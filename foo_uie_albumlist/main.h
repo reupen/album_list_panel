@@ -7,23 +7,6 @@
 
 extern const char * directory_structure_view_name;
 
-class IDropSource_albumlist : public IDropSource
-{
-	long refcount;
-	HWND wnd;
-public:
-	IDropSource_albumlist() : refcount(0) {}
-	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void ** ppvObject);
-	virtual ULONG STDMETHODCALLTYPE AddRef();
-	virtual ULONG STDMETHODCALLTYPE Release();
-
-	virtual HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState);
-
-	virtual HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect);
-	IDropSource_albumlist(HWND wnd_dbe) : wnd(wnd_dbe) {};
-
-};
-
 class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic
 {
 	static const char * class_name;

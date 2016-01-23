@@ -132,8 +132,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
 					if (pDataObject)
 					{
 						DWORD blah;
-						pfc::com_ptr_t<IDropSource_albumlist> p_IDropSource_albumlist = new IDropSource_albumlist(wnd_tv);
-						SHDoDragDrop(wnd_tv, pDataObject, p_IDropSource_albumlist.get_ptr(), DROPEFFECT_COPY, &blah);
+						SHDoDragDrop(wnd_tv, pDataObject, new mmh::ole::IDropSource_Generic(wnd_tv, pDataObject, wp, true), DROPEFFECT_COPY, &blah);
 						pDataObject->Release();
 					}
 					dragging = false;
