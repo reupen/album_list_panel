@@ -209,6 +209,7 @@ public:
 	friend class font_notify;
 private:
 	static HFONT g_font;
+	HTHEME m_dd_theme;
 	search_filter::ptr m_filter_ptr;
 	ui_selection_holder::ptr m_selection_holder;
 };

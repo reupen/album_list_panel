@@ -103,7 +103,7 @@ class album_list_fcl_appearance : public cui::fcl::dataset
 	}
 	virtual void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort)
 	{
-		t_size version, count, i;
+		t_size version;
 		fcl::reader r(p_reader, size, p_abort);
 		r.read_item(version);
 		if (version <= stream_version)

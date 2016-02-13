@@ -132,7 +132,19 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
 					if (pDataObject)
 					{
 						DWORD blah;
-						mmh::ole::DoDragDrop(wnd_tv, wp, pDataObject, DROPEFFECT_COPY|DROPEFFECT_MOVE, DROPEFFECT_COPY, &blah);
+						auto colours = cui::colours::helper(g_guid_album_list_colours);
+						auto icon = icon_ptr((static_api_ptr_t<ui_control>()->load_main_icon(256, 256)));
+						auto colourSelectionBackground = colours.get_colour(cui::colours::colour_selection_background);
+						auto colourSelectionText = colours.get_colour(cui::colours::colour_selection_text);
+						auto selectionCount = items.get_count();
+						auto showText = selectionCount > 1;
+						pfc::string8 text;
+						if (showText) text << selectionCount << " tracks";
+						SHDRAGIMAGE sdi = {0};
+						LOGFONT lf = {0};
+						GetObject(g_font, sizeof(lf), &lf);
+						uih::CreateDragImage(wnd_tv, colours.get_themed(), m_dd_theme, colourSelectionBackground, colourSelectionText, icon, &lf, showText, text, &sdi);
+						mmh::ole::DoDragDrop(wnd_tv, wp, pDataObject, DROPEFFECT_COPY|DROPEFFECT_MOVE, DROPEFFECT_COPY, &blah, &sdi);
 						pDataObject->Release();
 					}
 					dragging = false;

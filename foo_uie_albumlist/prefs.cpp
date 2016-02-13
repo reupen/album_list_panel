@@ -77,42 +77,6 @@ bool colour_picker(HWND wnd, cfg_int & out, COLORREF custom = 0)
 
 cfg_int cfg_child(create_guid(0x637c25b6, 0x9166, 0xd8df, 0xae, 0x7a, 0x39, 0x75, 0x78, 0x08, 0xfa, 0xf0), 0);
 
-BOOL font_picker(LOGFONT & p_font,HWND parent)
-{
-	CHOOSEFONT cf;
-	memset(&cf,0,sizeof(cf));
-	cf.lStructSize = sizeof(cf);
-	cf.hwndOwner=parent;
-	cf.lpLogFont=&p_font;
-	cf.Flags=CF_SCREENFONTS|CF_FORCEFONTEXIST|CF_INITTOLOGFONTSTRUCT;
-	cf.nFontType=SCREEN_FONTTYPE;
-	BOOL rv = ChooseFont(&cf);
-	return rv;
-}
-
-class string_font_desc : public std::basic_string<TCHAR>
-{
-public:
-	operator const TCHAR * () const {return data();}
-	string_font_desc(const LOGFONT & lf)
-	{
-		reserve(64);
-		HDC dc = GetDC(0);		
-		unsigned pt = -MulDiv(lf.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
-		ReleaseDC(0, dc);
-
-		append(lf.lfFaceName, wcslen_max(lf.lfFaceName, tabsize(lf.lfFaceName)));
-		append(_T(" "));
-		append(pfc::stringcvt::string_os_from_utf8(pfc::format_int(pt)));
-		append(_T("pt"));
-		if (lf.lfWeight == FW_BOLD)
-			append(_T(" Bold"));
-		if (lf.lfItalic)
-			append(_T(" Itallic"));
-	}
-};
-
-
 tab_general g_config_general;
 
 tab_advanced g_config_advanced;

@@ -62,7 +62,9 @@ void album_list_window::g_update_all_fonts()
 }
 
 
-album_list_window::album_list_window() : wnd_tv(0), wnd_edit(NULL), m_filter(false), m_timer(false), m_populated(false), initialised(false), view("by artist/album"), treeproc(0), dragging(false), clicked(false), clickpoint(0), indent_default(0)
+album_list_window::album_list_window() 
+	: wnd_tv(0), wnd_edit(NULL), m_filter(false), m_timer(false), m_populated(false), initialised(false), view("by artist/album"), 
+	treeproc(0), dragging(false), clicked(false), clickpoint(0), indent_default(0), m_dd_theme(NULL)
 {
 }
 
@@ -259,8 +261,8 @@ void album_list_window::update_all_labels()
 void album_list_window::update_colours()
 {
 	cui::colours::helper p_colours(g_guid_album_list_colours);
-	if (p_colours.get_themed()) g_set_treeview_window_explorer_theme(wnd_tv);
-	else g_remove_treeview_window_explorer_theme(wnd_tv);
+	if (p_colours.get_themed()) uih::SetTreeViewWindowExplorerTheme(wnd_tv);
+	else uih::RemoveTreeViewWindowExplorerTheme(wnd_tv);
 
 	TreeView_SetBkColor(wnd_tv, p_colours.get_colour(cui::colours::colour_background));
 	TreeView_SetLineColor(wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
@@ -385,9 +387,9 @@ void album_list_window::create_tree()
 	
 	if (wnd_tv)
 	{
-		if (is_vista_or_newer())
-		TreeView_SetExtendedStyle(wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
-		if (cui::colours::helper(g_guid_album_list_colours).get_themed()) g_set_treeview_window_explorer_theme(wnd_tv);
+		if (uih::IsVistaOrNewer())
+			TreeView_SetExtendedStyle(wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
+		if (cui::colours::helper(g_guid_album_list_colours).get_themed()) uih::SetTreeViewWindowExplorerTheme(wnd_tv);
 		//SendMessage(wnd, TV_FIRST + 44, 0x0002, 0x0002);
 		
 		indent_default =  TreeView_GetIndent(wnd_tv);

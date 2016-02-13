@@ -304,8 +304,8 @@ void setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size 
 				pad++;
 			}
 			char temp1[128], temp2[128];
-			sprintf(temp1, "%%0%uu. ", pad);
-			sprintf(temp2, temp1, idx + 1);
+			sprintf_s(temp1, "%%0%uu. ", pad);
+			sprintf_s(temp2, temp1, idx + 1);
 			sz_text += temp2;
 		}
 
@@ -317,7 +317,7 @@ void setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size 
 			if (num > 0)
 			{
 				char blah[64];
-				sprintf(blah, " (%u)", num);
+				sprintf_s(blah, " (%u)", num);
 				sz_text += blah;
 			}
 		}

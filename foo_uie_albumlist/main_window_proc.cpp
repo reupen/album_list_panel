@@ -13,12 +13,20 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 		modeless_dialog_manager::g_add(wnd);
 
+		m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : NULL;
+
 		create_tree();
 		create_filter();
 
 		if (cfg_populate) refresh_tree();
 
 		static_api_ptr_t<library_manager_v3>()->register_callback(this);
+	}
+	break;
+	case WM_THEMECHANGED:
+	{
+		if (m_dd_theme) CloseThemeData(m_dd_theme);
+		m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : NULL;
 	}
 	break;
 	/*case WM_GETMINMAXINFO:
@@ -315,6 +323,12 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 		m_selection_holder.release();
 		m_root.release();
 		p_selection.release();
+		if (m_dd_theme)
+		{
+			CloseThemeData(m_dd_theme);
+			m_dd_theme = NULL;
+		}
+
 		if (initialised)
 		{
 			list_wnd.remove_item(this);
