@@ -47,8 +47,8 @@ void do_autosend_playlist(node_ptr const & src, string_base & view, bool b_play)
 			inline titleformat_hook_view(const char * p_view) : m_view(p_view)
 			{};
 		};
-
-		static_api_ptr_t<titleformat_compiler>()->run(&titleformat_hook_view(view), playlist_name, cfg_playlist_name);
+		titleformat_hook_view tf_hook(view);
+		static_api_ptr_t<titleformat_compiler>()->run(&tf_hook, playlist_name, cfg_playlist_name);
 		//playlist_name.fix_filename_chars(); //for find playlist NOT RELEVANT FOR 0.9
 		unsigned idx = api->find_or_create_playlist(playlist_name, pfc_infinite);
 		api->playlist_undo_backup(idx);

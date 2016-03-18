@@ -497,11 +497,13 @@ void album_list_window::refresh_tree_internal()
 						info_ptr = library[n]->get_info_ref();
 
 #if 1
+						titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
+						titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
 						library[n]->format_title(
-							&titleformat_hook_impl_file_info_branch(location, &info_ptr->info()),
+							&tf_hook_file_info,
 							formatbuffer,
 							script,
-							&titleformat_text_filter_impl_reserved_chars("|")
+							&tf_hook_text_filter
 							);
 #else
 						script->run_filtered(
@@ -698,11 +700,13 @@ void album_list_window::refresh_tree_internal_add_tracks(metadb_handle_list & p_
 						metadb_info_container::ptr info_ptr;
 						info_ptr = new_tracks[n]->get_info_ref();
 #if 1
+						titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
+						titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
 						new_tracks[n]->format_title(
-							&titleformat_hook_impl_file_info_branch(location, &info_ptr->info()),
+							&tf_hook_file_info,
 							formatbuffer,
 							script,
-							&titleformat_text_filter_impl_reserved_chars("|")
+							&tf_hook_text_filter
 							);
 #else
 						script->run_filtered(
@@ -769,7 +773,8 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
 		refresh_tree_internal_add_tracks(p_data);
 	}
 	catch (pfc::exception const & e) {
-		popup_message::g_show(string_formatter() << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
+		string_formatter formatter;
+		popup_message::g_show(formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
 		m_root.release();
 	}
 
@@ -802,7 +807,8 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
 		refresh_tree_internal_remove_tracks(p_data);
 	}
 	catch (pfc::exception const & e) {
-		popup_message::g_show(string_formatter() << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
+		string_formatter formatter;
+		popup_message::g_show(formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
 		m_root.release();
 	}
 
@@ -843,7 +849,8 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
 		refresh_tree_internal_add_tracks(p_data);
 	}
 	catch (pfc::exception const & e) {
-		popup_message::g_show(string_formatter() << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
+		string_formatter formatter;
+		popup_message::g_show(formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
 		m_root.release();
 	}
 
@@ -966,7 +973,8 @@ void album_list_window::refresh_tree()
 			refresh_tree_internal();
 		}
 		catch (pfc::exception const & e) {
-			popup_message::g_show(string_formatter() << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
+			string_formatter formatter;
+			popup_message::g_show(formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error", popup_message::icon_error);
 			m_root.release();
 		}
 
@@ -988,7 +996,8 @@ void album_list_window::refresh_tree()
 			}
 		}
 #ifdef USE_TIMER
-		console::formatter() << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
+		console::formatter formatter; 
+		formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
 #endif
 
 #if 0

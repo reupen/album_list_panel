@@ -37,7 +37,7 @@ void node::sort_entries()//for contextmenu
 void node::create_new_playlist()
 {
 	static_api_ptr_t<playlist_manager> api;
-	string8 name = value;
+	string8 name = value.get_ptr();
 	if (name.is_empty()) name = "All music";
 	unsigned idx = api->create_playlist(name, pfc_infinite, pfc_infinite);
 	if (idx != pfc_infinite)
