@@ -382,7 +382,6 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 		uSendDlgItemMessage(wnd, IDC_KEYB, BM_SETCHECK, cfg_keyb, 0);
 		uSendDlgItemMessage(wnd, IDC_POPULATE, BM_SETCHECK, cfg_populate, 0);
 		uSendDlgItemMessage(wnd, IDC_HSCROLL, BM_SETCHECK, cfg_hscroll, 0);
-		uSendDlgItemMessage(wnd, IDC_THEMED, BM_SETCHECK, cfg_themed, 0);
 		uSendDlgItemMessage(wnd, IDC_SHOW_ROOT, BM_SETCHECK, cfg_show_root, 0);
 		uSendDlgItemMessage(wnd, IDC_AUTOPLAY, BM_SETCHECK, cfg_autoplay, 0);
 		uSendDlgItemMessage(wnd, IDC_ADD_ITEMS_USE_CORE_SORT, BM_SETCHECK, cfg_add_items_use_core_sort, 0);
@@ -454,9 +453,6 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 		case IDC_HSCROLL:
 			cfg_hscroll = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
 			album_list_window::g_update_all_showhscroll();
-			break;
-		case IDC_THEMED:
-			cfg_themed = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0) != 0;
 			break;
 		case IDC_SHOW_ROOT:
 			cfg_show_root = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);

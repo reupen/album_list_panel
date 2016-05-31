@@ -1,5 +1,6 @@
 #pragma once
 
+#define IDC_TREE 1000
 #define IDC_FILTER 1001
 #define EDIT_TIMER_ID 2001
 
