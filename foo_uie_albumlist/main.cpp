@@ -387,7 +387,7 @@ void album_list_window::create_tree()
 	
 	if (wnd_tv)
 	{
-		if (uih::IsVistaOrNewer())
+		if (mmh::osversion::is_windows_vista_or_newer())
 			TreeView_SetExtendedStyle(wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
 		if (cui::colours::helper(g_guid_album_list_colours).get_themed()) uih::SetTreeViewWindowExplorerTheme(wnd_tv);
 		//SendMessage(wnd, TV_FIRST + 44, 0x0002, 0x0002);
