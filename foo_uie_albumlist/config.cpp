@@ -2,14 +2,14 @@
 
 struct
 {
-	const char * name, *value;
+    const char * name, *value;
 } cfg_view_list_defaults[] =
 {
-	{ "by album","%album%[ '['%album artist%']']|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
-	{ "by artist","%<artist>%|%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
-	{ "by genre","%<genre>%|[%album artist% - ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
-	{ "by year","%<date>%|[%album artist% - ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
-	{ "by artist/album","[%album artist% - ]['['%date%']' ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
+    { "by album","%album%[ '['%album artist%']']|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
+    { "by artist","%<artist>%|%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
+    { "by genre","%<genre>%|[%album artist% - ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
+    { "by year","%<date>%|[%album artist% - ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
+    { "by artist/album","[%album artist% - ]['['%date%']' ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%" },
 };
 
 
@@ -56,37 +56,37 @@ cfg_int cfg_picmixer(create_guid(0x2a9d24a2, 0x2705, 0xb35e, 0xdb, 0x20, 0x86, 0
 
 inline void cfg_view_list_t::get_data_raw(stream_writer * out, abort_callback & p_abort)
 {
-	t_size n, m = data.get_count();
-	out->write_lendian_t(m, p_abort);
-	for (n = 0; n<m; n++)
-	{
-		out->write_string(data[n].name, p_abort);
-		out->write_string(data[n].value, p_abort);
-	}
+    t_size n, m = data.get_count();
+    out->write_lendian_t(m, p_abort);
+    for (n = 0; n<m; n++)
+    {
+        out->write_string(data[n].name, p_abort);
+        out->write_string(data[n].value, p_abort);
+    }
 }
 
 inline void cfg_view_list_t::set_data_raw(stream_reader * r, unsigned psize, abort_callback & p_abort)
 {
-	data.remove_all();
-	t_size n, m = 0;
-	r->read_lendian_t(m, p_abort);
-	for (n = 0; n<m; n++)
-	{
-		entry item;
-		r->read_string(item.name, p_abort);
-		r->read_string(item.value, p_abort);
-		data.add_item(item);
-	}
+    data.remove_all();
+    t_size n, m = 0;
+    r->read_lendian_t(m, p_abort);
+    for (n = 0; n<m; n++)
+    {
+        entry item;
+        r->read_string(item.name, p_abort);
+        r->read_string(item.value, p_abort);
+        data.add_item(item);
+    }
 }
 
 void cfg_view_list_t::reset()
 {
-	data.remove_all();
-	unsigned n;
-	for (n = 0; n<tabsize(cfg_view_list_defaults); n++)
-	{
-		data.add_item(entry(cfg_view_list_defaults[n].name, cfg_view_list_defaults[n].value));
-	}
+    data.remove_all();
+    unsigned n;
+    for (n = 0; n<tabsize(cfg_view_list_defaults); n++)
+    {
+        data.add_item(entry(cfg_view_list_defaults[n].name, cfg_view_list_defaults[n].value));
+    }
 }
 
 // {06B856CC-86E7-4459-A75C-2DAB5B33B8BB}
