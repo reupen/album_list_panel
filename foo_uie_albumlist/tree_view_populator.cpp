@@ -24,8 +24,7 @@ void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_
         m_utf16_converter.convert(text);
         if (ptr->m_ti)
         {
-            TVITEM tvi;
-            memset(&tvi, 0, sizeof(tvi));
+            TVITEM tvi{};
             tvi.hItem = ptr->m_ti;
             tvi.mask = TVIF_TEXT;
             tvi.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
@@ -33,13 +32,12 @@ void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_
         }
         else
         {
-            TVINSERTSTRUCT is;
-            memset(&is, 0, sizeof(is));
+            TVINSERTSTRUCT is{};
             is.hParent = parent;
             is.hInsertAfter = ti_after;
             is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
             is.item.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
-            is.item.lParam = (int)ptr.get_ptr();
+            is.item.lParam = reinterpret_cast<LPARAM>(ptr.get_ptr());
             is.item.state = level < 1 ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
             item = TreeView_InsertItem(list, &is);
@@ -56,9 +54,9 @@ void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_
     {
         for (n = 0; n < children.get_count(); n++)
         {
-            HTREEITEM ti_aft = n ? children[n - 1]->m_ti : NULL;
-            if (ti_aft == NULL) ti_aft = TVI_FIRST;
-            setup_tree(list, item, children[n], level + 1, n, children.get_count(), entries, ti_aft/*,false,p_sort_script*/);
+            HTREEITEM ti_aft = n ? children[n - 1]->m_ti : nullptr;
+            if (ti_aft == nullptr) ti_aft = TVI_FIRST;
+            setup_tree(list, item, children[n], level + 1, n, children.get_count(), entries, ti_aft);
         }
     }
 }
