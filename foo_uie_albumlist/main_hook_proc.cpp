@@ -137,12 +137,12 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
 						auto colourSelectionText = colours.get_colour(cui::colours::colour_selection_text);
 						auto selectionCount = items.get_count();
 						pfc::string8 text;
-						text << mmh::format_integer(selectionCount) << (selectionCount != 1 ? " tracks" : " track");
+						text << mmh::IntegerFormatter(selectionCount) << (selectionCount != 1 ? " tracks" : " track");
 						SHDRAGIMAGE sdi = {0};
 						LOGFONT lf = {0};
 						GetObject(g_font, sizeof(lf), &lf);
-						uih::CreateDragImage(wnd_tv, true, m_dd_theme, colourSelectionBackground, colourSelectionText, nullptr, &lf, true, text, &sdi);
-						mmh::ole::DoDragDrop(wnd_tv, wp, pDataObject, DROPEFFECT_COPY|DROPEFFECT_MOVE, DROPEFFECT_COPY, &blah, &sdi);
+						uih::create_drag_image(wnd_tv, true, m_dd_theme, colourSelectionBackground, colourSelectionText, nullptr, &lf, true, text, &sdi);
+						uih::ole::do_drag_drop(wnd_tv, wp, pDataObject, DROPEFFECT_COPY|DROPEFFECT_MOVE, DROPEFFECT_COPY, &blah, &sdi);
 						pDataObject->Release();
 					}
 					dragging = false;

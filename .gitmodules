@@ -13,3 +13,6 @@
 [submodule "ui_helpers"]
 	path = ui_helpers
 	url = https://github.com/reupen/ui_helpers.git
+[submodule "fbh"]
+	path = fbh
+	url = https://github.com/reupen/fbh.git

@@ -11,6 +11,7 @@
 #include "../columns_ui-sdk/ui_extension.h"
 #include "../ui_helpers/stdafx.h"
 #include "../mmh/stdafx.h"
+#include "../fbh/stdafx.h"
 
 using namespace pfc;
 

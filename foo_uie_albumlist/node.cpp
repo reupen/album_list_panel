@@ -3,12 +3,12 @@
 void node::sort_children()
 {
 	pfc::list_t<pfc::string_simple_t<WCHAR> > sortdata;
-	mmh::permutation_t permutation(children.get_count());
+	mmh::Permuation permutation(children.get_count());
 	sortdata.set_size(children.get_count());
 	t_size n;
 	for (n = 0; n<children.get_count(); n++)
 		sortdata[n] = pfc::stringcvt::string_wide_from_utf8(children[n]->value);
-	mmh::g_sort_get_permutation_qsort(sortdata, permutation, sortproc, false);
+	mmh::sort_get_permuation(sortdata, permutation, sortproc, false, false, true);
 	children.reorder(permutation.get_ptr());
 	for (n = 0; n<children.get_count(); n++)
 		children[n]->sort_children();

@@ -261,8 +261,8 @@ void album_list_window::update_all_labels()
 void album_list_window::update_colours()
 {
 	cui::colours::helper p_colours(g_guid_album_list_colours);
-	if (p_colours.get_themed()) uih::SetTreeViewWindowExplorerTheme(wnd_tv);
-	else uih::RemoveTreeViewWindowExplorerTheme(wnd_tv);
+	if (p_colours.get_themed()) uih::tree_view_set_explorer_theme(wnd_tv);
+	else uih::tree_view_remove_explorer_theme(wnd_tv);
 
 	TreeView_SetBkColor(wnd_tv, p_colours.get_colour(cui::colours::colour_background));
 	TreeView_SetLineColor(wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
@@ -387,9 +387,9 @@ void album_list_window::create_tree()
 	
 	if (wnd_tv)
 	{
-		if (mmh::osversion::is_windows_vista_or_newer())
+		if (mmh::is_windows_vista_or_newer())
 			TreeView_SetExtendedStyle(wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
-		if (cui::colours::helper(g_guid_album_list_colours).get_themed()) uih::SetTreeViewWindowExplorerTheme(wnd_tv);
+		if (cui::colours::helper(g_guid_album_list_colours).get_themed()) uih::tree_view_set_explorer_theme(wnd_tv);
 		//SendMessage(wnd, TV_FIRST + 44, 0x0002, 0x0002);
 		
 		indent_default =  TreeView_GetIndent(wnd_tv);

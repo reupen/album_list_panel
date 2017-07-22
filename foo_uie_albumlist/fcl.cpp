@@ -25,7 +25,7 @@ class album_list_fcl_views : public cui::fcl::dataset
 	virtual const GUID & get_group()const { return g_guid_fcl_group_album_list_views; }
 	virtual void get_data(stream_writer * p_writer, t_uint32 type, cui::fcl::t_export_feedback & feedback, abort_callback & p_abort)const
 	{
-		fcl::writer w(p_writer, p_abort);
+		fbh::fcl::Writer w(p_writer, p_abort);
 		w.write_raw((t_size)stream_version);
 		t_size i, count = cfg_view_list.get_count();
 		w.write_raw(count);
@@ -39,7 +39,7 @@ class album_list_fcl_views : public cui::fcl::dataset
 	virtual void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort)
 	{
 		t_size version, count, i;
-		fcl::reader r(p_reader, size, p_abort);
+		fbh::fcl::Reader r(p_reader, size, p_abort);
 		r.read_item(version);
 		if (version <= stream_version)
 		{
@@ -89,7 +89,7 @@ class album_list_fcl_appearance : public cui::fcl::dataset
 	virtual const GUID & get_group()const { return cui::fcl::groups::colours_and_fonts; }
 	virtual void get_data(stream_writer * p_writer, t_uint32 type, cui::fcl::t_export_feedback & feedback, abort_callback & p_abort)const
 	{
-		fcl::writer w(p_writer, p_abort);
+		fbh::fcl::Writer w(p_writer, p_abort);
 		w.write_raw(t_size(stream_version));
 		w.write_item(id_sub_item_counts, cfg_show_numbers);
 		w.write_item(id_sub_item_indices, cfg_show_numbers2);
@@ -104,7 +104,7 @@ class album_list_fcl_appearance : public cui::fcl::dataset
 	virtual void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort)
 	{
 		t_size version;
-		fcl::reader r(p_reader, size, p_abort);
+		fbh::fcl::Reader r(p_reader, size, p_abort);
 		r.read_item(version);
 		if (version <= stream_version)
 		{

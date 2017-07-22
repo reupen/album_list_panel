@@ -4,8 +4,8 @@ template <typename t_list, typename t_compare>
 static void g_sort_qsort(t_list & p_list, t_compare p_compare, bool stabilise)
 {
 	t_size size = pfc::array_size_t(p_list);
-	mmh::permutation_t perm(size);
-	mmh::g_sort_get_permutation_qsort(p_list, perm, p_compare, stabilise);
+	mmh::Permuation perm(size);
+	mmh::sort_get_permuation(p_list, perm, p_compare, stabilise, false, true);
 	p_list.reorder(perm.get_ptr());
 }
 
@@ -413,8 +413,8 @@ void album_list_window::refresh_tree_internal()
 			{
 				try
 				{
-					service_ptr_t<album_list_window> p_this = this;
-					m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, mmh::fb2k::completion_notify_create_copyptr(p_this, 0), NULL);
+					auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
+					m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
 				}
 				catch (exception_service_not_found const &)
 				{
@@ -617,8 +617,8 @@ void album_list_window::refresh_tree_internal_add_tracks(metadb_handle_list & p_
 			{
 				try
 				{
-					service_ptr_t<album_list_window> p_this = this;
-					m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, mmh::fb2k::completion_notify_create_copyptr(p_this, 0), NULL);
+					auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
+					m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
 				}
 				catch (exception_service_not_found const &)
 				{
@@ -796,8 +796,8 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
 
 	metadb_handle_list p_data = p_data_const;
 
-	mmh::permutation_t perm(p_data.get_count());
-	mmh::g_sort_get_permutation_qsort_v2(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
+	mmh::Permuation perm(p_data.get_count());
+	mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false, false, true);
 	p_data.reorder(perm.get_ptr());
 
 
@@ -837,8 +837,8 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
 
 	metadb_handle_list p_data = p_const_data;
 
-	mmh::permutation_t perm(p_data.get_count());
-	mmh::g_sort_get_permutation_qsort_v2(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
+	mmh::Permuation perm(p_data.get_count());
+	mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false, false, true);
 	p_data.reorder(perm.get_ptr());
 
 
