@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "tree_view_populator.h"
 #include "node.h"
 
 //TODO: node name as field
@@ -252,7 +253,7 @@ void album_list_window::update_all_labels()
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,0,entries);
+            TreeViewPopulator::s_setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,0,entries);
         }
         uSendMessage(wnd_tv,WM_SETREDRAW,TRUE,0);
     }

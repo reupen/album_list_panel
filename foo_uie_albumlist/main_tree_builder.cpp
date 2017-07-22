@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "tree_view_populator.h"
 
 template <typename t_list, typename t_compare>
 static void g_sort_qsort(t_list & p_list, t_compare p_compare, bool stabilise)
@@ -276,122 +277,8 @@ t_size process_byformat_add_branches_t(t_string_storage & p_string_storage, cons
             }
         }
         return branch_count;
-        }
-    }
-
-void setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, metadb_handle_list_t<pfc::alloc_fast_aggressive> & entries, HTREEITEM ti_after /*, bool b_sort,const service_ptr_t<titleformat_object> & p_sort_script*/)
-{
-    static string8_fastalloc sz_text;
-
-    HTREEITEM item = TVI_ROOT;
-
-    ptr->purge_empty_children(list);
-
-    if (ptr->m_ti)
-    {
-        item = ptr->m_ti;
-    }
-    if ((!ptr->m_ti || ptr->m_label_dirty) && (level > 0 || cfg_show_root))
-    {
-        sz_text.reset();
-
-        if (cfg_show_numbers2 && max_idx > 0)
-        {
-            t_size pad = 0;
-            while (max_idx > 0)
-            {
-                max_idx /= 10;
-                pad++;
-            }
-            char temp1[128], temp2[128];
-            sprintf_s(temp1, "%%0%uu. ", pad);
-            sprintf_s(temp2, temp1, idx + 1);
-            sz_text += temp2;
-        }
-
-        sz_text += ptr->get_val();
-
-        if (cfg_show_numbers)
-        {
-            t_size num = ptr->get_num_children();
-            if (num > 0)
-            {
-                char blah[64];
-                sprintf_s(blah, " (%u)", num);
-                sz_text += blah;
-            }
-        }
-
-
-        if (ptr->m_ti)
-        {
-            pfc::stringcvt::string_os_from_utf8_fast wstr(sz_text);
-            TVITEM tvi;
-            memset(&tvi, 0, sizeof(tvi));
-            tvi.hItem = ptr->m_ti;
-            tvi.mask = TVIF_TEXT;
-            tvi.pszText = const_cast<WCHAR*>(wstr.get_ptr());
-            TreeView_SetItem(list, &tvi);
-        }
-        else
-        {
-            uTVINSERTSTRUCT is;
-            memset(&is, 0, sizeof(is));
-            is.hParent = parent;
-            is.hInsertAfter = ti_after;
-            is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
-            is.item.pszText = const_cast<char*>(sz_text.get_ptr());
-            is.item.lParam = (int)ptr.get_ptr();
-            is.item.state = level < 1 ? TVIS_EXPANDED : 0;
-            is.item.stateMask = TVIS_EXPANDED;
-            item = uTreeView_InsertItem(list, &is);
-
-
-            ptr->m_ti = item;
-        }
-        ptr->m_label_dirty = false;
-    }
-
-    const list_t<node_ptr> & children = ptr->get_children();
-
-    unsigned n;
-
-#if 0
-    if (b_sort)
-    {
-        array_t<unsigned> order;
-        order.set_size(children.get_count());
-        {
-            TRACK_CALL_TEXT("sort");
-            for (n = 0; n < children.get_count(); n++)
-            {
-                entries.add_item(children[n]->get_entries()[0]);
-            }
-
-            order_helper::g_fill(order.get_ptr(), children.get_count());
-
-            entries.sort_by_format_get_order(order.get_ptr(), p_sort_script, 0);
-
-            entries.remove_all();
-        }
-
-        for (n = 0; n < children.get_count(); n++)
-            setup_tree(list, item, children[order[n]], level + 1, n, children.get_count(), entries, true, p_sort_script);
-
-    }
-    else
-#endif
-    {
-        for (n = 0; n < children.get_count(); n++)
-        {
-            HTREEITEM ti_aft = n ? children[n - 1]->m_ti : NULL;
-            if (ti_aft == NULL) ti_aft = TVI_FIRST;
-            setup_tree(list, item, children[n], level + 1, n, children.get_count(), entries, ti_aft/*,false,p_sort_script*/);
-        }
     }
 }
-
-
 
 void album_list_window::refresh_tree_internal()
 {
@@ -784,7 +671,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
         }
     }
 
@@ -825,7 +712,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
         }
     }
 
@@ -860,7 +747,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
         }
     }
 
@@ -992,7 +879,7 @@ void album_list_window::refresh_tree()
                 //if (sort_script.is_empty()) b_sort = false;
 
                 TRACK_CALL_TEXT("album_list_panel_setup_tree");
-                setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+                TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
             }
         }
 #ifdef USE_TIMER

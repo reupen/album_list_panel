@@ -218,4 +218,3 @@ private:
 void TreeView_CollapseOtherNodes(HWND wnd, HTREEITEM ti);
 void do_playlist(node_ptr const & src, bool replace, bool b_new = false);
 void do_autosend_playlist(node_ptr const & src, string_base & view, bool b_play = false);
-void setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, metadb_handle_list_t<pfc::alloc_fast_aggressive> & entries, HTREEITEM ti_after = TVI_LAST /*, bool b_sort,const service_ptr_t<titleformat_object> & p_sort_script*/);

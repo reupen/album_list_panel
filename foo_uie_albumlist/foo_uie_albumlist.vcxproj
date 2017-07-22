@@ -236,6 +236,7 @@
     <ClCompile Include=".\node.cpp" />
     <ClCompile Include=".\prefs.cpp" />
     <ClCompile Include=".\tfhook.cpp" />
+    <ClCompile Include="tree_view_populator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\config.h" />
@@ -245,6 +246,7 @@
     <ClInclude Include=".\resource.h" />
     <ClInclude Include=".\stdafx.h" />
     <ClInclude Include=".\tfhook.h" />
+    <ClInclude Include="tree_view_populator.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\columns_ui-sdk\columns_ui-sdk.vcxproj">
