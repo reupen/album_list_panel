@@ -296,26 +296,14 @@ void album_list_window::refresh_tree_internal()
         }
         else
         {
-            try
-            {
-                try
-                {
-                    auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
-                    m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
-                }
-                catch (exception_service_not_found const &)
-                {
-                    m_filter_ptr = static_api_ptr_t<search_filter_manager>()->create(pattern);
-                }
+            auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
+            m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
 
-                api->get_all_items(library);
-                pfc::array_t<bool> mask;
-                mask.set_count(library.get_count());
-                m_filter_ptr->test_multi(library, mask.get_ptr());
-                library.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
-            }
-            catch (pfc::exception const &) {};
-
+            api->get_all_items(library);
+            pfc::array_t<bool> mask;
+            mask.set_count(library.get_count());
+            m_filter_ptr->test_multi(library, mask.get_ptr());
+            library.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
         }
     }
 
@@ -338,8 +326,8 @@ void album_list_window::refresh_tree_internal()
                     api->get_relative_path(library[n], strings[n]);
                     entries[n].m_path = strings[n];
                     entries[n].m_item = library[n].get_ptr();
-        }
-    }
+                }
+            }
 
             {
                 g_sort_qsort(entries, process_bydir_entry::g_compare, false);
@@ -349,8 +337,8 @@ void album_list_window::refresh_tree_internal()
                 m_root = new node(0, 0, this);
                 process_level_recur_t(entries.get_ptr(), count, m_root, true);
             }
-}
-}
+        }
+    }
     else
     {
         const t_size count = library.get_count();
@@ -367,8 +355,6 @@ void album_list_window::refresh_tree_internal()
             list_t<process_byformat_entry> entries;
             //entries.prealloc(count);
 
-#if 1
-
             pfc::array_t<char, pfc::alloc_fast_aggressive> stringbuffer;
             stringbuffer.prealloc(1024 * 16);
 
@@ -383,7 +369,6 @@ void album_list_window::refresh_tree_internal()
                         metadb_info_container::ptr info_ptr;
                         info_ptr = library[n]->get_info_ref();
 
-#if 1
                         titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
                         titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
                         library[n]->format_title(
@@ -392,12 +377,7 @@ void album_list_window::refresh_tree_internal()
                             script,
                             &tf_hook_text_filter
                             );
-#else
-                        script->run_filtered(
-                            &titleformat_hook_impl_file_info_branch(location, info),
-                            formatbuffer,
-                            &titleformat_text_filter_impl_reserved_chars("|"));
-#endif
+
                         t_size branch_count = process_byformat_add_branches_t(stringbuffer, formatbuffer);
                         process_byformat_entry entry;
                         entry.m_item = library[n].get_ptr();
@@ -412,23 +392,6 @@ void album_list_window::refresh_tree_internal()
                     bufptr += strlen(bufptr) + 1;
                 }
             }
-#else
-
-            array_t<string8> strings(count);
-
-            {
-                string8_fastalloc formatbuffer;
-                albumlist_profiler(formatmode_setup);
-                for (t_size n = 0; n < count; n++)
-                {
-                    library[n]->format_title(0, formatbuffer, script, &titleformat_text_filter_impl_reserved_chars("|"));
-                    strings[n] = formatbuffer;
-                    entries[n].m_path = strings[n];
-                    entries[n].m_item = library[n].get_ptr();
-                }
-
-            }
-#endif
 
             {
                 g_sort_qsort(entries, process_byformat_entry::g_compare, false);
@@ -494,30 +457,15 @@ void album_list_window::refresh_tree_internal_add_tracks(metadb_handle_list & p_
     {
         string8 pattern;
         if (wnd_edit) uGetWindowText(wnd_edit, pattern);
-        if (!wnd_edit || pattern.is_empty())
+        if (wnd_edit && !pattern.is_empty())
         {
+            auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
+            m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
 
-        }
-        else
-        {
-            try
-            {
-                try
-                {
-                    auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
-                    m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
-                }
-                catch (exception_service_not_found const &)
-                {
-                    m_filter_ptr = static_api_ptr_t<search_filter_manager>()->create(pattern);
-                }
-
-                pfc::array_t<bool> mask;
-                mask.set_count(new_tracks.get_count());
-                m_filter_ptr->test_multi(new_tracks, mask.get_ptr());
-                new_tracks.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
-            }
-            catch (pfc::exception const &) {};
+            pfc::array_t<bool> mask;
+            mask.set_count(new_tracks.get_count());
+            m_filter_ptr->test_multi(new_tracks, mask.get_ptr());
+            new_tracks.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
 
         }
     }
