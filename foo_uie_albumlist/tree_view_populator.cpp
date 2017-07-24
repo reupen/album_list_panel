@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
-void TreeViewPopulator::s_setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, metadb_handle_list_t<pfc::alloc_fast_aggressive>& entries, HTREEITEM ti_after)
+void TreeViewPopulator::s_setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
     TreeViewPopulator populater;
-    populater.setup_tree(list, parent, ptr, level, idx, max_idx, entries, ti_after);
+    populater.setup_tree(list, parent, ptr, level, idx, max_idx, ti_after);
 }
 
-void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, metadb_handle_list_t<pfc::alloc_fast_aggressive>& entries, HTREEITEM ti_after)
+void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
     HTREEITEM item = TVI_ROOT;
 
@@ -56,7 +56,7 @@ void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_
         {
             HTREEITEM ti_aft = n ? children[n - 1]->m_ti : nullptr;
             if (ti_aft == nullptr) ti_aft = TVI_FIRST;
-            setup_tree(list, item, children[n], level + 1, n, children.get_count(), entries, ti_aft);
+            setup_tree(list, item, children[n], level + 1, n, children.get_count(), ti_aft);
         }
     }
 }

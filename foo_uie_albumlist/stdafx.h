@@ -2,6 +2,9 @@
 #define OEMRESOURCE
 #define _WIN32_WINNT _WIN32_WINNT_VISTA
 
+#include <ppl.h>
+#include <concurrent_vector.h>
+
 #include "../foobar2000/SDK/foobar2000.h"
 #include "../foobar2000/helpers/helpers.h"
 #include "resource.h"

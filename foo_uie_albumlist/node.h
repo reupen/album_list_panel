@@ -12,7 +12,7 @@ private:
     bool m_sorted, b_bydir;
     class album_list_window * p_dbe;
 
-    static int sortproc(const pfc::string_simple_t<WCHAR> & n1, const pfc::string_simple_t<WCHAR> & n2)
+    static int sortproc(const wchar_t* n1, const wchar_t* n2)
     {
         return StrCmpLogicalW(n1, n2);
     }

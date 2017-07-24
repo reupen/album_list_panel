@@ -67,9 +67,9 @@ public:
     album_list_window();
 
     void refresh_tree();
-    void refresh_tree_internal();
-    void refresh_tree_internal_add_tracks(metadb_handle_list & p_tracks);
-    void refresh_tree_internal_remove_tracks(metadb_handle_list & p_tracks);
+    void rebuild_nodes();
+    void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
+    void remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks);
     void update_all_labels();
     void update_colours();
     void update_item_height();

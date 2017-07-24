@@ -251,9 +251,8 @@ void album_list_window::update_all_labels()
         m_root->mark_all_labels_dirty();
         uSendMessage(wnd_tv,WM_SETREDRAW,FALSE,0);
         {
-            metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,0,entries);
+            TreeViewPopulator::s_setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,0);
         }
         uSendMessage(wnd_tv,WM_SETREDRAW,TRUE,0);
     }
@@ -288,9 +287,6 @@ void album_list_window::on_task_completion(t_uint32 task, t_uint32 code)
     if (task == 0)
         refresh_tree();
 }
-
-
-
 
 void TreeView_CollapseOtherNodes(HWND wnd, HTREEITEM ti)
 {

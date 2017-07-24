@@ -49,10 +49,23 @@ struct process_bydir_entry
     enum { is_bydir = true };
 };
 
+template <typename String>
+const char* c_str(String& string)
+{
+    return string.c_str();
+}
+
+template<>
+const char* c_str(const char* const & string)
+{
+    return string;
+}
+
+template <typename String = std::string>
 struct process_byformat_entry
 {
     metadb_handle * m_item;
-    const char * m_path;
+    String m_path;
 
     inline static bool g_is_separator(char c) { return c == '|'; }
 
@@ -71,22 +84,23 @@ struct process_byformat_entry
         return ret;
     }
 
-    t_size get_segment_length() const { return g_get_segment_length(m_path); }
+    t_size get_segment_length() const { return g_get_segment_length(c_str(m_path)); }
 
     inline static int g_compare_segment(const char * p_path1, const char * p_path2)
     {
         return stricmp_utf8_ex(p_path1, g_get_segment_length(p_path1), p_path2, g_get_segment_length(p_path2));
     }
 
-    inline static int g_compare_segment(const process_byformat_entry & p_item1, const process_byformat_entry & p_item2)
+    inline static int g_compare_segment(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2)
     {
-        return stricmp_utf8_ex(p_item1.m_path, p_item1.get_segment_length(), p_item2.m_path, p_item2.get_segment_length());
+        return stricmp_utf8_ex(c_str(p_item1.m_path), p_item1.get_segment_length(), c_str(p_item2.m_path), p_item2.get_segment_length());
     }
 
-    inline static int g_compare(const process_byformat_entry & p_item1, const process_byformat_entry & p_item2) { return stricmp_utf8(p_item1.m_path, p_item2.m_path); }
+    inline static int g_compare(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2) { return stricmp_utf8(c_str(p_item1.m_path), c_str(p_item2.m_path)); }
 
     enum { is_bydir = false };
 };
+
 
 template<typename t_entry>
 class process_entry_list_wrapper_t : public list_base_const_t<metadb_handle_ptr>
@@ -108,21 +122,21 @@ private:
     t_size m_count;
 };
 
-template<typename t_entry>
+template<typename t_entry, typename t_local_entry = t_entry>
 static void process_level_recur_t(const t_entry * p_items, t_size const p_items_count, node_ptr p_parent, bool b_add_only)
 {
     p_parent->set_bydir(t_entry::is_bydir);
     p_parent->set_data(process_entry_list_wrapper_t<t_entry>(p_items, p_items_count), !b_add_only);
     p_parent->m_label_dirty = cfg_show_numbers != 0;
     assert(p_items_count > 0);
-    pfc::array_t<t_entry> items_local; items_local.set_size(p_items_count);
+    pfc::array_t<t_local_entry> items_local; items_local.set_size(p_items_count);
     t_size items_local_ptr = 0;
     t_size n;
     const char * last_path = 0;
     bool b_node_added = false;
     for (n = 0; n < p_items_count; n++)
     {
-        const char * current_path = p_items[n].m_path;
+        const char * current_path = c_str(p_items[n].m_path);
         while (*current_path && t_entry::g_is_separator(*current_path)) current_path++;
         if (items_local_ptr > 0 && t_entry::g_compare_segment(last_path, current_path) != 0)
         {
@@ -130,7 +144,7 @@ static void process_level_recur_t(const t_entry * p_items, t_size const p_items_
             node_ptr p_node = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only, b_new);
             if (b_new)
                 b_node_added = true;
-            process_level_recur_t<t_entry>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
+            process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
             items_local_ptr = 0;
             last_path = 0;
         }
@@ -150,7 +164,7 @@ static void process_level_recur_t(const t_entry * p_items, t_size const p_items_
         node_ptr p_node = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only, b_new);
         if (b_new)
             b_node_added = true;
-        process_level_recur_t<t_entry>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
+        process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
         items_local_ptr = 0;
         last_path = 0;
     }
@@ -175,13 +189,13 @@ struct process_byformat_branch_choice
     t_size m_end;
 };
 
-template <typename t_string_storage>
-t_size process_byformat_add_branches_t(t_string_storage & p_string_storage, const char * p_text)
+template <typename List>
+t_size process_byformat_add_branches(metadb_handle* handle, const char* p_text, List& entries)
 {
     const char * marker = strchr(p_text, 4);
     if (marker == 0)
     {
-        p_string_storage.append_fromptr(p_text, strlen(p_text) + 1);
+        entries.push_back(process_byformat_entry<>{handle, p_text});
         return 1;
     }
     else
@@ -256,16 +270,19 @@ t_size process_byformat_add_branches_t(t_string_storage & p_string_storage, cons
             }
         }
 
+        pfc::string8_fast buffer;
         // assemble branches
         for (t_size branch_index = 0; branch_index < branch_count; branch_index++)
         {
+            buffer.reset();
             t_size segment_count = segments.get_count();
             for (t_size segment_index = 0; segment_index < segment_count; segment_index++)
             {
                 const process_byformat_branch_choice & choice = choices[segments[segment_index].m_current_choice];
-                p_string_storage.append_fromptr(&p_text[choice.m_start], choice.m_end - choice.m_start);
+                buffer.add_string(&p_text[choice.m_start], choice.m_end - choice.m_start);
             }
-            p_string_storage.append_single(0);
+            entries.push_back(process_byformat_entry<>{handle, buffer});
+
             for (t_size segment_index = 0; segment_index < segment_count; segment_index++)
             {
                 process_byformat_branch_segment & segment = segments[segment_count - segment_index - 1];
@@ -280,9 +297,8 @@ t_size process_byformat_add_branches_t(t_string_storage & p_string_storage, cons
     }
 }
 
-void album_list_window::refresh_tree_internal()
+void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing)
 {
-    metadb_handle_list_t<pfc::alloc_fast_aggressive> library;
     m_filter_ptr.release();
 
     static_api_ptr_t<library_manager> api;
@@ -290,26 +306,24 @@ void album_list_window::refresh_tree_internal()
     {
         string8 pattern;
         if (wnd_edit) uGetWindowText(wnd_edit, pattern);
-        if (!wnd_edit || pattern.is_empty())
-        {
-            api->get_all_items(library);
-        }
-        else
+        if (wnd_edit && !pattern.is_empty())
         {
             auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
-            m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
+            try {
+                m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
 
-            api->get_all_items(library);
-            pfc::array_t<bool> mask;
-            mask.set_count(library.get_count());
-            m_filter_ptr->test_multi(library, mask.get_ptr());
-            library.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
+                pfc::array_t<bool> mask;
+                mask.set_count(tracks.get_count());
+                m_filter_ptr->test_multi(tracks, mask.get_ptr());
+                tracks.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
+            }
+            catch (const pfc::exception& ex) {}
         }
     }
 
     if (is_bydir())
     {
-        const t_size count = library.get_count();
+        const t_size count = tracks.get_count();
 
         if (count > 0)
         {
@@ -323,89 +337,74 @@ void album_list_window::refresh_tree_internal()
             {
                 for (n = 0; n < count; n++)
                 {
-                    api->get_relative_path(library[n], strings[n]);
+                    api->get_relative_path(tracks[n], strings[n]);
                     entries[n].m_path = strings[n];
-                    entries[n].m_item = library[n].get_ptr();
+                    entries[n].m_item = tracks[n].get_ptr();
                 }
             }
 
-            {
-                g_sort_qsort(entries, process_bydir_entry::g_compare, false);
-            }
+            g_sort_qsort(entries, process_bydir_entry::g_compare, false);
 
-            {
+            if (!preserve_existing || !m_root.is_valid())
                 m_root = new node(0, 0, this);
-                process_level_recur_t(entries.get_ptr(), count, m_root, true);
-            }
+
+            process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
     }
     else
     {
-        const t_size count = library.get_count();
+        const t_size count = tracks.get_count();
 
         if (count > 0)
         {
             service_ptr_t<titleformat_object> script;
+            static_api_ptr_t<titleformat_compiler>()->compile_safe(script, get_hierarchy());
+            concurrency::concurrent_vector<process_byformat_entry<>> entries;
 
+            concurrency::parallel_for(size_t{0}, count, [&tracks, &script, &entries](size_t n)
             {
-                static_api_ptr_t<titleformat_compiler>()->compile_safe(script, get_hierarchy());
-            }
+                pfc::string8_fast formatted_title;
+                formatted_title.prealloc(32);
+                const playable_location & location = tracks[n]->get_location();
+                metadb_info_container::ptr info_ptr;
+                info_ptr = tracks[n]->get_info_ref();
 
-            //array_t<process_byformat_entry> entries(count);
-            list_t<process_byformat_entry> entries;
-            //entries.prealloc(count);
+                titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
+                titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
+                formatted_title.prealloc(32);
+                tracks[n]->format_title(
+                    &tf_hook_file_info, formatted_title, script, &tf_hook_text_filter
+                );
+                process_byformat_add_branches(tracks[n].get_ptr(), formatted_title, entries);
+            });
 
-            pfc::array_t<char, pfc::alloc_fast_aggressive> stringbuffer;
-            stringbuffer.prealloc(1024 * 16);
+            t_size size = entries.size();
 
+            pfc::list_t<process_byformat_entry<>> entries_sorted;
+            entries_sorted.set_size(size);
+            for (size_t i = 0; i < size; ++i)
+                entries_sorted[i] = std::move(entries[i]);
 
-            {
-                string8_fastalloc formatbuffer;
+            mmh::Permuation perm(size);
+            mmh::sort_get_permuation(entries_sorted, perm, process_byformat_entry<>::g_compare, false, false, true);
+            mmh::destructive_reorder(entries_sorted, perm);
 
-                {
-                    for (t_size n = 0; n < count; n++)
-                    {
-                        const playable_location & location = library[n]->get_location();
-                        metadb_info_container::ptr info_ptr;
-                        info_ptr = library[n]->get_info_ref();
-
-                        titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
-                        titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
-                        library[n]->format_title(
-                            &tf_hook_file_info,
-                            formatbuffer,
-                            script,
-                            &tf_hook_text_filter
-                            );
-
-                        t_size branch_count = process_byformat_add_branches_t(stringbuffer, formatbuffer);
-                        process_byformat_entry entry;
-                        entry.m_item = library[n].get_ptr();
-                        entries.add_items_repeat(entry, branch_count);
-                    }
-                }
-
-                const char * bufptr = stringbuffer.get_ptr();
-                for (t_size n = 0; n < entries.get_count(); n++)
-                {
-                    entries[n].m_path = bufptr;
-                    bufptr += strlen(bufptr) + 1;
-                }
-            }
-
-            {
-                g_sort_qsort(entries, process_byformat_entry::g_compare, false);
-            }
-
-            {
+            if (!preserve_existing || !m_root.is_valid())
                 m_root = new node(0, 0, this);
-                process_level_recur_t(entries.get_ptr(), entries.get_count(), m_root, true);
-            }
+            process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
     }
 }
 
-__forceinline void g_node_remove_tracks_recur(const node_ptr & ptr, const metadb_handle_list & p_tracks)
+void album_list_window::rebuild_nodes()
+{
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> tracks;
+    static_api_ptr_t<library_manager> api;
+    api->get_all_items(tracks);
+    build_nodes(tracks);
+}
+
+__forceinline void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
 {
     if (ptr.is_valid())
     {
@@ -437,175 +436,23 @@ __forceinline void g_node_remove_tracks_recur(const node_ptr & ptr, const metadb
     }
 }
 
-void album_list_window::refresh_tree_internal_remove_tracks(metadb_handle_list & p_tracks)
+void album_list_window::remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
 {
     g_node_remove_tracks_recur(m_root, p_tracks);
 }
 
-void album_list_window::refresh_tree_internal_add_tracks(metadb_handle_list & p_tracks)
-{
-    metadb_handle_list_t<pfc::alloc_fast_aggressive> current_tracks, new_tracks = p_tracks;
-    m_filter_ptr.release();
-
-    if (m_root.is_valid())
-        current_tracks = m_root->get_entries();
-
-
-
-    static_api_ptr_t<library_manager> api;
-
-    {
-        string8 pattern;
-        if (wnd_edit) uGetWindowText(wnd_edit, pattern);
-        if (wnd_edit && !pattern.is_empty())
-        {
-            auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
-            m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
-
-            pfc::array_t<bool> mask;
-            mask.set_count(new_tracks.get_count());
-            m_filter_ptr->test_multi(new_tracks, mask.get_ptr());
-            new_tracks.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
-
-        }
-    }
-
-    if (is_bydir())
-    {
-        const t_size count = new_tracks.get_count();
-
-        if (count > 0)
-        {
-            pfc::list_t<process_bydir_entry> entries;
-            entries.set_size(count);
-            pfc::array_t<string8> strings;
-            strings.set_size(count);
-
-            unsigned n;
-
-            {
-                for (n = 0; n < count; n++)
-                {
-                    api->get_relative_path(new_tracks[n], strings[n]);
-                    entries[n].m_path = strings[n];
-                    entries[n].m_item = new_tracks[n].get_ptr();
-                }
-            }
-
-            {
-                g_sort_qsort(entries, process_bydir_entry::g_compare, false);
-            }
-
-            {
-                if (!m_root.is_valid())
-                    m_root = new node(0, 0, this);
-                process_level_recur_t(entries.get_ptr(), count, m_root, false);
-            }
-        }
-    }
-    else
-    {
-        const t_size count = new_tracks.get_count();
-
-        if (count > 0)
-        {
-            service_ptr_t<titleformat_object> script;
-
-            {
-                static_api_ptr_t<titleformat_compiler>()->compile_safe(script, get_hierarchy());
-            }
-
-            //array_t<process_byformat_entry> entries(count);
-            list_t<process_byformat_entry> entries;
-            //entries.prealloc(count);
-
-#if 1
-
-            pfc::array_t<char, pfc::alloc_fast_aggressive> stringbuffer;
-            stringbuffer.prealloc(1024 * 16);
-
-
-            {
-                string8_fastalloc formatbuffer;
-
-                {
-                    for (t_size n = 0; n < count; n++)
-                    {
-                        const playable_location & location = new_tracks[n]->get_location();
-                        metadb_info_container::ptr info_ptr;
-                        info_ptr = new_tracks[n]->get_info_ref();
-#if 1
-                        titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
-                        titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
-                        new_tracks[n]->format_title(
-                            &tf_hook_file_info,
-                            formatbuffer,
-                            script,
-                            &tf_hook_text_filter
-                            );
-#else
-                        script->run_filtered(
-                            &titleformat_hook_impl_file_info_branch(location, info),
-                            formatbuffer,
-                            &titleformat_text_filter_impl_reserved_chars("|"));
-#endif
-                        t_size branch_count = process_byformat_add_branches_t(stringbuffer, formatbuffer);
-                        process_byformat_entry entry;
-                        entry.m_item = new_tracks[n].get_ptr();
-                        entries.add_items_repeat(entry, branch_count);
-                    }
-            }
-
-                const char * bufptr = stringbuffer.get_ptr();
-                for (t_size n = 0; n < entries.get_count(); n++)
-                {
-                    entries[n].m_path = bufptr;
-                    bufptr += strlen(bufptr) + 1;
-                }
-            }
-#else
-
-            array_t<string8> strings(count);
-
-            {
-                string8_fastalloc formatbuffer;
-                albumlist_profiler(formatmode_setup);
-                for (t_size n = 0; n < count; n++)
-                {
-                    library[n]->format_title(0, formatbuffer, script, &titleformat_text_filter_impl_reserved_chars("|"));
-                    strings[n] = formatbuffer;
-                    entries[n].m_path = strings[n];
-                    entries[n].m_item = library[n].get_ptr();
-                }
-
-                }
-#endif
-
-                {
-                    g_sort_qsort(entries, process_byformat_entry::g_compare, false);
-                }
-
-                {
-                    if (!m_root.is_valid())
-                        m_root = new node(0, 0, this);
-                    process_level_recur_t(entries.get_ptr(), entries.get_count(), m_root, false);
-                }
-        }
-    }
-}
-
-void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handle_ptr> & p_const_data)
+void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
 {
     if (!m_populated) return;
 
     TRACK_CALL_TEXT("album_list_panel_refresh_tree");
 
-    metadb_handle_list p_data = p_const_data;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
 
     uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
-        refresh_tree_internal_add_tracks(p_data);
+        build_nodes(p_data, true);
     }
     catch (pfc::exception const & e) {
         string_formatter formatter;
@@ -619,7 +466,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
         }
     }
 
@@ -629,7 +476,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
 {
     if (!m_populated) return;
 
-    metadb_handle_list p_data = p_data_const;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_data_const;
 
     mmh::Permuation perm(p_data.get_count());
     mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false, false, true);
@@ -639,7 +486,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
     uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
-        refresh_tree_internal_remove_tracks(p_data);
+        remove_nodes(p_data);
     }
     catch (pfc::exception const & e) {
         string_formatter formatter;
@@ -660,7 +507,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
         }
     }
 
@@ -670,7 +517,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
 {
     if (!m_populated) return;
 
-    metadb_handle_list p_data = p_const_data;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
 
     mmh::Permuation perm(p_data.get_count());
     mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false, false, true);
@@ -680,8 +527,8 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
     uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
-        refresh_tree_internal_remove_tracks(p_data);
-        refresh_tree_internal_add_tracks(p_data);
+        remove_nodes(p_data);
+        build_nodes(p_data, true);
     }
     catch (pfc::exception const & e) {
         string_formatter formatter;
@@ -695,7 +542,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
         }
     }
 
@@ -805,7 +652,7 @@ void album_list_window::refresh_tree()
         timer.start();
 #endif
         try {
-            refresh_tree_internal();
+            rebuild_nodes();
         }
         catch (pfc::exception const & e) {
             string_formatter formatter;
@@ -815,44 +662,15 @@ void album_list_window::refresh_tree()
 
         if (m_root.is_valid())
         {
-
-            //if (!b_sort)
             m_root->sort_children();
 
-            {
-                metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-
-                service_ptr_t<titleformat_object> sort_script;
-                //if (b_sort) static_api_ptr_t<titleformat_compiler>()->compile_safe(sort_script,cfg_sort_order);
-                //if (sort_script.is_empty()) b_sort = false;
-
-                TRACK_CALL_TEXT("album_list_panel_setup_tree");
-                TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0, entries/*,b_sort,sort_script*/);
-            }
+            TRACK_CALL_TEXT("album_list_panel_setup_tree");
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
         }
 #ifdef USE_TIMER
         console::formatter formatter; 
         formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
 #endif
-
-#if 0
-
-        g_enum_callback.run(this);
-
-        //pointers to hierarchy strings kept by nodes for sorting
-
-        if (!b_sort) m_root.sort_children();
-
-        {
-            metadb_handle_list_fast entries;
-
-            service_ptr_t<titleformat_object> sort_script;
-            if (b_sort) static_api_ptr_t<titleformat>()->compile_safe(sort_script, cfg_sort_order);
-
-            setup_tree(wnd_tv, TVI_ROOT, &m_root, 0, 0, 0, entries, b_sort, sort_script);
-        }
-#endif
-
         uSendMessage(wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
 }

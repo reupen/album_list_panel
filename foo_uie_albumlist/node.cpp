@@ -2,15 +2,16 @@
 
 void node::sort_children()
 {
-    pfc::list_t<pfc::string_simple_t<WCHAR> > sortdata;
-    mmh::Permuation permutation(children.get_count());
-    sortdata.set_size(children.get_count());
-    t_size n;
-    for (n = 0; n<children.get_count(); n++)
-        sortdata[n] = pfc::stringcvt::string_wide_from_utf8(children[n]->value);
-    mmh::sort_get_permuation(sortdata, permutation, sortproc, false, false, true);
-    children.reorder(permutation.get_ptr());
-    for (n = 0; n<children.get_count(); n++)
+    const auto count = children.get_count();
+    mmh::Permuation permutation(count);
+    pfc::array_staticsize_t<pfc::stringcvt::string_wide_from_utf8_fast> sortdata(count);
+
+    for (size_t n = 0; n < count; n++)
+        sortdata[n].convert(children[n]->value);
+    mmh::sort_get_permuation(sortdata, permutation, StrCmpLogicalW, false, false, true);
+
+    mmh::destructive_reorder(children, permutation);
+    for (size_t n = 0; n < count; n++)
         children[n]->sort_children();
 }
 
