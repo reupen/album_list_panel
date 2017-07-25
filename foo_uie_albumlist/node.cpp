@@ -21,18 +21,17 @@ void node::sort_entries()//for contextmenu
 {
     if (!m_sorted)
     {
-        //            entries.sort_by_pointer_remove_duplicates();
-        if (b_bydir) entries.sort_by_path();
-        /*else if (cfg_sorttree)
-        {
-        entries.sort_by_format(cfg_sort_order,0);
-        }*/
+        pfc::string8 tf_string;
+        if (b_bydir)
+            tf_string = "%path_sort%";
         else
         {
-            string8 temp = p_dbe->get_hierarchy();
-            temp += "|%path%";
-            entries.sort_by_format(temp, 0);
+            tf_string = p_dbe->get_hierarchy();
+            tf_string += "|%path_sort%";
         }
+        service_ptr_t<titleformat_object> script;
+        if (static_api_ptr_t<titleformat_compiler>()->compile(script, tf_string))
+            fbh::sort_metadb_handle_list_by_format(entries, script, nullptr);
         m_sorted = true;
     }
 }
