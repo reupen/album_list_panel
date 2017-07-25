@@ -11,8 +11,10 @@ void node::sort_children()
     mmh::sort_get_permuation(sortdata, permutation, StrCmpLogicalW, false, false, true);
 
     mmh::destructive_reorder(children, permutation);
-    for (size_t n = 0; n < count; n++)
+    concurrency::parallel_for(size_t{0}, count, [this](size_t n)
+    {
         children[n]->sort_children();
+    });
 }
 
 void node::sort_entries()//for contextmenu
