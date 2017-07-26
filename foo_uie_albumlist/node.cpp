@@ -73,7 +73,8 @@ void node::send_to_playlist(bool replace)
     }
 }
 
-node::node(const char * p_value, unsigned p_value_len, album_list_window * dbe) : p_dbe(dbe), m_ti(NULL), m_label_dirty(false)
+node::node(const char * p_value, unsigned p_value_len, album_list_window * dbe, uint16_t level)
+    : p_dbe(dbe), m_ti(NULL), m_label_dirty(false), m_level(level)
 {
     if (p_value && p_value_len > 0)
     {
@@ -111,7 +112,7 @@ node_ptr node::find_or_add_child(const char * p_value, unsigned p_value_len, boo
         b_new = false;
     }
     else
-        children.insert_item(new node(/*this,*/p_value, p_value_len, p_dbe), index);
+        children.insert_item(new node(p_value, p_value_len, p_dbe, m_level + 1), index);
     return children[index];
 }
 
@@ -121,7 +122,7 @@ node_ptr node::add_child_v2(const char * p_value, unsigned p_value_len)
     {
         p_value = "?"; p_value_len = 1;
     }
-    node * temp = new node(/*this,*/p_value, p_value_len, p_dbe);
+    node * temp = new node(/*this,*/p_value, p_value_len, p_dbe, m_level + 1);
     children.add_item(temp);
     return temp;
 }
@@ -141,11 +142,13 @@ void node::purge_empty_children(HWND wnd)
     t_size i = children.get_count(), index_first_removed = pfc_infinite;
     for (; i; i--)
     {
-        if (!children[i - 1]->get_entries().get_count())
+        auto& child = children[i - 1];
+        if (!child->get_entries().get_count())
         {
-            if (p_dbe && p_dbe->p_selection == children[i - 1])
-                p_dbe->p_selection = NULL;
-            TreeView_DeleteItem(wnd, children[i - 1]->m_ti);
+            if (p_dbe && p_dbe->p_selection == child)
+                p_dbe->p_selection = nullptr;
+            if (child->m_ti)
+                TreeView_DeleteItem(wnd, child->m_ti);
             children.remove_by_idx(i - 1);
             index_first_removed = i - 1;
         }

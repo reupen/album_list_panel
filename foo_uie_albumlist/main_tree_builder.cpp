@@ -346,7 +346,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             g_sort_qsort(entries, process_bydir_entry::g_compare, false);
 
             if (!preserve_existing || !m_root.is_valid())
-                m_root = new node(0, 0, this);
+                m_root = new node(nullptr, 0, this, 0);
 
             process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
@@ -378,7 +378,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                 process_byformat_add_branches(tracks[n].get_ptr(), formatted_title, entries);
             });
 
-            t_size size = entries.size();
+            const t_size size = entries.size();
 
             pfc::list_t<process_byformat_entry<>> entries_sorted;
             entries_sorted.set_size(size);
@@ -390,7 +390,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             mmh::destructive_reorder(entries_sorted, perm);
 
             if (!preserve_existing || !m_root.is_valid())
-                m_root = new node(0, 0, this);
+                m_root = new node(nullptr, 0, this, 0);
             process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
     }
@@ -503,11 +503,10 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
             p_selection.release();
         }
         else
-            //m_root->sort_children();
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
 

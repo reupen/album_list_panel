@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "tree_view_populator.h"
 
 LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -253,64 +254,43 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         switch (hdr->idFrom)
         {
-
-        case IDC_TREE:
-        {
-            if (hdr->code == TVN_ITEMEXPANDING)
+            case IDC_TREE:
             {
-                LPNMTREEVIEW param = (LPNMTREEVIEW)hdr;
-                if (cfg_picmixer && (param->action == TVE_EXPAND))
-                {
-                    TreeView_CollapseOtherNodes(param->hdr.hwndFrom, param->itemNew.hItem);
-                }
-            }
-
-            else if (hdr->code == TVN_SELCHANGED)
-            {
-                LPNMTREEVIEW param = (LPNMTREEVIEW)hdr;
-
-                p_selection = (node*)param->itemNew.lParam;
-                if ((param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD))
-                {
-                    if (cfg_autosend)
-                        do_autosend_playlist(p_selection, view);
-                }
-                if (m_selection_holder.is_valid())
-                {
-                    m_selection_holder->set_selection(p_selection.is_valid() ? p_selection->get_entries() : metadb_handle_list());
-                }
-#if 0
-                if (cfg_picmixer)
-                {
-                    HTREEITEM ti_parent_old = TreeView_GetParent(param->hdr.hwndFrom, param->itemOld.hItem);
-                    HTREEITEM ti_parent_new = TreeView_GetParent(param->hdr.hwndFrom, param->itemNew.hItem);
-
-                    if (/*ti_parent_old != param->itemNew.hItem &&  */!TreeView_IsChild(param->hdr.hwndFrom, param->itemNew.hItem, param->itemOld.hItem))
+                switch(hdr->code) {
+                    case TVN_ITEMEXPANDING: 
                     {
-                        HTREEITEM ti = //TreeView_GetLevel(param->hdr.hwndFrom, param->itemNew.hItem) < TreeView_GetLevel(param->hdr.hwndFrom, param->itemOld.hItem) ? 
-                            TreeView_GetCommonParentChild(param->hdr.hwndFrom, param->itemOld.hItem, param->itemNew.hItem)
-                            //: param->itemOld.hItem
-                            ;
-                        if (ti && ti != TVI_ROOT) TreeView_Expand(param->hdr.hwndFrom, ti, TVE_COLLAPSE);
-                    }
+                        LPNMTREEVIEW param = reinterpret_cast<LPNMTREEVIEW>(hdr);
+                        node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam);
 
-                    if (ti_parent_new)
-                    {
-
-                        HTREEITEM child = TreeView_GetChild(param->hdr.hwndFrom, ti_parent_new);
-                        while (child)
-                        {
-                            if (child != param->itemNew.hItem)
-                            {
-
-                            }
+                        if (!p_node->m_children_inserted) {
+                            TreeViewPopulator::s_setup_children(wnd_tv, p_node);
                         }
+
+                        if (cfg_picmixer && (param->action == TVE_EXPAND))
+                        {
+                            TreeView_CollapseOtherNodes(param->hdr.hwndFrom, param->itemNew.hItem);
+                        }
+                        break;
+                    }
+                    case TVN_SELCHANGED: 
+                    {
+                        LPNMTREEVIEW param = (LPNMTREEVIEW)hdr;
+
+                        p_selection = reinterpret_cast<node*>(param->itemNew.lParam);
+                        if ((param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD))
+                        {
+                            if (cfg_autosend)
+                                do_autosend_playlist(p_selection, view);
+                        }
+                        if (m_selection_holder.is_valid())
+                        {
+                            m_selection_holder->set_selection(p_selection.is_valid() ? p_selection->get_entries() : metadb_handle_list());
+                        }
+                        break;
                     }
                 }
-#endif
+                break;
             }
-        }
-        break;
         }
 
     }

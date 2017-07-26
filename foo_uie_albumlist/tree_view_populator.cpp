@@ -1,23 +1,29 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
-void TreeViewPopulator::s_setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, HTREEITEM ti_after)
+void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
-    TreeViewPopulator populater;
-    populater.setup_tree(list, parent, ptr, level, idx, max_idx, ti_after);
+    TreeViewPopulator populater{wnd_tv, ptr->m_level};
+    populater.setup_tree(parent, ptr, idx, max_idx, ti_after);
 }
 
-void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_size level, t_size idx, t_size max_idx, HTREEITEM ti_after)
+void TreeViewPopulator::s_setup_children(HWND wnd_tv, node_ptr ptr)
+{
+    TreeViewPopulator populater{wnd_tv, ptr->m_level};
+    populater.setup_children(ptr);
+}
+
+void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
     HTREEITEM item = TVI_ROOT;
+    const auto populate_children = ptr->m_children_inserted || ptr->m_level < 1 + m_initial_level;
 
-    ptr->purge_empty_children(list);
+    ptr->purge_empty_children(m_wnd_tv);
 
     if (ptr->m_ti)
-    {
         item = ptr->m_ti;
-    }
-    if ((!ptr->m_ti || ptr->m_label_dirty) && (level > 0 || cfg_show_root))
+
+    if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root))
     {
         const char* text = get_item_text(ptr, idx, max_idx);
 
@@ -28,7 +34,7 @@ void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_
             tvi.hItem = ptr->m_ti;
             tvi.mask = TVIF_TEXT;
             tvi.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
-            TreeView_SetItem(list, &tvi);
+            TreeView_SetItem(m_wnd_tv, &tvi);
         }
         else
         {
@@ -38,27 +44,39 @@ void TreeViewPopulator::setup_tree(HWND list, HTREEITEM parent, node_ptr ptr, t_
             is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
             is.item.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
             is.item.lParam = reinterpret_cast<LPARAM>(ptr.get_ptr());
-            is.item.state = level < 1 ? TVIS_EXPANDED : 0;
+            is.item.state = ptr->m_level < 1 ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
-            item = TreeView_InsertItem(list, &is);
+
+            const auto children_count = ptr->get_children().get_count();
+            if (!populate_children && children_count > 0) {
+                is.item.mask |= TVIF_CHILDREN;
+                is.item.cChildren = 1;
+            }
+
+            item = TreeView_InsertItem(m_wnd_tv, &is);
 
             ptr->m_ti = item;
         }
         ptr->m_label_dirty = false;
     }
 
-    const list_t<node_ptr> & children = ptr->get_children();
+    if (populate_children)
+        setup_children(ptr);
+}
 
-    unsigned n;
+void TreeViewPopulator::setup_children(node_ptr ptr)
+{
+    const auto& children = ptr->get_children();
+    const auto children_count = children.get_count();
 
+    for (size_t n = 0; n < children_count; n++)
     {
-        for (n = 0; n < children.get_count(); n++)
-        {
-            HTREEITEM ti_aft = n ? children[n - 1]->m_ti : nullptr;
-            if (ti_aft == nullptr) ti_aft = TVI_FIRST;
-            setup_tree(list, item, children[n], level + 1, n, children.get_count(), ti_aft);
-        }
+        HTREEITEM ti_aft = n ? children[n - 1]->m_ti : nullptr;
+        if (ti_aft == nullptr)
+            ti_aft = TVI_FIRST;
+        setup_tree(ptr->m_ti, children[n], n, children_count, ti_aft);
     }
+    ptr->m_children_inserted = true;
 }
 
 const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_size item_count)

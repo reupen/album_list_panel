@@ -6,10 +6,11 @@ class node : public pfc::refcounted_object_root
 {
 private:
     string_simple value;
-    //node * parent;
     list_t<node_ptr> children;
     metadb_handle_list entries;
-    bool m_sorted, b_bydir;
+    bool m_sorted;
+    bool b_bydir;
+
     class album_list_window * p_dbe;
 
     static int sortproc(const wchar_t* n1, const wchar_t* n2)
@@ -19,6 +20,8 @@ private:
 public:
     HTREEITEM m_ti;
     bool m_label_dirty;
+    bool m_children_inserted = false;
+    uint16_t m_level;
 
     void sort_children();
 
@@ -32,7 +35,7 @@ public:
 
     inline const char * get_sort_data() const { return value; }
 
-    node(const char * p_value, unsigned p_value_len, class album_list_window * dbe);
+    node(const char * p_value, unsigned p_value_len, class album_list_window * dbe, uint16_t level);
     inline void set_bydir(bool p) { b_bydir = p; }
 
     ~node()
@@ -61,8 +64,6 @@ public:
     }
 
     node_ptr find_or_add_child(const char * p_value, unsigned p_value_len, bool b_find, bool & b_new);
-
-
 
     node_ptr add_child_v2(const char * p_value, unsigned p_value_len);
     node_ptr add_child_v2(const char * p_value)
