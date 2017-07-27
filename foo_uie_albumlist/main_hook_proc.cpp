@@ -56,8 +56,8 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
     case WM_SETFOCUS:
     {
         m_selection_holder = static_api_ptr_t<ui_selection_manager>()->acquire();
-        if (p_selection.is_valid())
-            m_selection_holder->set_selection(p_selection->get_entries());
+        if (m_selection.is_valid())
+            m_selection_holder->set_selection(m_selection->get_entries());
     }
     break;
     case WM_KILLFOCUS:
@@ -92,21 +92,21 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
     }
     break;
     case WM_LBUTTONUP:
-        clicked = false;
+        m_clicked = false;
         break;
     case WM_LBUTTONDOWN:
-        clicked = true;
-        clickpoint = lp;
+        m_clicked = true;
+        m_clickpoint = lp;
         break;
     case WM_MOUSEMOVE:
     {
-        if (!(wp&MK_LBUTTON)/* || (wp&MK_RBUTTON)*/) { dragging = false; clicked = false; }
-        else if (!dragging && clicked && test_point_distance(clickpoint, lp, 5))
+        if (!(wp&MK_LBUTTON)/* || (wp&MK_RBUTTON)*/) { m_dragging = false; m_clicked = false; }
+        else if (!m_dragging && m_clicked && test_point_distance(m_clickpoint, lp, 5))
         {
             TVHITTESTINFO ti;
             memset(&ti, 0, sizeof(ti));
-            ti.pt.x = (short)LOWORD(clickpoint);
-            ti.pt.y = (short)HIWORD(clickpoint);
+            ti.pt.x = (short)LOWORD(m_clickpoint);
+            ti.pt.y = (short)HIWORD(m_clickpoint);
             uSendMessage(wnd, TVM_HITTEST, 0, (LPARAM)&ti);
 
             if (ti.flags & TVHT_ONITEM)
@@ -114,20 +114,20 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
                 //                    HTREEITEM item = TreeView_GetSelection(wnd);
                 if (ti.hItem) uSendMessage(wnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM)ti.hItem);
 
-                if (p_selection.is_valid())
+                if (m_selection.is_valid())
                 {
                     static_api_ptr_t<playlist_incoming_item_filter> incoming_api;
                     metadb_handle_list_t<pfc::alloc_fast_aggressive> items;
                     if (cfg_add_items_use_core_sort)
                     {
-                        incoming_api->filter_items(p_selection->get_entries(), items);
+                        incoming_api->filter_items(m_selection->get_entries(), items);
                     }
                     else
                     {
-                        p_selection->sort_entries();
-                        items = p_selection->get_entries();
+                        m_selection->sort_entries();
+                        items = m_selection->get_entries();
                     }
-                    dragging = true;
+                    m_dragging = true;
                     IDataObject * pDataObject = static_api_ptr_t<playlist_incoming_item_filter>()->create_dataobject(items);
                     if (pDataObject)
                     {
@@ -140,13 +140,13 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
                         text << mmh::IntegerFormatter(selectionCount) << (selectionCount != 1 ? " tracks" : " track");
                         SHDRAGIMAGE sdi = {0};
                         LOGFONT lf = {0};
-                        GetObject(g_font, sizeof(lf), &lf);
-                        uih::create_drag_image(wnd_tv, true, m_dd_theme, colourSelectionBackground, colourSelectionText, nullptr, &lf, true, text, &sdi);
-                        uih::ole::do_drag_drop(wnd_tv, wp, pDataObject, DROPEFFECT_COPY|DROPEFFECT_MOVE, DROPEFFECT_COPY, &blah, &sdi);
+                        GetObject(s_font, sizeof(lf), &lf);
+                        uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colourSelectionBackground, colourSelectionText, nullptr, &lf, true, text, &sdi);
+                        uih::ole::do_drag_drop(m_wnd_tv, wp, pDataObject, DROPEFFECT_COPY|DROPEFFECT_MOVE, DROPEFFECT_COPY, &blah, &sdi);
                         pDataObject->Release();
                     }
-                    dragging = false;
-                    clicked = false;
+                    m_dragging = false;
+                    m_clicked = false;
                 }
 
                 //                    uSendMessage(wnd,TVM_SELECTITEM,TVGN_CARET,(long)item);
@@ -178,16 +178,16 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
                     switch (action)
                     {
                     case 1:
-                        do_playlist(p_selection, true);
+                        do_playlist(m_selection, true);
                         break;
                     case 2:
-                        do_playlist(p_selection, false);
+                        do_playlist(m_selection, false);
                         break;
                     case 3:
-                        do_playlist(p_selection, true, true);
+                        do_playlist(m_selection, true, true);
                         break;
                     case 4:
-                        do_autosend_playlist(p_selection, view, true);
+                        do_autosend_playlist(m_selection, m_view, true);
                         break;
                     }
 
@@ -198,7 +198,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
 
     break;
     case WM_LBUTTONDBLCLK:
-        if (p_selection.is_valid() && p_selection->get_num_entries()>0)
+        if (m_selection.is_valid() && m_selection->get_num_entries()>0)
         {
             TVHITTESTINFO ti;
             memset(&ti, 0, sizeof(ti));
@@ -212,25 +212,25 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
                 switch (cfg_dblclk)
                 {
                 case 0:
-                    if (p_selection == nullptr || p_selection->get_num_children()>0) break;
-                    do_playlist(p_selection, true);
+                    if (m_selection == nullptr || m_selection->get_num_children()>0) break;
+                    do_playlist(m_selection, true);
                     return 0;
                 case 1:
-                    do_playlist(p_selection, true);
+                    do_playlist(m_selection, true);
                     return 0;
                 case 2:
-                    do_playlist(p_selection, false);
+                    do_playlist(m_selection, false);
                     return 0;
                 case 3:
-                    do_playlist(p_selection, true, true);
+                    do_playlist(m_selection, true, true);
                     return 0;
                 case 4:
-                    do_autosend_playlist(p_selection, view, true);
+                    do_autosend_playlist(m_selection, m_view, true);
                     return 0;
                 }
                 break;
             }
         }
     }
-    return uCallWindowProc(treeproc, wnd, msg, wp, lp);
+    return uCallWindowProc(m_treeproc, wnd, msg, wp, lp);
 }

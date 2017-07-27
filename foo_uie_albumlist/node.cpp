@@ -145,8 +145,8 @@ void node::purge_empty_children(HWND wnd)
         auto& child = children[i - 1];
         if (!child->get_entries().get_count())
         {
-            if (p_dbe && p_dbe->p_selection == child)
-                p_dbe->p_selection = nullptr;
+            if (p_dbe && p_dbe->m_selection == child)
+                p_dbe->m_selection = nullptr;
             if (child->m_ti)
                 TreeView_DeleteItem(wnd, child->m_ti);
             children.remove_by_idx(i - 1);

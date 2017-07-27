@@ -8,9 +8,9 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     {
     case WM_CREATE:
     {
-        list_wnd.add_item(this);
+        s_instances.add_item(this);
 
-        initialised = true;
+        m_initialised = true;
 
         modeless_dialog_manager::g_add(wnd);
 
@@ -57,13 +57,13 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         {
         case IDC_FILTER | (EN_CHANGE << 16) :
             if (m_timer)
-                KillTimer(wnd_edit, 500);
+                KillTimer(m_wnd_edit, 500);
             m_timer = SetTimer(wnd, EDIT_TIMER_ID, 500, nullptr) != 0;
             return TRUE;
         case IDOK:
-            if (GetKeyState(VK_SHIFT) & KF_UP) do_playlist(p_selection, false);
-            else if (GetKeyState(VK_CONTROL) & KF_UP) do_playlist(p_selection, true, true);
-            else do_playlist(p_selection, true);
+            if (GetKeyState(VK_SHIFT) & KF_UP) do_playlist(m_selection, false);
+            else if (GetKeyState(VK_CONTROL) & KF_UP) do_playlist(m_selection, true, true);
+            else do_playlist(m_selection, true);
             return 0;
         }
         break;
@@ -78,7 +78,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         unsigned IDM_MANAGER_BASE = 0;
 
-        HWND list = wnd_tv;
+        HWND list = m_wnd_tv;
 
         HTREEITEM treeitem = nullptr;
 
@@ -102,9 +102,9 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         {
             treeitem = TreeView_GetSelection(list);
             RECT rc;
-            if (treeitem && TreeView_GetItemRect(wnd_tv, treeitem, &rc, TRUE))
+            if (treeitem && TreeView_GetItemRect(m_wnd_tv, treeitem, &rc, TRUE))
             {
-                MapWindowPoints(wnd_tv, HWND_DESKTOP, (LPPOINT)&rc, 2);
+                MapWindowPoints(m_wnd_tv, HWND_DESKTOP, (LPPOINT)&rc, 2);
 
                 pt.x = rc.left;
                 pt.y = rc.top + (rc.bottom - rc.top) / 2;
@@ -123,7 +123,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         string8_fastalloc temp;
         temp.prealloc(32);
 
-        uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(directory_structure_view_name, view) ? MF_CHECKED : 0), ID_VIEW_BASE + 0, directory_structure_view_name);
+        uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(directory_structure_view_name, m_view) ? MF_CHECKED : 0), ID_VIEW_BASE + 0, directory_structure_view_name);
 
         list_t<string_simple, pfc::alloc_fast> views;
 
@@ -136,7 +136,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
             if (item)
             {
-                uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(temp, view) ? MF_CHECKED : 0), ID_VIEW_BASE + views.add_item(item), temp);
+                uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(temp, m_view) ? MF_CHECKED : 0), ID_VIEW_BASE + views.add_item(item), temp);
             }
 
         }
@@ -199,7 +199,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 unsigned n = cmd - ID_VIEW_BASE;
                 if (n<views.get_count())
                 {
-                    view = views[n].get_ptr();
+                    m_view = views[n].get_ptr();
                     refresh_tree();
                 }
             }
@@ -218,7 +218,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     do_playlist(p_node, false);
                     break;
                 case ID_AUTOSEND:
-                    do_autosend_playlist(p_node, view, true);
+                    do_autosend_playlist(p_node, m_view, true);
                     break;
                 case ID_CONF:
                 {
@@ -263,7 +263,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                         node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam);
 
                         if (!p_node->m_children_inserted) {
-                            TreeViewPopulator::s_setup_children(wnd_tv, p_node);
+                            TreeViewPopulator::s_setup_children(m_wnd_tv, p_node);
                         }
 
                         if (cfg_picmixer && (param->action == TVE_EXPAND))
@@ -276,15 +276,15 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     {
                         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
 
-                        p_selection = reinterpret_cast<node*>(param->itemNew.lParam);
+                        m_selection = reinterpret_cast<node*>(param->itemNew.lParam);
                         if ((param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD))
                         {
                             if (cfg_autosend)
-                                do_autosend_playlist(p_selection, view);
+                                do_autosend_playlist(m_selection, m_view);
                         }
                         if (m_selection_holder.is_valid())
                         {
-                            m_selection_holder->set_selection(p_selection.is_valid() ? p_selection->get_entries() : metadb_handle_list());
+                            m_selection_holder->set_selection(m_selection.is_valid() ? m_selection->get_entries() : metadb_handle_list());
                         }
                         break;
                     }
@@ -302,22 +302,22 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         destroy_filter();
         m_selection_holder.release();
         m_root.release();
-        p_selection.release();
+        m_selection.release();
         if (m_dd_theme)
         {
             CloseThemeData(m_dd_theme);
             m_dd_theme = nullptr;
         }
 
-        if (initialised)
+        if (m_initialised)
         {
-            list_wnd.remove_item(this);
-            if (list_wnd.get_count() == 0)
+            s_instances.remove_item(this);
+            if (s_instances.get_count() == 0)
             {
-                DeleteFont(g_font);
-                g_font = nullptr;
+                DeleteFont(s_font);
+                s_font = nullptr;
             }
-            initialised = false;
+            m_initialised = false;
         }
         break;
     }

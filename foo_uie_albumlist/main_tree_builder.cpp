@@ -305,8 +305,8 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
 
     {
         string8 pattern;
-        if (wnd_edit) uGetWindowText(wnd_edit, pattern);
-        if (wnd_edit && !pattern.is_empty())
+        if (m_wnd_edit) uGetWindowText(m_wnd_edit, pattern);
+        if (m_wnd_edit && !pattern.is_empty())
         {
             auto completion_notify_ptr = fb2k::makeCompletionNotify([p_this = service_ptr_t<album_list_window>{this}](auto && code){ p_this->on_task_completion(0, code); });
             try {
@@ -450,7 +450,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
 
     metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
 
-    uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
+    uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         build_nodes(p_data, true);
@@ -467,11 +467,11 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
 
-    uSendMessage(wnd_tv, WM_SETREDRAW, TRUE, 0);
+    uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
 }
 void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data_const)
 {
@@ -484,7 +484,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
     p_data.reorder(perm.get_ptr());
 
 
-    uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
+    uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         remove_nodes(p_data);
@@ -499,19 +499,19 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
     {
         if (!m_root->get_entries().get_count())
         {
-            TreeView_DeleteItem(wnd_tv, m_root->m_ti);
+            TreeView_DeleteItem(m_wnd_tv, m_root->m_ti);
             m_root.release();
-            p_selection.release();
+            m_selection.release();
         }
         else
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
 
-    uSendMessage(wnd_tv, WM_SETREDRAW, TRUE, 0);
+    uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
 }
 void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_const_data)
 {
@@ -524,7 +524,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
     p_data.reorder(perm.get_ptr());
 
 
-    uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
+    uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         remove_nodes(p_data);
@@ -542,18 +542,18 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
 
-    uSendMessage(wnd_tv, WM_SETREDRAW, TRUE, 0);
+    uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
 }
 
 void album_list_window::refresh_tree()
 {
     TRACK_CALL_TEXT("album_list_panel_refresh_tree");
 
-    if (!wnd_tv) return;
+    if (!m_wnd_tv) return;
 
     m_populated = true;
 
@@ -567,9 +567,9 @@ void album_list_window::refresh_tree()
     {
         //bool b_sort = !!cfg_sorttree;
 
-        uSendMessage(wnd_tv, WM_SETREDRAW, FALSE, 0);
-        uSendMessage(wnd_tv, TVM_DELETEITEM, 0, (long)TVI_ROOT);
-        p_selection.release();
+        uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+        uSendMessage(m_wnd_tv, TVM_DELETEITEM, 0, (long)TVI_ROOT);
+        m_selection.release();
         m_root.release();
 #if 0
 
@@ -665,12 +665,12 @@ void album_list_window::refresh_tree()
             m_root->sort_children();
 
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
 #ifdef USE_TIMER
         console::formatter formatter; 
         formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
 #endif
-        uSendMessage(wnd_tv, WM_SETREDRAW, TRUE, 0);
+        uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
 }

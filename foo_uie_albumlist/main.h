@@ -29,12 +29,12 @@ public:
 
     bool is_bydir()
     {
-        return !stricmp_utf8(view, directory_structure_view_name);
+        return !stricmp_utf8(m_view, directory_structure_view_name);
     }
 
     const char * get_hierarchy()
     {
-        unsigned idx = cfg_view_list.find_item(view);
+        unsigned idx = cfg_view_list.find_item(m_view);
         if (idx != (unsigned)(-1)) return cfg_view_list.get_value(idx);
         return "N/A";
     }
@@ -64,7 +64,7 @@ public:
 
     const GUID & get_extension_guid() const override
     {
-        return extension_guid;
+        return s_extension_guid;
     }
 
     void get_name(string_base & out)const override;
@@ -129,7 +129,7 @@ public:
         bool get_display_data(string_base & p_out, unsigned & p_displayflags)const override
         {
             p_out = view;
-            p_displayflags = (!stricmp_utf8(view, p_this->view) ? ui_extension::menu_node_t::state_checked : 0);
+            p_displayflags = (!stricmp_utf8(view, p_this->m_view) ? ui_extension::menu_node_t::state_checked : 0);
             return true;
         }
         bool get_description(string_base & p_out)const override
@@ -138,7 +138,7 @@ public:
         }
         void execute() override
         {
-            p_this->view = view;
+            p_this->m_view = view;
             p_this->refresh_tree();
         }
         menu_node_view(album_list_window * p_wnd, const char * p_value) : p_this(p_wnd), view(p_value) {};
@@ -181,26 +181,26 @@ public:
 private:
     static LRESULT WINAPI hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    static ptr_list_t<album_list_window> list_wnd;
-    static const GUID extension_guid;
-    static const char* class_name;
-    static HFONT g_font;
+    static ptr_list_t<album_list_window> s_instances;
+    static const GUID s_extension_guid;
+    static const char* s_class_name;
+    static HFONT s_font;
 
-    HWND wnd_tv{nullptr};
-    HWND wnd_edit{nullptr};
+    HWND m_wnd_tv{nullptr};
+    HWND m_wnd_edit{nullptr};
     HTHEME m_dd_theme{nullptr};
-    WNDPROC treeproc{nullptr};
-    bool initialised{false};
+    WNDPROC m_treeproc{nullptr};
+    bool m_initialised{false};
     bool m_populated{false};
-    bool dragging{false};
-    bool clicked{false};
+    bool m_dragging{false};
+    bool m_clicked{false};
     bool m_filter{false};
     bool m_timer{false};
-    DWORD clickpoint{0};
-    int indent_default{0};
-    string8 view{"by artist/album"};
+    DWORD m_clickpoint{0};
+    int m_indent_default{0};
+    string8 m_view{"by artist/album"};
     node_ptr m_root;
-    node_ptr p_selection;
+    node_ptr m_selection;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
 };

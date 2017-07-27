@@ -23,40 +23,40 @@ class album_list_window;
 
 static string8_fastalloc g_formatbuf;
 
-ptr_list_t<album_list_window> album_list_window::list_wnd;
-HFONT album_list_window::g_font = nullptr;
+ptr_list_t<album_list_window> album_list_window::s_instances;
+HFONT album_list_window::s_font = nullptr;
 
 void album_list_window::g_update_all_fonts()
 {
-    if (g_font!=nullptr)
+    if (s_font!=nullptr)
     {
-        unsigned n, count = album_list_window::list_wnd.get_count();
+        unsigned n, count = album_list_window::s_instances.get_count();
         for (n=0; n<count; n++)
         {
-            HWND wnd = album_list_window::list_wnd[n]->wnd_tv;
+            HWND wnd = album_list_window::s_instances[n]->m_wnd_tv;
             if (wnd) uSendMessage(wnd,WM_SETFONT,(WPARAM)0,MAKELPARAM(0,0));
-            wnd = album_list_window::list_wnd[n]->wnd_edit;
+            wnd = album_list_window::s_instances[n]->m_wnd_edit;
             if (wnd) uSendMessage(wnd,WM_SETFONT,(WPARAM)0,MAKELPARAM(0,0));
         }
-        DeleteObject(g_font);
+        DeleteObject(s_font);
     }
 
-    g_font = cui::fonts::helper(g_guid_album_list_font).get_font();
+    s_font = cui::fonts::helper(g_guid_album_list_font).get_font();
 
-    unsigned n, count = album_list_window::list_wnd.get_count();
+    unsigned n, count = album_list_window::s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = album_list_window::list_wnd[n]->wnd_tv;
+        HWND wnd = album_list_window::s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            uSendMessage(wnd,WM_SETFONT,(WPARAM)g_font,MAKELPARAM(1,0));
+            uSendMessage(wnd,WM_SETFONT,(WPARAM)s_font,MAKELPARAM(1,0));
             if (cfg_use_custom_indent)
                 TreeView_SetIndent(wnd, cfg_indent);
-            wnd = album_list_window::list_wnd[n]->wnd_edit;
+            wnd = album_list_window::s_instances[n]->m_wnd_edit;
             if (wnd) 
             {
-                uSendMessage(wnd,WM_SETFONT,(WPARAM)g_font,MAKELPARAM(1,0));
-                album_list_window::list_wnd[n]->on_size();
+                uSendMessage(wnd,WM_SETFONT,(WPARAM)s_font,MAKELPARAM(1,0));
+                album_list_window::s_instances[n]->on_size();
             }
         }
     }
@@ -64,23 +64,23 @@ void album_list_window::g_update_all_fonts()
 
 album_list_window::~album_list_window()
 {
-    if (initialised) 
+    if (m_initialised) 
     {
-        list_wnd.remove_item(this);
-        initialised = false;
+        s_instances.remove_item(this);
+        m_initialised = false;
     }
 }
 
 void album_list_window::update_all_window_frames()
 {
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     long flags = 0;
     if (cfg_frame == 1) flags |= WS_EX_CLIENTEDGE;
     if (cfg_frame == 2) flags |= WS_EX_STATICEDGE;
     
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd)
         {
             uSetWindowLong(wnd, GWL_EXSTYLE, flags);
@@ -98,13 +98,13 @@ void album_list_window::update_all_window_frames()
 void album_list_window::update_all_colours()
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            list_wnd[n]->update_colours();
+            s_instances[n]->update_colours();
         }
     }
 
@@ -113,13 +113,13 @@ void album_list_window::update_all_colours()
 void album_list_window::g_update_all_labels()
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            list_wnd[n]->update_all_labels();
+            s_instances[n]->update_all_labels();
         }
     }
 
@@ -128,15 +128,15 @@ void album_list_window::g_update_all_labels()
 void album_list_window::g_update_all_showhscroll()
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            list_wnd[n]->destroy_tree();
-            list_wnd[n]->create_tree();
-            list_wnd[n]->on_size();
+            s_instances[n]->destroy_tree();
+            s_instances[n]->create_tree();
+            s_instances[n]->on_size();
             /*
             SetWindowLongPtr(wnd, GWL_STYLE, (cfg_hscroll ? NULL : TVS_NOHSCROLL ) | (GetWindowLongPtr(wnd, GWL_STYLE) &~(TVS_NOHSCROLL )) );
             SetWindowPos(wnd, NULL, 0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
@@ -152,13 +152,13 @@ void album_list_window::g_update_all_showhscroll()
 void album_list_window::g_on_view_script_change(const char * p_view_before, const char * p_view)
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            list_wnd[n]->on_view_script_change(p_view_before, p_view);
+            s_instances[n]->on_view_script_change(p_view_before, p_view);
         }
     }
 
@@ -167,13 +167,13 @@ void album_list_window::g_on_view_script_change(const char * p_view_before, cons
 void album_list_window::g_refresh_all()
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            list_wnd[n]->refresh_tree();
+            s_instances[n]->refresh_tree();
         }
     }
 
@@ -181,13 +181,13 @@ void album_list_window::g_refresh_all()
 void album_list_window::update_all_item_heights()
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->wnd_tv;
+        HWND wnd = s_instances[n]->m_wnd_tv;
         if (wnd) 
         {
-            list_wnd[n]->update_item_height();
+            s_instances[n]->update_item_height();
         }
     }
 
@@ -214,13 +214,13 @@ void album_list_window::update_all_item_heights()
 void album_list_window::update_all_indents()
 {
             
-    unsigned n, count = list_wnd.get_count();
+    unsigned n, count = s_instances.get_count();
     for (n=0; n<count; n++)
     {
-        HWND wnd = list_wnd[n]->get_wnd();
+        HWND wnd = s_instances[n]->get_wnd();
         if (wnd) 
         {
-            TreeView_SetIndent(list_wnd[n]->wnd_tv, cfg_use_custom_indent ? cfg_indent : list_wnd[n]->indent_default);
+            TreeView_SetIndent(s_instances[n]->m_wnd_tv, cfg_use_custom_indent ? cfg_indent : s_instances[n]->m_indent_default);
         }
     }
 }
@@ -229,9 +229,9 @@ void album_list_window::on_view_script_change(const char * p_view_before, const 
 {
     if (get_wnd())
     {
-        if (!stricmp_utf8(p_view_before, view))
+        if (!stricmp_utf8(p_view_before, m_view))
         {
-            view = p_view;
+            m_view = p_view;
             refresh_tree();
         }
     }
@@ -242,37 +242,37 @@ void album_list_window::update_all_labels()
     if (m_root.is_valid())
     {
         m_root->mark_all_labels_dirty();
-        uSendMessage(wnd_tv,WM_SETREDRAW,FALSE,0);
+        uSendMessage(m_wnd_tv,WM_SETREDRAW,FALSE,0);
         {
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,nullptr);
+            TreeViewPopulator::s_setup_tree(m_wnd_tv,TVI_ROOT,m_root,0,0,nullptr);
         }
-        uSendMessage(wnd_tv,WM_SETREDRAW,TRUE,0);
+        uSendMessage(m_wnd_tv,WM_SETREDRAW,TRUE,0);
     }
 }
 
 void album_list_window::update_colours()
 {
     cui::colours::helper p_colours(g_guid_album_list_colours);
-    if (p_colours.get_themed()) uih::tree_view_set_explorer_theme(wnd_tv);
-    else uih::tree_view_remove_explorer_theme(wnd_tv);
+    if (p_colours.get_themed()) uih::tree_view_set_explorer_theme(m_wnd_tv);
+    else uih::tree_view_remove_explorer_theme(m_wnd_tv);
 
-    TreeView_SetBkColor(wnd_tv, p_colours.get_colour(cui::colours::colour_background));
-    TreeView_SetLineColor(wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
-    TreeView_SetTextColor(wnd_tv, p_colours.get_colour(cui::colours::colour_text));
+    TreeView_SetBkColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_background));
+    TreeView_SetLineColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
+    TreeView_SetTextColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_text));
     
 }
 
 void album_list_window::update_item_height()
 {
-    const auto font = reinterpret_cast<HFONT>(uSendMessage(wnd_tv, WM_GETFONT, 0, 0));
+    const auto font = reinterpret_cast<HFONT>(uSendMessage(m_wnd_tv, WM_GETFONT, 0, 0));
     int font_height = -1;
     if (cfg_custom_item_height)
     {
         font_height = uGetFontHeight(font) + cfg_item_height; 
         if (font_height < 1) font_height = 1;
     }
-    TreeView_SetItemHeight(wnd_tv, font_height);
+    TreeView_SetItemHeight(m_wnd_tv, font_height);
 }
 
 void album_list_window::on_task_completion(t_uint32 task, t_uint32 code)
@@ -313,32 +313,32 @@ void album_list_window::create_or_destroy_filter()
 
 void album_list_window::create_filter()
 {
-    if (m_filter && !wnd_edit)
+    if (m_filter && !m_wnd_edit)
     {
         long flags = WS_EX_CLIENTEDGE;//0;
         /*if (cfg_frame == 1) flags |= WS_EX_CLIENTEDGE;
         else if (cfg_frame == 2) flags |= WS_EX_STATICEDGE;*/
-        wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""),
+        m_wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""),
             WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0,
             get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), nullptr);
         //SetWindowTheme(wnd_edit, L"SearchBoxEdit", NULL);
-        uSendMessage(wnd_edit,WM_SETFONT,(WPARAM)g_font,MAKELPARAM(0,0));
-        SetFocus(wnd_edit);
-        Edit_SetCueBannerText(wnd_edit, L"Search");
+        uSendMessage(m_wnd_edit,WM_SETFONT,(WPARAM)s_font,MAKELPARAM(0,0));
+        SetFocus(m_wnd_edit);
+        Edit_SetCueBannerText(m_wnd_edit, L"Search");
     }
 }
 
 void album_list_window::destroy_filter()
 {
-    if (wnd_edit)
+    if (m_wnd_edit)
     {
-        bool b_was_focused = GetFocus() == wnd_edit;
-        DestroyWindow(wnd_edit);
-        wnd_edit=nullptr;
-        if (wnd_tv)
+        bool b_was_focused = GetFocus() == m_wnd_edit;
+        DestroyWindow(m_wnd_edit);
+        m_wnd_edit=nullptr;
+        if (m_wnd_tv)
         {
             if (m_populated) refresh_tree();
-            if (b_was_focused) SetFocus(wnd_tv);
+            if (b_was_focused) SetFocus(m_wnd_tv);
         }
     }
     m_filter_ptr.release();
@@ -347,12 +347,12 @@ void album_list_window::destroy_filter()
 void album_list_window::on_size(unsigned cx, unsigned cy)
 {
     HDWP dwp = BeginDeferWindowPos(2);
-    unsigned edit_height = wnd_edit ? uGetFontHeight(g_font) + 4: 0;
+    unsigned edit_height = m_wnd_edit ? uGetFontHeight(s_font) + 4: 0;
     unsigned tv_height = edit_height<cy?cy-edit_height:cy;
     unsigned edit_cx = 0;
-    dwp = DeferWindowPos(dwp, wnd_tv, nullptr, 0, 0, cx, tv_height, SWP_NOZORDER);
-    if (wnd_edit)
-    dwp = DeferWindowPos(dwp, wnd_edit, nullptr, edit_cx, tv_height, max(cx-edit_cx,0), edit_height, SWP_NOZORDER);
+    dwp = DeferWindowPos(dwp, m_wnd_tv, nullptr, 0, 0, cx, tv_height, SWP_NOZORDER);
+    if (m_wnd_edit)
+    dwp = DeferWindowPos(dwp, m_wnd_edit, nullptr, edit_cx, tv_height, max(cx-edit_cx,0), edit_height, SWP_NOZORDER);
     EndDeferWindowPos(dwp);
 }
 
@@ -371,22 +371,22 @@ void album_list_window::create_tree()
     if (cfg_frame == 1) flags |= WS_EX_CLIENTEDGE;
     else if (cfg_frame == 2) flags |= WS_EX_STATICEDGE;
 
-    wnd_tv = CreateWindowEx(flags, WC_TREEVIEW, _T("Album list"),
+    m_wnd_tv = CreateWindowEx(flags, WC_TREEVIEW, _T("Album list"),
         TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT  | (cfg_hscroll ? 0 : TVS_NOHSCROLL ) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP, 0, 0, 0, 0,
         wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
     
-    if (wnd_tv)
+    if (m_wnd_tv)
     {
         if (mmh::is_windows_vista_or_newer())
-            TreeView_SetExtendedStyle(wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
-        if (cui::colours::helper(g_guid_album_list_colours).get_themed()) uih::tree_view_set_explorer_theme(wnd_tv);
+            TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
+        if (cui::colours::helper(g_guid_album_list_colours).get_themed()) uih::tree_view_set_explorer_theme(m_wnd_tv);
         //SendMessage(wnd, TV_FIRST + 44, 0x0002, 0x0002);
         
-        indent_default =  TreeView_GetIndent(wnd_tv);
+        m_indent_default =  TreeView_GetIndent(m_wnd_tv);
 
-        if (g_font)
+        if (s_font)
         {
-            uSendMessage(wnd_tv,WM_SETFONT,(WPARAM)g_font,MAKELPARAM(0,0));
+            uSendMessage(m_wnd_tv,WM_SETFONT,(WPARAM)s_font,MAKELPARAM(0,0));
             if (cfg_use_custom_indent)
                 TreeView_SetIndent(wnd, cfg_indent);
         }
@@ -399,8 +399,8 @@ void album_list_window::create_tree()
 
         update_colours();
 
-        uSetWindowLong(wnd_tv,GWL_USERDATA,(LPARAM)(this));
-        treeproc = (WNDPROC)uSetWindowLong(wnd_tv,GWL_WNDPROC,(LPARAM)(hook_proc));
+        uSetWindowLong(m_wnd_tv,GWL_USERDATA,(LPARAM)(this));
+        m_treeproc = (WNDPROC)uSetWindowLong(m_wnd_tv,GWL_WNDPROC,(LPARAM)(hook_proc));
 
         if (m_populated)
             refresh_tree();
@@ -409,10 +409,10 @@ void album_list_window::create_tree()
 
 void album_list_window::destroy_tree()
 {
-    if (wnd_tv)
+    if (m_wnd_tv)
     {
-        DestroyWindow(wnd_tv);
-        wnd_tv=nullptr;
+        DestroyWindow(m_wnd_tv);
+        m_wnd_tv=nullptr;
     }
 }
 
@@ -420,7 +420,7 @@ void album_list_window::destroy_tree()
 
 void album_list_window::get_config(stream_writer * p_writer, abort_callback & p_abort) const
 {
-    p_writer->write_string(view, p_abort);
+    p_writer->write_string(m_view, p_abort);
     p_writer->write_lendian_t(m_filter, p_abort);
 }
 
@@ -442,7 +442,7 @@ void album_list_window::set_config(stream_reader * p_reader, t_size psize, abort
 {
     if (psize) 
     {
-        p_reader->read_string(view, p_abort);
+        p_reader->read_string(m_view, p_abort);
         try
         {
             p_reader->read_lendian_t(m_filter, p_abort);
@@ -453,7 +453,7 @@ void album_list_window::set_config(stream_reader * p_reader, t_size psize, abort
 
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
-const GUID album_list_window::extension_guid = 
+const GUID album_list_window::s_extension_guid = 
 { 0x606e9cdd, 0x45ee, 0x4c3b, { 0x9f, 0xd5, 0x49, 0x38, 0x1c, 0xeb, 0xe8, 0xae } };
 
 ui_extension::window_factory<album_list_window> blah;
