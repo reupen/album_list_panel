@@ -399,6 +399,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
 void album_list_window::rebuild_nodes()
 {
     metadb_handle_list_t<pfc::alloc_fast_aggressive> tracks;
+    tracks.prealloc(1024);
     static_api_ptr_t<library_manager> api;
     api->get_all_items(tracks);
     build_nodes(tracks);
