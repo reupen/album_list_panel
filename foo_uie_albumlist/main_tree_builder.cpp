@@ -479,7 +479,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
     metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_data_const;
 
     mmh::Permuation perm(p_data.get_count());
-    mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false, false, true);
+    mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
     p_data.reorder(perm.get_ptr());
 
 
@@ -519,7 +519,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
     metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
 
     mmh::Permuation perm(p_data.get_count());
-    mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false, false, true);
+    mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
     p_data.reorder(perm.get_ptr());
 
 
