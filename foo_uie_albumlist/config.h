@@ -32,8 +32,8 @@ private:
 public:
 
     ~cfg_view_list_t() {}
-    void get_data_raw(stream_writer * out, abort_callback & p_abort);
-    virtual void set_data_raw(stream_reader * r, unsigned psize, abort_callback & p_abort);
+    void get_data_raw(stream_writer * out, abort_callback & p_abort) override;
+    void set_data_raw(stream_reader * r, unsigned psize, abort_callback & p_abort) override;
 
     virtual void reset();
 

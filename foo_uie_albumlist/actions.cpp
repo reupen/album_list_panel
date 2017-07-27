@@ -25,7 +25,7 @@ void do_autosend_playlist(node_ptr const & src, string_base & view, bool b_play)
         {
             const char * m_view;
         public:
-            virtual bool process_field(titleformat_text_out * p_out, const char * p_name, unsigned p_name_length, bool & p_found_flag)
+            bool process_field(titleformat_text_out * p_out, const char * p_name, unsigned p_name_length, bool & p_found_flag) override
             {
                 p_found_flag = false;
                 if (m_view)
@@ -39,7 +39,7 @@ void do_autosend_playlist(node_ptr const & src, string_base & view, bool b_play)
                 }
                 return false;
             }
-            virtual bool process_function(titleformat_text_out * p_out, const char * p_name, unsigned p_name_length, titleformat_hook_function_params * p_params, bool & p_found_flag)
+            bool process_function(titleformat_text_out * p_out, const char * p_name, unsigned p_name_length, titleformat_hook_function_params * p_params, bool & p_found_flag) override
             {
                 p_found_flag = false;
                 return false;

@@ -18,8 +18,8 @@ public:
     static BOOL CALLBACK g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     BOOL CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 public:
-    virtual HWND create(HWND wnd) { return uCreateDialog(IDD_CONFIG, wnd, g_on_message, (LPARAM)this); }
-    virtual const char * get_name() { return "General"; }
+    HWND create(HWND wnd) override { return uCreateDialog(IDD_CONFIG, wnd, g_on_message, (LPARAM)this); }
+    const char * get_name() override { return "General"; }
 
     tab_general() : m_initialised(false), m_wnd(NULL) {};
 
@@ -31,8 +31,8 @@ class tab_advanced : public preferences_tab
 
     static BOOL CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 public:
-    virtual HWND create(HWND wnd) { return uCreateDialog(IDD_ADVANCED, wnd, ConfigProc); }
-    virtual const char * get_name() { return "Advanced"; }
+    HWND create(HWND wnd) override { return uCreateDialog(IDD_ADVANCED, wnd, ConfigProc); }
+    const char * get_name() override { return "Advanced"; }
 
 };
 
@@ -45,21 +45,21 @@ class config_albumlist : public preferences_page
 
     static BOOL CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 public:
-    HWND create(HWND parent)
+    HWND create(HWND parent) override
     {
         return uCreateDialog(IDD_HOST, parent, ConfigProc);
     }
-    const char * get_name() { return "Album List Panel"; }
-    virtual GUID get_guid()
+    const char * get_name() override { return "Album List Panel"; }
+    GUID get_guid() override
     {
         return g_guid_preferences_album_list_panel;
     }
-    virtual GUID get_parent_guid() { return preferences_page::guid_media_library; }
-    virtual bool reset_query()
+    GUID get_parent_guid() override { return preferences_page::guid_media_library; }
+    bool reset_query() override
     {
         return false;
     }
-    virtual void reset()
+    void reset() override
     {
     };
 };

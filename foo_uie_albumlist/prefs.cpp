@@ -312,21 +312,21 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 class font_client_album_list : public cui::fonts::client
 {
 public:
-    virtual const GUID & get_client_guid() const
+    const GUID & get_client_guid() const override
     {
         return g_guid_album_list_font;
     }
-    virtual void get_name(pfc::string_base & p_out) const
+    void get_name(pfc::string_base & p_out) const override
     {
         p_out = "Album List";
     }
 
-    virtual cui::fonts::font_type_t get_default_font_type() const
+    cui::fonts::font_type_t get_default_font_type() const override
     {
         return cui::fonts::font_type_items;
     }
 
-    virtual void on_font_changed() const
+    void on_font_changed() const override
     {
         album_list_window::g_update_all_fonts();
 
@@ -338,18 +338,18 @@ font_client_album_list::factory<font_client_album_list> g_font_client_album_list
 class appearance_client_filter_impl : public cui::colours::client
 {
 public:
-    virtual const GUID & get_client_guid() const { return g_guid_album_list_colours; };
-    virtual void get_name(pfc::string_base & p_out) const { p_out = "Album List"; };
+    const GUID & get_client_guid() const override { return g_guid_album_list_colours; };
+    void get_name(pfc::string_base & p_out) const override { p_out = "Album List"; };
 
-    virtual t_size get_supported_colours() const { return cui::colours::colour_flag_text | cui::colours::colour_flag_background | cui::colours::colour_flag_active_item_frame; }; //bit-mask
-    virtual t_size get_supported_bools() const { return 0; }; //bit-mask
-    virtual bool get_themes_supported() const { return true; };
+    t_size get_supported_colours() const override { return cui::colours::colour_flag_text | cui::colours::colour_flag_background | cui::colours::colour_flag_active_item_frame; }; //bit-mask
+    t_size get_supported_bools() const override { return 0; }; //bit-mask
+    bool get_themes_supported() const override { return true; };
 
-    virtual void on_colour_changed(t_size mask) const
+    void on_colour_changed(t_size mask) const override
     {
         album_list_window::update_all_colours();
     };
-    virtual void on_bool_changed(t_size mask) const {};
+    void on_bool_changed(t_size mask) const override {};
 };
 
 namespace {

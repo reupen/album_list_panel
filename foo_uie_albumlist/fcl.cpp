@@ -20,10 +20,10 @@ class album_list_fcl_views : public cui::fcl::dataset
 {
     enum { stream_version = 0 };
     enum { view_name, view_script };
-    virtual void get_name(pfc::string_base & p_out)const { p_out = "Album List Views"; }
-    virtual const GUID & get_guid()const { return g_guid_fcl_dataset_album_list_views; }
-    virtual const GUID & get_group()const { return g_guid_fcl_group_album_list_views; }
-    virtual void get_data(stream_writer * p_writer, t_uint32 type, cui::fcl::t_export_feedback & feedback, abort_callback & p_abort)const
+    void get_name(pfc::string_base & p_out)const override { p_out = "Album List Views"; }
+    const GUID & get_guid()const override { return g_guid_fcl_dataset_album_list_views; }
+    const GUID & get_group()const override { return g_guid_fcl_group_album_list_views; }
+    void get_data(stream_writer * p_writer, t_uint32 type, cui::fcl::t_export_feedback & feedback, abort_callback & p_abort)const override
     {
         fbh::fcl::Writer w(p_writer, p_abort);
         w.write_raw((t_size)stream_version);
@@ -36,7 +36,7 @@ class album_list_fcl_views : public cui::fcl::dataset
             w.write_item(view_script, cfg_view_list.get_value(i));
         }
     }
-    virtual void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort)
+    void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort) override
     {
         t_size version, count, i;
         fbh::fcl::Reader r(p_reader, size, p_abort);
@@ -84,10 +84,10 @@ class album_list_fcl_appearance : public cui::fcl::dataset
         id_sub_item_counts, id_sub_item_indices, id_horizontal_scrollbar, id_root_node,
         id_use_item_padding, id_item_padding, id_use_indentation, id_indentation, id_edge_style
     };
-    virtual void get_name(pfc::string_base & p_out)const { p_out = "Album List appearance settings"; }
-    virtual const GUID & get_guid()const { return g_guid_fcl_dataset_album_list_appearance; }
-    virtual const GUID & get_group()const { return cui::fcl::groups::colours_and_fonts; }
-    virtual void get_data(stream_writer * p_writer, t_uint32 type, cui::fcl::t_export_feedback & feedback, abort_callback & p_abort)const
+    void get_name(pfc::string_base & p_out)const override { p_out = "Album List appearance settings"; }
+    const GUID & get_guid()const override { return g_guid_fcl_dataset_album_list_appearance; }
+    const GUID & get_group()const override { return cui::fcl::groups::colours_and_fonts; }
+    void get_data(stream_writer * p_writer, t_uint32 type, cui::fcl::t_export_feedback & feedback, abort_callback & p_abort)const override
     {
         fbh::fcl::Writer w(p_writer, p_abort);
         w.write_raw(t_size(stream_version));
@@ -101,7 +101,7 @@ class album_list_fcl_appearance : public cui::fcl::dataset
         w.write_item(id_indentation, cfg_indent);
         w.write_item(id_edge_style, cfg_frame);
     }
-    virtual void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort)
+    void set_data(stream_reader * p_reader, t_size size, t_uint32 type, cui::fcl::t_import_feedback & feedback, abort_callback & p_abort) override
     {
         t_size version;
         fbh::fcl::Reader r(p_reader, size, p_abort);

@@ -107,11 +107,11 @@ class process_entry_list_wrapper_t : public list_base_const_t<metadb_handle_ptr>
 {
 public:
     process_entry_list_wrapper_t(const t_entry* p_data, t_size p_count) : m_data(p_data), m_count(p_count) {}
-    t_size get_count() const
+    t_size get_count() const override
     {
         return m_count;
     }
-    void get_item_ex(metadb_handle_ptr & p_out, t_size n) const
+    void get_item_ex(metadb_handle_ptr & p_out, t_size n) const override
     {
         p_out = m_data[n].m_item;
     }

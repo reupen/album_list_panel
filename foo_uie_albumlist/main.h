@@ -31,9 +31,9 @@ protected:
     friend class node;
 
 public:
-    void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr> & p_data);
-    void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data);
-    void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_data);
+    void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
+    void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
+    void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
 
     string8 view;
 
@@ -51,7 +51,7 @@ public:
 
     node_ptr m_root;
 
-    LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
     void create_or_destroy_filter();
     void create_filter();
     void destroy_filter();
@@ -88,21 +88,21 @@ public:
 
     static const GUID extension_guid;
 
-    virtual const GUID & get_extension_guid() const
+    const GUID & get_extension_guid() const override
     {
         return extension_guid;
     }
 
 
-    virtual void get_name(string_base & out)const;
-    virtual void get_category(string_base & out)const;
+    void get_name(string_base & out)const override;
+    void get_category(string_base & out)const override;
 
-    virtual void set_config(stream_reader * p_reader, t_size size, abort_callback & p_abort);
-    virtual void get_config(stream_writer * p_writer, abort_callback & p_abort)const;
+    void set_config(stream_reader * p_reader, t_size size, abort_callback & p_abort) override;
+    void get_config(stream_writer * p_writer, abort_callback & p_abort)const override;
 
-    unsigned get_type() const { return ui_extension::type_panel; }
+    unsigned get_type() const override { return ui_extension::type_panel; }
 
-    virtual class_data & get_class_data()const
+    class_data & get_class_data()const override
     {
         __implement_get_class_data(_T("{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"), false);
     }
@@ -112,17 +112,17 @@ public:
     class menu_node_settings : public ui_extension::menu_node_command_t
     {
     public:
-        virtual bool get_display_data(pfc::string_base & p_out, unsigned & p_displayflags) const
+        bool get_display_data(pfc::string_base & p_out, unsigned & p_displayflags) const override
         {
             p_out = "Settings";
             p_displayflags = 0;
             return true;
         }
-        virtual bool get_description(pfc::string_base & p_out) const
+        bool get_description(pfc::string_base & p_out) const override
         {
             return false;
         }
-        virtual void execute()
+        void execute() override
         {
             static_api_ptr_t<ui_control>()->show_preferences(g_guid_preferences_album_list_panel);
         }
@@ -132,17 +132,17 @@ public:
     {
         service_ptr_t<album_list_window> p_this;
     public:
-        virtual bool get_display_data(pfc::string_base & p_out, unsigned & p_displayflags) const
+        bool get_display_data(pfc::string_base & p_out, unsigned & p_displayflags) const override
         {
             p_out = "Filter";
             p_displayflags = p_this->m_filter ? uie::menu_node_t::state_checked : 0;
             return true;
         }
-        virtual bool get_description(pfc::string_base & p_out) const
+        bool get_description(pfc::string_base & p_out) const override
         {
             return false;
         }
-        virtual void execute()
+        void execute() override
         {
             p_this->m_filter = !p_this->m_filter;
             p_this->create_or_destroy_filter();
@@ -155,17 +155,17 @@ public:
         service_ptr_t<album_list_window> p_this;
         string_simple view;
     public:
-        virtual bool get_display_data(string_base & p_out, unsigned & p_displayflags)const
+        bool get_display_data(string_base & p_out, unsigned & p_displayflags)const override
         {
             p_out = view;
             p_displayflags = (!stricmp_utf8(view, p_this->view) ? ui_extension::menu_node_t::state_checked : 0);
             return true;
         }
-        virtual bool get_description(string_base & p_out)const
+        bool get_description(string_base & p_out)const override
         {
             return false;
         }
-        virtual void execute()
+        void execute() override
         {
             p_this->view = view;
             p_this->refresh_tree();
@@ -177,14 +177,14 @@ public:
     {
         list_t<ui_extension::menu_node_ptr> m_items;
     public:
-        virtual bool get_display_data(string_base & p_out, unsigned & p_displayflags)const
+        bool get_display_data(string_base & p_out, unsigned & p_displayflags)const override
         {
             p_out = "View";
             p_displayflags = 0;
             return true;
         }
-        virtual unsigned get_children_count()const { return m_items.get_count(); }
-        virtual void get_child(unsigned p_index, uie::menu_node_ptr & p_out)const { p_out = m_items[p_index].get_ptr(); }
+        unsigned get_children_count()const override { return m_items.get_count(); }
+        void get_child(unsigned p_index, uie::menu_node_ptr & p_out)const override { p_out = m_items[p_index].get_ptr(); }
         menu_node_select_view(album_list_window * p_wnd)
         {
             unsigned n, m = cfg_view_list.get_count();
@@ -200,7 +200,7 @@ public:
         };
     };
 
-    virtual void get_menu_items(ui_extension::menu_hook_t & p_hook)
+    void get_menu_items(ui_extension::menu_hook_t & p_hook) override
     {
         p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_select_view(this)));
         p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_filter(this)));

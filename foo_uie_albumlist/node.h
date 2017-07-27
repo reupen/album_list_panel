@@ -38,7 +38,7 @@ public:
     node(const char * p_value, unsigned p_value_len, class album_list_window * dbe, uint16_t level);
     inline void set_bydir(bool p) { b_bydir = p; }
 
-    ~node()
+    ~node() override
     {
         entries.remove_all();
         children.remove_all();
