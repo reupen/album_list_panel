@@ -132,7 +132,7 @@ static void process_level_recur_t(const t_entry * p_items, t_size const p_items_
     pfc::array_t<t_local_entry> items_local; items_local.set_size(p_items_count);
     t_size items_local_ptr = 0;
     t_size n;
-    const char * last_path = 0;
+    const char * last_path = nullptr;
     bool b_node_added = false;
     for (n = 0; n < p_items_count; n++)
     {
@@ -146,7 +146,7 @@ static void process_level_recur_t(const t_entry * p_items, t_size const p_items_
                 b_node_added = true;
             process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
             items_local_ptr = 0;
-            last_path = 0;
+            last_path = nullptr;
         }
 
         if (*current_path != 0)
@@ -166,7 +166,7 @@ static void process_level_recur_t(const t_entry * p_items, t_size const p_items_
             b_node_added = true;
         process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
         items_local_ptr = 0;
-        last_path = 0;
+        last_path = nullptr;
     }
     if (b_node_added && cfg_show_numbers2)
     {
@@ -193,7 +193,7 @@ template <typename List>
 t_size process_byformat_add_branches(metadb_handle* handle, const char* p_text, List& entries)
 {
     const char * marker = strchr(p_text, 4);
-    if (marker == 0)
+    if (marker == nullptr)
     {
         entries.push_back(process_byformat_entry<>{handle, p_text});
         return 1;
@@ -467,7 +467,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
 
@@ -542,7 +542,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
 
@@ -665,7 +665,7 @@ void album_list_window::refresh_tree()
             m_root->sort_children();
 
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, 0);
+            TreeViewPopulator::s_setup_tree(wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
 #ifdef USE_TIMER
         console::formatter formatter; 

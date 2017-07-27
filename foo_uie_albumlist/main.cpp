@@ -24,11 +24,11 @@ class album_list_window;
 static string8_fastalloc g_formatbuf;
 
 ptr_list_t<album_list_window> album_list_window::list_wnd;
-HFONT album_list_window::g_font = 0;
+HFONT album_list_window::g_font = nullptr;
 
 void album_list_window::g_update_all_fonts()
 {
-    if (g_font!=0)
+    if (g_font!=nullptr)
     {
         unsigned n, count = album_list_window::list_wnd.get_count();
         for (n=0; n<count; n++)
@@ -84,7 +84,7 @@ void album_list_window::update_all_window_frames()
         if (wnd)
         {
             uSetWindowLong(wnd, GWL_EXSTYLE, flags);
-            SetWindowPos(wnd,0,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
+            SetWindowPos(wnd,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
         }
         /*wnd = list_wnd[n]->wnd_edit;
         if (wnd)
@@ -245,7 +245,7 @@ void album_list_window::update_all_labels()
         uSendMessage(wnd_tv,WM_SETREDRAW,FALSE,0);
         {
             TRACK_CALL_TEXT("album_list_panel_setup_tree");
-            TreeViewPopulator::s_setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,0);
+            TreeViewPopulator::s_setup_tree(wnd_tv,TVI_ROOT,m_root,0,0,nullptr);
         }
         uSendMessage(wnd_tv,WM_SETREDRAW,TRUE,0);
     }
@@ -320,7 +320,7 @@ void album_list_window::create_filter()
         else if (cfg_frame == 2) flags |= WS_EX_STATICEDGE;*/
         wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""),
             WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0,
-            get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), NULL);
+            get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), nullptr);
         //SetWindowTheme(wnd_edit, L"SearchBoxEdit", NULL);
         uSendMessage(wnd_edit,WM_SETFONT,(WPARAM)g_font,MAKELPARAM(0,0));
         SetFocus(wnd_edit);
@@ -334,7 +334,7 @@ void album_list_window::destroy_filter()
     {
         bool b_was_focused = GetFocus() == wnd_edit;
         DestroyWindow(wnd_edit);
-        wnd_edit=NULL;
+        wnd_edit=nullptr;
         if (wnd_tv)
         {
             if (m_populated) refresh_tree();
@@ -350,9 +350,9 @@ void album_list_window::on_size(unsigned cx, unsigned cy)
     unsigned edit_height = wnd_edit ? uGetFontHeight(g_font) + 4: 0;
     unsigned tv_height = edit_height<cy?cy-edit_height:cy;
     unsigned edit_cx = 0;
-    dwp = DeferWindowPos(dwp, wnd_tv, 0, 0, 0, cx, tv_height, SWP_NOZORDER);
+    dwp = DeferWindowPos(dwp, wnd_tv, nullptr, 0, 0, cx, tv_height, SWP_NOZORDER);
     if (wnd_edit)
-    dwp = DeferWindowPos(dwp, wnd_edit, 0, edit_cx, tv_height, max(cx-edit_cx,0), edit_height, SWP_NOZORDER);
+    dwp = DeferWindowPos(dwp, wnd_edit, nullptr, edit_cx, tv_height, max(cx-edit_cx,0), edit_height, SWP_NOZORDER);
     EndDeferWindowPos(dwp);
 }
 
@@ -373,7 +373,7 @@ void album_list_window::create_tree()
 
     wnd_tv = CreateWindowEx(flags, WC_TREEVIEW, _T("Album list"),
         TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT  | (cfg_hscroll ? 0 : TVS_NOHSCROLL ) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP, 0, 0, 0, 0,
-        wnd, HMENU(IDC_TREE), core_api::get_my_instance(), NULL);
+        wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
     
     if (wnd_tv)
     {
@@ -412,7 +412,7 @@ void album_list_window::destroy_tree()
     if (wnd_tv)
     {
         DestroyWindow(wnd_tv);
-        wnd_tv=NULL;
+        wnd_tv=nullptr;
     }
 }
 

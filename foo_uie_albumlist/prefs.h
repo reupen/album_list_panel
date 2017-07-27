@@ -11,9 +11,9 @@ public:
 class tab_general : public preferences_tab
 {
     bool m_initialised{false};
-    HWND m_wnd{NULL};
+    HWND m_wnd{nullptr};
 public:
-    bool is_active() { return m_wnd != 0; }
+    bool is_active() { return m_wnd != nullptr; }
     void refresh_views();
     static BOOL CALLBACK g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     BOOL CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);

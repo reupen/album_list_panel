@@ -35,13 +35,13 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 uGetDlgItemText(wnd, IDC_NAME, temp);
                 if (temp.is_empty())
                 {
-                    uMessageBox(wnd, "Please enter a valid name.", 0, 0);
+                    uMessageBox(wnd, "Please enter a valid name.", nullptr, 0);
                     break;
                 }
                 unsigned idx_find = cfg_view_list.find_item(temp);
                 if (idx_find != -1 && (ptr->b_new || ((idx_find != ptr->idx) && (idx_find != -1))))
                 {
-                    uMessageBox(wnd, "View of this name already exists. Please enter another one.", 0, 0);
+                    uMessageBox(wnd, "View of this name already exists. Please enter another one.", nullptr, 0);
                     break;
                 }
                 ptr->name = temp;
@@ -88,7 +88,7 @@ static preferences_tab * g_tabs[] =
 };
 
 
-HWND config_albumlist::child = 0;
+HWND config_albumlist::child = nullptr;
 
 static preferences_page_factory_t<config_albumlist> foo3;
 
@@ -111,7 +111,7 @@ void tab_general::refresh_views()
 
 BOOL tab_general::g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    tab_general * p_data = NULL;
+    tab_general * p_data = nullptr;
     if (msg == WM_INITDIALOG)
     {
         p_data = reinterpret_cast<tab_general*>(lp);
@@ -220,7 +220,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                         cfg_view_list.format_display(idx, temp);
                         uSendMessage(list, LB_DELETESTRING, idx, 0);
                         uSendMessageText(list, LB_INSERTSTRING, idx, temp);
-                        uSendMessageText(list, LB_SETCURSEL, idx, 0);
+                        uSendMessageText(list, LB_SETCURSEL, idx, nullptr);
                         album_list_window::g_on_view_script_change(pbefore.name, p.name);
                     }
                 }
@@ -303,7 +303,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_DESTROY:
         //history_sort.add_item(cfg_sort_order);
         m_initialised = false;
-        m_wnd = NULL;
+        m_wnd = nullptr;
         break;
     }
     return 0;
@@ -566,7 +566,7 @@ void config_albumlist::make_child(HWND wnd)
     {
         ShowWindow(child, SW_HIDE);
         DestroyWindow(child);
-        child = 0;
+        child = nullptr;
     }
 
     HWND wnd_tab = GetDlgItem(wnd, IDC_TAB1);
@@ -595,7 +595,7 @@ void config_albumlist::make_child(HWND wnd)
         }
     }
 
-    SetWindowPos(child, 0, tab.left, tab.top, tab.right - tab.left, tab.bottom - tab.top, SWP_NOZORDER);
+    SetWindowPos(child, nullptr, tab.left, tab.top, tab.right - tab.left, tab.bottom - tab.top, SWP_NOZORDER);
     SetWindowPos(wnd_tab, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     ShowWindow(child, SW_SHOWNORMAL);
@@ -639,7 +639,7 @@ BOOL config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         {
         case WM_DESTROY:
         {
-            if (child && (HWND)lp == child) child = 0;
+            if (child && (HWND)lp == child) child = nullptr;
         }
         break;
         }

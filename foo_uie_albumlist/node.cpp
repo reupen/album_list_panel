@@ -74,7 +74,7 @@ void node::send_to_playlist(bool replace)
 }
 
 node::node(const char * p_value, unsigned p_value_len, album_list_window * dbe, uint16_t level)
-    : p_dbe(dbe), m_ti(NULL), m_label_dirty(false), m_level(level)
+    : p_dbe(dbe), m_ti(nullptr), m_label_dirty(false), m_level(level)
 {
     if (p_value && p_value_len > 0)
     {

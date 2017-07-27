@@ -40,13 +40,13 @@ public:
     const char * get_name(unsigned idx) const
     {
         if (idx >= 0 && idx<data.get_count()) return data[idx].name;
-        else return 0;
+        else return nullptr;
     }
 
     const char * get_value(unsigned idx) const
     {
         if (idx >= 0 && idx<data.get_count()) return data[idx].value;
-        else return 0;
+        else return nullptr;
     }
 
     unsigned find_item(const char * name) const

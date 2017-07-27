@@ -14,7 +14,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         modeless_dialog_manager::g_add(wnd);
 
-        m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : NULL;
+        m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr;
 
         create_tree();
         create_filter();
@@ -27,7 +27,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_THEMECHANGED:
     {
         if (m_dd_theme) CloseThemeData(m_dd_theme);
-        m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : NULL;
+        m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr;
     }
     break;
     /*case WM_GETMINMAXINFO:
@@ -58,7 +58,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         case IDC_FILTER | (EN_CHANGE << 16) :
             if (m_timer)
                 KillTimer(wnd_edit, 500);
-            m_timer = SetTimer(wnd, EDIT_TIMER_ID, 500, NULL) != 0;
+            m_timer = SetTimer(wnd, EDIT_TIMER_ID, 500, nullptr) != 0;
             return TRUE;
         case IDOK:
             if (GetKeyState(VK_SHIFT) & KF_UP) do_playlist(p_selection, false);
@@ -80,7 +80,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         HWND list = wnd_tv;
 
-        HTREEITEM treeitem = NULL;
+        HTREEITEM treeitem = nullptr;
 
         TVHITTESTINFO ti;
         memset(&ti, 0, sizeof(ti));
@@ -153,7 +153,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         bool show_shortcuts = standard_config_objects::query_show_keyboard_shortcuts_in_menus();
 
-        node * p_node = NULL;
+        node * p_node = nullptr;
         TVITEMEX tvi;
         memset(&tvi, 0, sizeof(tvi));
         tvi.hItem = treeitem;
@@ -183,7 +183,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             }
         }
 
-        int cmd = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(), 0);
+        int cmd = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(), nullptr);
         DestroyMenu(menu);
 
         TreeView_Select(list, NULL, TVGN_DROPHILITE);
@@ -306,7 +306,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         if (m_dd_theme)
         {
             CloseThemeData(m_dd_theme);
-            m_dd_theme = NULL;
+            m_dd_theme = nullptr;
         }
 
         if (initialised)
@@ -315,7 +315,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             if (list_wnd.get_count() == 0)
             {
                 DeleteFont(g_font);
-                g_font = 0;
+                g_font = nullptr;
             }
             initialised = false;
         }

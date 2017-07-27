@@ -212,7 +212,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
                 switch (cfg_dblclk)
                 {
                 case 0:
-                    if (p_selection == 0 || p_selection->get_num_children()>0) break;
+                    if (p_selection == nullptr || p_selection->get_num_children()>0) break;
                     do_playlist(p_selection, true);
                     return 0;
                 case 1:

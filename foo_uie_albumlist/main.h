@@ -13,7 +13,7 @@ class album_list_window : public ui_extension::container_ui_extension, public li
     static const char * class_name;
     bool initialised{false};
     bool m_populated{false};
-    WNDPROC treeproc{0};
+    WNDPROC treeproc{nullptr};
 
     bool dragging{false}, clicked{false};
     DWORD clickpoint{0};
@@ -25,7 +25,7 @@ class album_list_window : public ui_extension::container_ui_extension, public li
 
 protected:
     static ptr_list_t<album_list_window> list_wnd;
-    HWND wnd_tv{0}, wnd_edit{NULL};
+    HWND wnd_tv{nullptr}, wnd_edit{nullptr};
     node_ptr p_selection;
 
     friend class node;
@@ -208,7 +208,7 @@ public:
     friend class font_notify;
 private:
     static HFONT g_font;
-    HTHEME m_dd_theme{NULL};
+    HTHEME m_dd_theme{nullptr};
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
 };
