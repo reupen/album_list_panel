@@ -15,13 +15,9 @@ void TreeViewPopulator::s_setup_children(HWND wnd_tv, node_ptr ptr)
 
 void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
-    HTREEITEM item = TVI_ROOT;
     const auto populate_children = ptr->m_children_inserted || ptr->m_level < 1 + m_initial_level;
 
     ptr->purge_empty_children(m_wnd_tv);
-
-    if (ptr->m_ti)
-        item = ptr->m_ti;
 
     if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root))
     {
@@ -53,9 +49,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
                 is.item.cChildren = 1;
             }
 
-            item = TreeView_InsertItem(m_wnd_tv, &is);
-
-            ptr->m_ti = item;
+            ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);;
         }
         ptr->m_label_dirty = false;
     }
