@@ -10,8 +10,8 @@ public:
 
 class tab_general : public preferences_tab
 {
-    bool m_initialised;
-    HWND m_wnd;
+    bool m_initialised{false};
+    HWND m_wnd{NULL};
 public:
     bool is_active() { return m_wnd != 0; }
     void refresh_views();
@@ -21,7 +21,7 @@ public:
     HWND create(HWND wnd) override { return uCreateDialog(IDD_CONFIG, wnd, g_on_message, (LPARAM)this); }
     const char * get_name() override { return "General"; }
 
-    tab_general() : m_initialised(false), m_wnd(NULL) {};
+    tab_general()  {};
 
 };
 

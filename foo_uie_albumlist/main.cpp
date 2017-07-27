@@ -62,13 +62,6 @@ void album_list_window::g_update_all_fonts()
     }
 }
 
-
-album_list_window::album_list_window() 
-    : wnd_tv(0), wnd_edit(NULL), m_filter(false), m_timer(false), m_populated(false), initialised(false), view("by artist/album"), 
-    treeproc(0), dragging(false), clicked(false), clickpoint(0), indent_default(0), m_dd_theme(NULL)
-{
-}
-
 album_list_window::~album_list_window()
 {
     if (initialised) 

@@ -11,21 +11,21 @@ extern const char * directory_structure_view_name;
 class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic
 {
     static const char * class_name;
-    bool initialised;
-    bool m_populated;
-    WNDPROC treeproc;
+    bool initialised{false};
+    bool m_populated{false};
+    WNDPROC treeproc{0};
 
-    bool dragging, clicked;
-    DWORD clickpoint;
-    int indent_default;
+    bool dragging{false}, clicked{false};
+    DWORD clickpoint{0};
+    int indent_default{0};
 
     bool
-        m_filter,
-        m_timer;
+        m_filter{false},
+        m_timer{false};
 
 protected:
     static ptr_list_t<album_list_window> list_wnd;
-    HWND wnd_tv, wnd_edit;
+    HWND wnd_tv{0}, wnd_edit{NULL};
     node_ptr p_selection;
 
     friend class node;
@@ -35,7 +35,7 @@ public:
     void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
     void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
 
-    string8 view;
+    string8 view{"by artist/album"};
 
     bool is_bydir()
     {
@@ -63,8 +63,6 @@ public:
 
     LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     static LRESULT WINAPI hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-
-    album_list_window();
 
     void refresh_tree();
     void rebuild_nodes();
@@ -210,7 +208,7 @@ public:
     friend class font_notify;
 private:
     static HFONT g_font;
-    HTHEME m_dd_theme;
+    HTHEME m_dd_theme{NULL};
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
 };
