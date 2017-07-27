@@ -250,7 +250,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     return 0;
     case WM_NOTIFY:
     {
-        LPNMHDR hdr = (LPNMHDR)lp;
+        auto hdr = reinterpret_cast<LPNMHDR>(lp);
 
         switch (hdr->idFrom)
         {
@@ -259,7 +259,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 switch(hdr->code) {
                     case TVN_ITEMEXPANDING: 
                     {
-                        LPNMTREEVIEW param = reinterpret_cast<LPNMTREEVIEW>(hdr);
+                        auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
                         node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam);
 
                         if (!p_node->m_children_inserted) {
@@ -274,7 +274,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     }
                     case TVN_SELCHANGED: 
                     {
-                        LPNMTREEVIEW param = (LPNMTREEVIEW)hdr;
+                        auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
 
                         p_selection = reinterpret_cast<node*>(param->itemNew.lParam);
                         if ((param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD))

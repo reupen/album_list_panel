@@ -16,7 +16,7 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_INITDIALOG:
         uSetWindowLong(wnd, DWL_USER, lp);
         {
-            edit_view_param * ptr = reinterpret_cast<edit_view_param*>(lp);
+            const auto ptr = reinterpret_cast<edit_view_param*>(lp);
             uSetDlgItemText(wnd, IDC_NAME, ptr->name);
             uSetDlgItemText(wnd, IDC_VALUE, ptr->value);
         }
@@ -29,7 +29,7 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDOK:
         {
-            edit_view_param * ptr = reinterpret_cast<edit_view_param*>(uGetWindowLong(wnd, DWL_USER));
+            auto ptr = reinterpret_cast<edit_view_param*>(uGetWindowLong(wnd, DWL_USER));
             {
                 string8 temp;
                 uGetDlgItemText(wnd, IDC_NAME, temp);
@@ -201,7 +201,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_VIEWS | (LBN_DBLCLK << 16) :
         {
-            HWND list = (HWND)lp;
+            const auto list = reinterpret_cast<HWND>(lp);
             unsigned idx = uSendMessage(list, LB_GETCURSEL, 0, 0);
             if (idx != LB_ERR)
             {

@@ -122,7 +122,7 @@ node_ptr node::add_child_v2(const char * p_value, unsigned p_value_len)
     {
         p_value = "?"; p_value_len = 1;
     }
-    node * temp = new node(/*this,*/p_value, p_value_len, p_dbe, m_level + 1);
+    node_ptr temp = new node(p_value, p_value_len, p_dbe, m_level + 1);
     children.add_item(temp);
     return temp;
 }

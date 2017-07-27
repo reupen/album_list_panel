@@ -80,7 +80,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
     break;
     case WM_GETDLGCODE:
     {
-        MSG * msg = (LPMSG)lp;
+        auto msg = reinterpret_cast<LPMSG>(lp);
         if (msg && cfg_keyb)
         {
             // let dialog manager handle it, otherwise to kill ping we have to process WM_CHAR to return 0 on wp == 0xd and 0xa

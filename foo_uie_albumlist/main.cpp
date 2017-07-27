@@ -272,7 +272,7 @@ void album_list_window::update_colours()
 
 void album_list_window::update_item_height()
 {
-    HFONT font = (HFONT)uSendMessage(wnd_tv, WM_GETFONT, 0, 0);
+    const auto font = reinterpret_cast<HFONT>(uSendMessage(wnd_tv, WM_GETFONT, 0, 0));
     int font_height = -1;
     if (cfg_custom_item_height)
     {
