@@ -26,7 +26,7 @@ static string8_fastalloc g_formatbuf;
 ptr_list_t<album_list_window> album_list_window::s_instances;
 HFONT album_list_window::s_font = nullptr;
 
-void album_list_window::g_update_all_fonts()
+void album_list_window::s_update_all_fonts()
 {
     if (s_font!=nullptr)
     {
@@ -71,7 +71,7 @@ album_list_window::~album_list_window()
     }
 }
 
-void album_list_window::update_all_window_frames()
+void album_list_window::s_update_all_window_frames()
 {
     unsigned n, count = s_instances.get_count();
     long flags = 0;
@@ -95,7 +95,7 @@ void album_list_window::update_all_window_frames()
     }
 }
 
-void album_list_window::update_all_colours()
+void album_list_window::s_update_all_colours()
 {
             
     unsigned n, count = s_instances.get_count();
@@ -110,7 +110,7 @@ void album_list_window::update_all_colours()
 
 }
 
-void album_list_window::g_update_all_labels()
+void album_list_window::s_update_all_labels()
 {
             
     unsigned n, count = s_instances.get_count();
@@ -125,7 +125,7 @@ void album_list_window::g_update_all_labels()
 
 }
 
-void album_list_window::g_update_all_showhscroll()
+void album_list_window::s_update_all_showhscroll()
 {
             
     unsigned n, count = s_instances.get_count();
@@ -149,7 +149,7 @@ void album_list_window::g_update_all_showhscroll()
 
 }
 
-void album_list_window::g_on_view_script_change(const char * p_view_before, const char * p_view)
+void album_list_window::s_on_view_script_change(const char * p_view_before, const char * p_view)
 {
             
     unsigned n, count = s_instances.get_count();
@@ -164,7 +164,7 @@ void album_list_window::g_on_view_script_change(const char * p_view_before, cons
 
 }
 
-void album_list_window::g_refresh_all()
+void album_list_window::s_refresh_all()
 {
             
     unsigned n, count = s_instances.get_count();
@@ -178,7 +178,7 @@ void album_list_window::g_refresh_all()
     }
 
 }
-void album_list_window::update_all_item_heights()
+void album_list_window::s_update_all_item_heights()
 {
             
     unsigned n, count = s_instances.get_count();
@@ -211,7 +211,7 @@ void album_list_window::update_all_item_heights()
     }
 }*/
 
-void album_list_window::update_all_indents()
+void album_list_window::s_update_all_indents()
 {
             
     unsigned n, count = s_instances.get_count();
@@ -391,7 +391,7 @@ void album_list_window::create_tree()
                 TreeView_SetIndent(wnd, cfg_indent);
         }
         else
-            g_update_all_fonts();
+            s_update_all_fonts();
 
 
         if (cfg_custom_item_height)
@@ -400,7 +400,7 @@ void album_list_window::create_tree()
         update_colours();
 
         uSetWindowLong(m_wnd_tv,GWL_USERDATA,(LPARAM)(this));
-        m_treeproc = (WNDPROC)uSetWindowLong(m_wnd_tv,GWL_WNDPROC,(LPARAM)(hook_proc));
+        m_treeproc = (WNDPROC)uSetWindowLong(m_wnd_tv,GWL_WNDPROC,(LPARAM)(s_hook_proc));
 
         if (m_populated)
             refresh_tree();

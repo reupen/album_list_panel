@@ -13,15 +13,15 @@ class album_list_window : public ui_extension::container_ui_extension, public li
     friend class font_notify;
     friend class node;
 public:
-    static void update_all_colours();
-    static void update_all_item_heights();
-    static void update_all_indents();
-    static void g_update_all_labels();
-    static void g_update_all_showhscroll();
-    static void g_update_all_fonts();
-    static void g_refresh_all();
-    static void g_on_view_script_change(const char * p_view_before, const char * p_view);
-    static void update_all_window_frames();
+    static void s_update_all_colours();
+    static void s_update_all_item_heights();
+    static void s_update_all_indents();
+    static void s_update_all_labels();
+    static void s_update_all_showhscroll();
+    static void s_update_all_fonts();
+    static void s_refresh_all();
+    static void s_on_view_script_change(const char * p_view_before, const char * p_view);
+    static void s_update_all_window_frames();
 
     void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
     void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
@@ -179,7 +179,7 @@ public:
     }
 
 private:
-    static LRESULT WINAPI hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    static LRESULT WINAPI s_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     static ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;

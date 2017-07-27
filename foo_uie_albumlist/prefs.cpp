@@ -221,7 +221,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                         uSendMessage(list, LB_DELETESTRING, idx, 0);
                         uSendMessageText(list, LB_INSERTSTRING, idx, temp);
                         uSendMessageText(list, LB_SETCURSEL, idx, nullptr);
-                        album_list_window::g_on_view_script_change(pbefore.name, p.name);
+                        album_list_window::s_on_view_script_change(pbefore.name, p.name);
                     }
                 }
             }
@@ -328,7 +328,7 @@ public:
 
     void on_font_changed() const override
     {
-        album_list_window::g_update_all_fonts();
+        album_list_window::s_update_all_fonts();
 
     }
 };
@@ -347,7 +347,7 @@ public:
 
     void on_colour_changed(t_size mask) const override
     {
-        album_list_window::update_all_colours();
+        album_list_window::s_update_all_colours();
     };
     void on_bool_changed(t_size mask) const override {};
 };
@@ -445,18 +445,18 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             //break;
         case IDC_SHOW_NUMBERS:
             cfg_show_numbers = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
-            album_list_window::g_update_all_labels();
+            album_list_window::s_update_all_labels();
             break;
         case IDC_AUTO_SEND:
             cfg_autosend = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_HSCROLL:
             cfg_hscroll = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
-            album_list_window::g_update_all_showhscroll();
+            album_list_window::s_update_all_showhscroll();
             break;
         case IDC_SHOW_ROOT:
             cfg_show_root = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
-            album_list_window::g_refresh_all();
+            album_list_window::s_refresh_all();
             break;
         case IDC_AUTOPLAY:
             cfg_autoplay = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
@@ -466,12 +466,12 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_SHOW_NUMBERS2:
             cfg_show_numbers2 = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);
-            album_list_window::g_update_all_labels();
+            album_list_window::s_update_all_labels();
             break;
         case (CBN_SELCHANGE << 16) | IDC_FRAME:
         {
             cfg_frame = uSendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
-            album_list_window::update_all_window_frames();
+            album_list_window::s_update_all_window_frames();
         }
         break;
         /*case (EN_CHANGE<<16)|IDC_HEIGHT:
@@ -500,7 +500,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     if (new_height > 99) new_height = 99;
                     if (new_height < -99) new_height = -99;
                     cfg_item_height = new_height;
-                    album_list_window::update_all_item_heights();
+                    album_list_window::s_update_all_item_heights();
                 }
             }
         }
@@ -518,7 +518,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             else
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
-            album_list_window::update_all_item_heights();
+            album_list_window::s_update_all_item_heights();
         }
         break;
         case IDC_USE_INDENT:
@@ -533,7 +533,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             else
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
-            album_list_window::update_all_indents();
+            album_list_window::s_update_all_indents();
         }
         break;
         case (EN_CHANGE << 16) | IDC_INDENT:
@@ -546,7 +546,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 {
                     if (new_height > 999) new_height = 999;
                     cfg_indent = new_height;
-                    album_list_window::update_all_indents();
+                    album_list_window::s_update_all_indents();
                 }
             }
         }

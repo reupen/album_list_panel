@@ -73,7 +73,7 @@ class album_list_fcl_views : public cui::fcl::dataset
         }
         if (g_config_general.is_active())
             g_config_general.refresh_views();
-        album_list_window::g_refresh_all();
+        album_list_window::s_refresh_all();
     }
 };
 
@@ -147,9 +147,9 @@ class album_list_fcl_appearance : public cui::fcl::dataset
                     break;
                 }
             }
-            album_list_window::update_all_item_heights();
-            album_list_window::update_all_indents();
-            album_list_window::update_all_window_frames();
+            album_list_window::s_update_all_item_heights();
+            album_list_window::s_update_all_indents();
+            album_list_window::s_update_all_window_frames();
         }
     }
 };
