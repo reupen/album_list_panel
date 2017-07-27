@@ -10,32 +10,22 @@ extern const char * directory_structure_view_name;
 
 class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic
 {
-    static const char * class_name;
-    bool initialised{false};
-    bool m_populated{false};
-    WNDPROC treeproc{nullptr};
-
-    bool dragging{false}, clicked{false};
-    DWORD clickpoint{0};
-    int indent_default{0};
-
-    bool
-        m_filter{false},
-        m_timer{false};
-
-protected:
-    static ptr_list_t<album_list_window> list_wnd;
-    HWND wnd_tv{nullptr}, wnd_edit{nullptr};
-    node_ptr p_selection;
-
+    friend class font_notify;
     friend class node;
-
 public:
+    static void update_all_colours();
+    static void update_all_item_heights();
+    static void update_all_indents();
+    static void g_update_all_labels();
+    static void g_update_all_showhscroll();
+    static void g_update_all_fonts();
+    static void g_refresh_all();
+    static void g_on_view_script_change(const char * p_view_before, const char * p_view);
+    static void update_all_window_frames();
+
     void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
     void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
     void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
-
-    string8 view{"by artist/album"};
 
     bool is_bydir()
     {
@@ -49,9 +39,9 @@ public:
         return "N/A";
     }
 
-    node_ptr m_root;
-
     LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
+    LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
     void create_or_destroy_filter();
     void create_filter();
     void destroy_filter();
@@ -61,9 +51,6 @@ public:
     void on_size(unsigned cx, unsigned cy);
     void on_size();
 
-    LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-    static LRESULT WINAPI hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-
     void refresh_tree();
     void rebuild_nodes();
     void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
@@ -72,25 +59,13 @@ public:
     void update_colours();
     void update_item_height();
     void on_view_script_change(const char * p_view_before, const char * p_view);
-    static void update_all_colours();
-    //static void update_all_heights();
-    static void update_all_item_heights();
-    static void update_all_indents();
-    static void g_update_all_labels();
-    static void g_update_all_showhscroll();
-    static void g_update_all_fonts();
-    static void g_refresh_all();
-    static void g_on_view_script_change(const char * p_view_before, const char * p_view);
 
     ~album_list_window();
-
-    static const GUID extension_guid;
 
     const GUID & get_extension_guid() const override
     {
         return extension_guid;
     }
-
 
     void get_name(string_base & out)const override;
     void get_category(string_base & out)const override;
@@ -104,8 +79,6 @@ public:
     {
         __implement_get_class_data(_T("{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"), false);
     }
-
-    static void update_all_window_frames();
 
     class menu_node_settings : public ui_extension::menu_node_command_t
     {
@@ -205,10 +178,29 @@ public:
         p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_settings()));
     }
 
-    friend class font_notify;
 private:
+    static LRESULT WINAPI hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
+    static ptr_list_t<album_list_window> list_wnd;
+    static const GUID extension_guid;
+    static const char* class_name;
     static HFONT g_font;
+
+    HWND wnd_tv{nullptr};
+    HWND wnd_edit{nullptr};
     HTHEME m_dd_theme{nullptr};
+    WNDPROC treeproc{nullptr};
+    bool initialised{false};
+    bool m_populated{false};
+    bool dragging{false};
+    bool clicked{false};
+    bool m_filter{false};
+    bool m_timer{false};
+    DWORD clickpoint{0};
+    int indent_default{0};
+    string8 view{"by artist/album"};
+    node_ptr m_root;
+    node_ptr p_selection;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
 };
