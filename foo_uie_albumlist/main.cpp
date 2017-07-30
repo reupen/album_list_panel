@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "tree_view_populator.h"
+#include "menu.h"
 #include "node.h"
+#include "tree_view_populator.h"
 
 //TODO: node name as field
 
@@ -451,6 +452,42 @@ void album_list_window::set_config(stream_reader * p_reader, t_size psize, abort
     }
 }
 
+void album_list_window::toggle_show_filter()
+{
+    m_filter = !m_filter;
+    create_or_destroy_filter();
+}
+
+const char* album_list_window::get_view() const
+{
+    return m_view;
+}
+
+void album_list_window::set_view(const char* view)
+{
+    m_view = view;
+    refresh_tree();
+}
+
+void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)
+{
+    const auto node_settings = uie::menu_node_ptr{new uie::simple_command_menu_node{
+        "Settings", 
+        "Shows Album List panel settings", 
+        0, 
+        []{ static_api_ptr_t<ui_control>()->show_preferences(g_guid_preferences_album_list_panel); }
+    }};
+    const auto node_filter = uie::menu_node_ptr{new uie::simple_command_menu_node{
+        "Filter", 
+        "Shows the filter bar", 
+        m_filter ? uie::menu_node_t::state_checked : 0, 
+        [instance = service_ptr_t<album_list_window>{this}]{ instance->toggle_show_filter(); }
+    }};
+
+    p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_select_view(this)));
+    p_hook.add_node(node_filter);
+    p_hook.add_node(node_settings);
+}
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
 const GUID album_list_window::s_extension_guid = 

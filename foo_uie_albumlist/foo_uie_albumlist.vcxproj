@@ -246,6 +246,7 @@
     <ClInclude Include=".\resource.h" />
     <ClInclude Include=".\stdafx.h" />
     <ClInclude Include=".\tfhook.h" />
+    <ClInclude Include="menu.h" />
     <ClInclude Include="tree_view_populator.h" />
   </ItemGroup>
   <ItemGroup>

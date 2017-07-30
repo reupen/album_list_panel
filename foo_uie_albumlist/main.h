@@ -42,6 +42,10 @@ public:
     LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
     LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
+    void toggle_show_filter();
+    const char* get_view() const;
+    void set_view(const char* view);
+
     void create_or_destroy_filter();
     void create_filter();
     void destroy_filter();
@@ -80,103 +84,7 @@ public:
         __implement_get_class_data(_T("{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"), false);
     }
 
-    class menu_node_settings : public ui_extension::menu_node_command_t
-    {
-    public:
-        bool get_display_data(pfc::string_base & p_out, unsigned & p_displayflags) const override
-        {
-            p_out = "Settings";
-            p_displayflags = 0;
-            return true;
-        }
-        bool get_description(pfc::string_base & p_out) const override
-        {
-            return false;
-        }
-        void execute() override
-        {
-            static_api_ptr_t<ui_control>()->show_preferences(g_guid_preferences_album_list_panel);
-        }
-        menu_node_settings() {};
-    };
-    class menu_node_filter : public ui_extension::menu_node_command_t
-    {
-        service_ptr_t<album_list_window> p_this;
-    public:
-        bool get_display_data(pfc::string_base & p_out, unsigned & p_displayflags) const override
-        {
-            p_out = "Filter";
-            p_displayflags = p_this->m_filter ? uie::menu_node_t::state_checked : 0;
-            return true;
-        }
-        bool get_description(pfc::string_base & p_out) const override
-        {
-            return false;
-        }
-        void execute() override
-        {
-            p_this->m_filter = !p_this->m_filter;
-            p_this->create_or_destroy_filter();
-        }
-        menu_node_filter(album_list_window * p_wnd) : p_this(p_wnd) {};
-    };
-
-    class menu_node_view : public ui_extension::menu_node_command_t
-    {
-        service_ptr_t<album_list_window> p_this;
-        string_simple view;
-    public:
-        bool get_display_data(string_base & p_out, unsigned & p_displayflags)const override
-        {
-            p_out = view;
-            p_displayflags = (!stricmp_utf8(view, p_this->m_view) ? ui_extension::menu_node_t::state_checked : 0);
-            return true;
-        }
-        bool get_description(string_base & p_out)const override
-        {
-            return false;
-        }
-        void execute() override
-        {
-            p_this->m_view = view;
-            p_this->refresh_tree();
-        }
-        menu_node_view(album_list_window * p_wnd, const char * p_value) : p_this(p_wnd), view(p_value) {};
-    };
-
-    class menu_node_select_view : public ui_extension::menu_node_popup_t
-    {
-        list_t<ui_extension::menu_node_ptr> m_items;
-    public:
-        bool get_display_data(string_base & p_out, unsigned & p_displayflags)const override
-        {
-            p_out = "View";
-            p_displayflags = 0;
-            return true;
-        }
-        unsigned get_children_count()const override { return m_items.get_count(); }
-        void get_child(unsigned p_index, uie::menu_node_ptr & p_out)const override { p_out = m_items[p_index].get_ptr(); }
-        menu_node_select_view(album_list_window * p_wnd)
-        {
-            unsigned n, m = cfg_view_list.get_count();
-            string8_fastalloc temp;
-            temp.prealloc(32);
-
-            m_items.add_item(new menu_node_view(p_wnd, directory_structure_view_name));
-
-            for (n = 0; n<m; n++)
-            {
-                m_items.add_item(new menu_node_view(p_wnd, cfg_view_list.get_name(n)));
-            };
-        };
-    };
-
-    void get_menu_items(ui_extension::menu_hook_t & p_hook) override
-    {
-        p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_select_view(this)));
-        p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_filter(this)));
-        p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_settings()));
-    }
+    void get_menu_items(ui_extension::menu_hook_t& p_hook) override;
 
 private:
     static LRESULT WINAPI s_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
