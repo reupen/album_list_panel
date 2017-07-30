@@ -1,23 +1,5 @@
 #pragma once
 
-struct create_guid : public GUID
-{
-    create_guid(t_uint32 p_data1, t_uint16 p_data2, t_uint16 p_data3, t_uint8 p_data41, t_uint8 p_data42, t_uint8 p_data43, t_uint8 p_data44, t_uint8 p_data45, t_uint8 p_data46, t_uint8 p_data47, t_uint8 p_data48)
-    {
-        Data1 = p_data1;
-        Data2 = p_data2;
-        Data3 = p_data3;
-        Data4[0] = p_data41;
-        Data4[1] = p_data42;
-        Data4[2] = p_data43;
-        Data4[3] = p_data44;
-        Data4[4] = p_data45;
-        Data4[5] = p_data46;
-        Data4[6] = p_data47;
-        Data4[7] = p_data48;
-    }
-};
-
 class cfg_view_list_t : public cfg_var
 {
 private:
@@ -100,7 +82,7 @@ extern const GUID g_guid_album_list_font,
     g_guid_album_list_colours;
 
 extern cfg_view_list_t cfg_view_list;
-extern create_guid g_guid_preferences_album_list_panel;
+extern GUID g_guid_preferences_album_list_panel;
 extern cfg_bool cfg_themed;
 extern cfg_int cfg_populate,
     cfg_autosend,
