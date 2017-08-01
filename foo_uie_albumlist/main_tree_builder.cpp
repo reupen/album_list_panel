@@ -466,7 +466,6 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
         //m_root->sort_children();
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-            TRACK_CALL_TEXT("album_list_panel_setup_tree");
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
@@ -506,7 +505,6 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
         else
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-            TRACK_CALL_TEXT("album_list_panel_setup_tree");
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
@@ -541,7 +539,6 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
         //m_root->sort_children();
         {
             metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-            TRACK_CALL_TEXT("album_list_panel_setup_tree");
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
     }
@@ -664,7 +661,6 @@ void album_list_window::refresh_tree()
         {
             m_root->sort_children();
 
-            TRACK_CALL_TEXT("album_list_panel_setup_tree");
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
 #ifdef USE_TIMER

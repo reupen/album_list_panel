@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "actions.h"
 
 class titleformat_hook_view : public titleformat_hook {
 public:

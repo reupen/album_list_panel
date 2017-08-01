@@ -3,6 +3,7 @@
 
 void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
+    TRACK_CALL_TEXT("album_list_panel::TreeViewPopulator::s_setup_tree");
     TreeViewPopulator populater{wnd_tv, ptr->m_level};
     populater.setup_tree(parent, ptr, idx, max_idx, ti_after);
 }

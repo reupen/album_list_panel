@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "actions.h"
 #include "tree_view_populator.h"
 
 LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -268,7 +269,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
                         if (cfg_picmixer && (param->action == TVE_EXPAND))
                         {
-                            TreeView_CollapseOtherNodes(param->hdr.hwndFrom, param->itemNew.hItem);
+                            uih::tree_view_collapse_other_nodes(param->hdr.hwndFrom, param->itemNew.hItem);
                         }
                         break;
                     }

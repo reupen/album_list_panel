@@ -6,10 +6,9 @@
 
 #define USE_TIMER
 
-extern const char * directory_structure_view_name;
+extern const char* directory_structure_view_name;
 
-class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic
-{
+class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic {
     friend class font_notify;
     friend class node;
 public:
@@ -20,38 +19,22 @@ public:
     static void s_update_all_showhscroll();
     static void s_update_all_fonts();
     static void s_refresh_all();
-    static void s_on_view_script_change(const char * p_view_before, const char * p_view);
+    static void s_on_view_script_change(const char* p_view_before, const char* p_view);
     static void s_update_all_window_frames();
 
-    void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
-    void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
-    void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_data) override;
+    ~album_list_window();
 
-    bool is_bydir()
-    {
-        return !stricmp_utf8(m_view, directory_structure_view_name);
-    }
-
-    const char * get_hierarchy()
-    {
-        unsigned idx = cfg_view_list.find_item(m_view);
-        if (idx != (unsigned)(-1)) return cfg_view_list.get_value(idx);
-        return "N/A";
-    }
-
-    LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
-    LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-
-    void toggle_show_filter();
+    bool is_bydir() const;
+    const char* get_hierarchy() const;
     const char* get_view() const;
     void set_view(const char* view);
+    void toggle_show_filter();
 
     void create_or_destroy_filter();
     void create_filter();
     void destroy_filter();
     void create_tree();
     void destroy_tree();
-    void on_task_completion(t_uint32 task, t_uint32 code);
     void on_size(unsigned cx, unsigned cy);
     void on_size();
 
@@ -59,31 +42,37 @@ public:
     void rebuild_nodes();
     void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
     void remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks);
+
     void update_all_labels();
     void update_colours();
     void update_item_height();
-    void on_view_script_change(const char * p_view_before, const char * p_view);
+    void on_view_script_change(const char* p_view_before, const char* p_view);
 
-    ~album_list_window();
-
-    const GUID & get_extension_guid() const override
+    const GUID& get_extension_guid() const override
     {
         return s_extension_guid;
     }
 
-    void get_name(string_base & out)const override;
-    void get_category(string_base & out)const override;
+    void get_name(string_base& out) const override;
+    void get_category(string_base& out) const override;
 
-    void set_config(stream_reader * p_reader, t_size size, abort_callback & p_abort) override;
-    void get_config(stream_writer * p_writer, abort_callback & p_abort)const override;
+    void set_config(stream_reader* p_reader, t_size size, abort_callback& p_abort) override;
+    void get_config(stream_writer* p_writer, abort_callback& p_abort) const override;
 
     unsigned get_type() const override { return ui_extension::type_panel; }
 
-    class_data & get_class_data()const override
+    class_data& get_class_data() const override
     {
         __implement_get_class_data(_T("{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"), false);
     }
 
+    void on_task_completion(t_uint32 task, t_uint32 code);
+    void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
+    void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
+    void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
+
+    LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
+    LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     void get_menu_items(ui_extension::menu_hook_t& p_hook) override;
 
 private:
@@ -112,7 +101,3 @@ private:
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
 };
-
-void TreeView_CollapseOtherNodes(HWND wnd, HTREEITEM ti);
-void do_playlist(node_ptr const & src, bool replace, bool b_new = false);
-void do_autosend_playlist(node_ptr const & src, string_base & view, bool b_play = false);

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "actions.h"
 
 LRESULT WINAPI album_list_window::s_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
