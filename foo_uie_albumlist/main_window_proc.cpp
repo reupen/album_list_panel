@@ -90,12 +90,12 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         {
             ti.pt = pt;
             ScreenToClient(list, &ti.pt);
-            uSendMessage(list, TVM_HITTEST, 0, (long)&ti);
+            SendMessage(list, TVM_HITTEST, 0, (long)&ti);
             if (ti.hItem && (ti.flags & TVHT_ONITEM))
             {
                 //FIX THIS AND AUTOSEND
                 //TreeView_Select(list, ti.hItem, TVGN_DROPHILITE);
-                //uSendMessage(list,TVM_SELECTITEM,TVGN_DROPHILITE,(long)ti.hItem);
+                //SendMessage(list,TVM_SELECTITEM,TVGN_DROPHILITE,(long)ti.hItem);
                 treeitem = ti.hItem;
             }
         }
@@ -237,7 +237,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                         refresh_tree();
                     break;
                 }
-                if (cmd2) uSendMessage(get_wnd(), WM_COMMAND, cmd2, 0);
+                if (cmd2) SendMessage(get_wnd(), WM_COMMAND, cmd2, 0);
             }
         }
 

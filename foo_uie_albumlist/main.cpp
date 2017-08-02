@@ -325,7 +325,7 @@ void album_list_window::create_tree()
 
         update_colours();
 
-        SetWindowLong(m_wnd_tv, GWLP_USERDATA, reinterpret_cast<LPARAM>(this));
+        SetWindowLongPtr(m_wnd_tv, GWLP_USERDATA, reinterpret_cast<LPARAM>(this));
         m_treeproc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(m_wnd_tv,GWLP_WNDPROC, reinterpret_cast<LPARAM>(s_hook_proc)));
 
         if (m_populated)

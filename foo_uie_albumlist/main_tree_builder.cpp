@@ -450,7 +450,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
 
     metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
 
-    uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         build_nodes(p_data, true);
@@ -470,7 +470,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
         }
     }
 
-    uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
 }
 void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr> & p_data_const)
 {
@@ -483,7 +483,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
     p_data.reorder(perm.get_ptr());
 
 
-    uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         remove_nodes(p_data);
@@ -509,7 +509,7 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
         }
     }
 
-    uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
 }
 void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr> & p_const_data)
 {
@@ -522,7 +522,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
     p_data.reorder(perm.get_ptr());
 
 
-    uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         remove_nodes(p_data);
@@ -543,7 +543,7 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
         }
     }
 
-    uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
 }
 
 void album_list_window::refresh_tree()
@@ -564,8 +564,8 @@ void album_list_window::refresh_tree()
     {
         //bool b_sort = !!cfg_sorttree;
 
-        uSendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
-        uSendMessage(m_wnd_tv, TVM_DELETEITEM, 0, (long)TVI_ROOT);
+        SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+        SendMessage(m_wnd_tv, TVM_DELETEITEM, 0, (long)TVI_ROOT);
         m_selection.release();
         m_root.release();
 #if 0
@@ -667,6 +667,6 @@ void album_list_window::refresh_tree()
         console::formatter formatter; 
         formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
 #endif
-        uSendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+        SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
 }
