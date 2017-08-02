@@ -146,7 +146,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             uSendMessageText(list, CB_ADDSTRING, 0, "Add to playlist");
             uSendMessageText(list, CB_ADDSTRING, 0, "Send to new playlist");
             uSendMessageText(list, CB_ADDSTRING, 0, "Send to autosend playlist");
-            uSendMessage(list, CB_SETCURSEL, cfg_dblclk, 0);
+            uSendMessage(list, CB_SETCURSEL, cfg_double_click_action, 0);
 
             list = uGetDlgItem(wnd, IDC_MIDDLE);
             uSendMessageText(list, CB_ADDSTRING, 0, "None");
@@ -154,7 +154,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             uSendMessageText(list, CB_ADDSTRING, 0, "Add to playlist");
             uSendMessageText(list, CB_ADDSTRING, 0, "Send to new playlist");
             uSendMessageText(list, CB_ADDSTRING, 0, "Send to autosend playlist");
-            uSendMessage(list, CB_SETCURSEL, cfg_middle, 0);
+            uSendMessage(list, CB_SETCURSEL, cfg_middle_click_action, 0);
         }
 
 
@@ -182,10 +182,10 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             //                EnableWindow(uGetDlgItem(wnd,IDC_SORT_ORDER),cfg_sorttree);
             //                break;
         case IDC_MIDDLE | (CBN_SELCHANGE << 16) :
-            cfg_middle = uSendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
+            cfg_middle_click_action = uSendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
             break;
         case IDC_DBLCLK | (CBN_SELCHANGE << 16) :
-            cfg_dblclk = uSendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
+            cfg_double_click_action = uSendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
             break;
         case IDC_AUTO_SEND:
             cfg_autosend = uSendMessage((HWND)lp, BM_GETCHECK, 0, 0);

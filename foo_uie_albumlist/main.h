@@ -93,7 +93,8 @@ private:
     bool m_clicked{false};
     bool m_filter{false};
     bool m_timer{false};
-    DWORD m_clickpoint{0};
+    bool m_process_char{true};
+    POINT m_clickpoint{};
     int m_indent_default{0};
     string8 m_view{"by artist/album"};
     node_ptr m_root;
