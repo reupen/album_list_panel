@@ -403,40 +403,36 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
     }
 }
 
-void album_list_window::rebuild_nodes()
-{
-    metadb_handle_list_t<pfc::alloc_fast_aggressive> tracks;
-    tracks.prealloc(1024);
-    static_api_ptr_t<library_manager> api;
-    api->get_all_items(tracks);
-    build_nodes(tracks);
-}
-
 void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
 {
-    if (ptr.is_valid()) {
-        size_t count{ptr->get_entries().get_count()};
-        size_t index{};
-        bit_array_bittable mask(count);
-        bool b_found{false};
+    if (!ptr.is_valid())
+        return;
 
-        const metadb_handle_ptr* p_entries = ptr->get_entries().get_ptr();
-        const node_ptr* p_nodes = ptr->get_children().get_ptr();
+    size_t count{ptr->get_entries().get_count()};
 
-        for (size_t i{0}; i < count; i++) {
-            if (pfc::bsearch_simple_inline_t(p_tracks.get_ptr(), p_tracks.get_count(), p_entries[i], index)) {
-                mask.set(i, true);
-                b_found = true;
-            }
+    if (!count)
+        return;
+
+    size_t index{};
+    bit_array_bittable mask(count);
+    bool b_found{false};
+
+    const metadb_handle_ptr* p_entries = ptr->get_entries().get_ptr();
+    const node_ptr* p_nodes = ptr->get_children().get_ptr();
+
+    for (size_t i{0}; i < count; i++) {
+        if (pfc::bsearch_simple_inline_t(p_tracks.get_ptr(), p_tracks.get_count(), p_entries[i], index)) {
+            mask.set(i, true);
+            b_found = true;
         }
+    }
 
-        if (b_found)
-            ptr->remove_entries(mask);
+    if (b_found)
+        ptr->remove_entries(mask);
 
-        count = ptr->get_children().get_count();
-        for (size_t i{0}; i < count; i++) {
-            g_node_remove_tracks_recur(p_nodes[i], p_tracks);
-        }
+    count = ptr->get_children().get_count();
+    for (size_t i{0}; i < count; i++) {
+        g_node_remove_tracks_recur(p_nodes[i], p_tracks);
     }
 }
 
@@ -480,15 +476,18 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         m_root.release();
     }
 
-    mmh::Permuation perm(to_remove.get_count());
-    mmh::sort_get_permuation(to_remove.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
-    to_remove.reorder(perm.get_ptr());
+    if (preserve_existing && to_remove.get_count()) {
+        mmh::Permuation perm(to_remove.get_count());
+        mmh::sort_get_permuation(to_remove.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
+        to_remove.reorder(perm.get_ptr());
+    }
 
     SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
-        remove_nodes(to_remove);
-        build_nodes(to_add, true);
+        if (preserve_existing)
+            remove_nodes(to_remove);
+        build_nodes(to_add, preserve_existing);
     }
     catch (pfc::exception const& e) {
         string_formatter formatter;
