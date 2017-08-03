@@ -9,7 +9,8 @@ public:
     void setup_children(node_ptr ptr);
 
     static void s_setup_children(HWND wnd_tv, node_ptr ptr);
-    static void s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after = TVI_LAST);
+    static void s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx,
+                             HTREEITEM ti_after = TVI_LAST);
 private:
     HWND m_wnd_tv;
     uint16_t m_initial_level;

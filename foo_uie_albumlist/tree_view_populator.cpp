@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
-void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after)
+void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx,
+                                     HTREEITEM ti_after)
 {
     TRACK_CALL_TEXT("album_list_panel::TreeViewPopulator::s_setup_tree");
     TreeViewPopulator populater{wnd_tv, ptr->m_level};
@@ -20,21 +21,18 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
 
     ptr->purge_empty_children(m_wnd_tv);
 
-    if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root))
-    {
+    if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root)) {
         const char* text = get_item_text(ptr, idx, max_idx);
 
         m_utf16_converter.convert(text);
-        if (ptr->m_ti)
-        {
+        if (ptr->m_ti) {
             TVITEM tvi{};
             tvi.hItem = ptr->m_ti;
             tvi.mask = TVIF_TEXT;
             tvi.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
             TreeView_SetItem(m_wnd_tv, &tvi);
         }
-        else
-        {
+        else {
             TVINSERTSTRUCT is{};
             is.hParent = parent;
             is.hInsertAfter = ti_after;
@@ -50,7 +48,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
                 is.item.cChildren = 1;
             }
 
-            ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);;
+            ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);
         }
         ptr->m_label_dirty = false;
     }
@@ -64,12 +62,11 @@ void TreeViewPopulator::setup_children(node_ptr ptr)
     const auto& children = ptr->get_children();
     const auto children_count = children.get_count();
 
-    for (size_t n = 0; n < children_count; n++)
-    {
-        HTREEITEM ti_aft = n ? children[n - 1]->m_ti : nullptr;
+    for (size_t i{0}; i < children_count; i++) {
+        HTREEITEM ti_aft = i ? children[i - 1]->m_ti : nullptr;
         if (ti_aft == nullptr)
             ti_aft = TVI_FIRST;
-        setup_tree(ptr->m_ti, children[n], n, children_count, ti_aft);
+        setup_tree(ptr->m_ti, children[i], i, children_count, ti_aft);
     }
     ptr->m_children_inserted = true;
 }
@@ -81,11 +78,9 @@ const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_
 
     m_text_buffer.reset();
 
-    if (cfg_show_numbers2 && item_count > 0)
-    {
+    if (cfg_show_numbers2 && item_count > 0) {
         t_size pad = 0;
-        while (item_count > 0)
-        {
+        while (item_count > 0) {
             item_count /= 10;
             pad++;
         }
@@ -97,11 +92,9 @@ const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_
 
     m_text_buffer += ptr->get_val();
 
-    if (cfg_show_numbers)
-    {
+    if (cfg_show_numbers) {
         t_size num = ptr->get_num_children();
-        if (num > 0)
-        {
+        if (num > 0) {
             char blah[64];
             sprintf_s(blah, " (%u)", num);
             m_text_buffer += blah;
