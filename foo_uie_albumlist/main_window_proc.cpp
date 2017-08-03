@@ -105,11 +105,9 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         ID_VIEW_BASE
     };
 
-    HMENU menu = CreatePopupMenu();
+    const HMENU menu{CreatePopupMenu()};
     service_ptr_t<contextmenu_manager> p_menu_manager;
-
-    HTREEITEM treeitem = nullptr;
-
+    HTREEITEM treeitem{nullptr};
     TVHITTESTINFO ti{};
 
     if (pt.x != -1 && pt.y != -1) {
@@ -117,9 +115,6 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         ScreenToClient(m_wnd_tv, &ti.pt);
         TreeView_HitTest(m_wnd_tv, &ti);
         if (ti.hItem && (ti.flags & TVHT_ONITEM)) {
-            //FIX THIS AND AUTOSEND
-            //TreeView_Select(list, ti.hItem, TVGN_DROPHILITE);
-            //SendMessage(list,TVM_SELECTITEM,TVGN_DROPHILITE,(long)ti.hItem);
             treeitem = ti.hItem;
         }
     }
@@ -140,28 +135,22 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     TreeView_Select(m_wnd_tv, treeitem, TVGN_DROPHILITE);
 
     HMENU menu_view = CreatePopupMenu();
-    size_t view_count = cfg_view_list.get_count();
-    string8_fastalloc temp;
-    temp.prealloc(32);
+    const size_t view_count = cfg_view_list.get_count();
 
     uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(directory_structure_view_name, m_view) ? MF_CHECKED : 0),
         ID_VIEW_BASE + 0, directory_structure_view_name);
 
-    list_t<string_simple, pfc::alloc_fast> views;
-
-    views.add_item(string_simple(directory_structure_view_name));
+    std::vector<std::string> view_names;
+    view_names.emplace_back(directory_structure_view_name);
 
     for (size_t i = 0; i < view_count; i++) {
-        temp = cfg_view_list.get_name(i);
-        string_simple item(temp.get_ptr());
-
-        if (item) {
-            uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(temp, m_view) ? MF_CHECKED : 0),
-                ID_VIEW_BASE + views.add_item(item), temp);
-        }
+        auto view_name = cfg_view_list.get_name(i);
+        view_names.emplace_back(view_name);
+        uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(view_name, m_view) ? MF_CHECKED : 0),
+            ID_VIEW_BASE + i + 1, view_name);
     }
 
-    const unsigned IDM_MANAGER_BASE = ID_VIEW_BASE + views.get_count();
+    const unsigned IDM_MANAGER_BASE = ID_VIEW_BASE + view_names.size();
 
     uAppendMenu(menu, MF_STRING | MF_POPUP, reinterpret_cast<UINT>(menu_view), "View");
 
@@ -209,8 +198,8 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         }
         else if (cmd >= ID_VIEW_BASE) {
             const unsigned view_index = cmd - ID_VIEW_BASE;
-            if (view_index < views.get_count()) {
-                m_view = views[view_index].get_ptr();
+            if (view_index < view_names.size()) {
+                m_view = view_names[view_index].c_str();
                 refresh_tree();
             }
         }
