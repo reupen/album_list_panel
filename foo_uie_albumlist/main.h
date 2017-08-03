@@ -72,6 +72,8 @@ public:
     void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
 
     LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
+    LRESULT on_wm_contextmenu(POINT pt);
+    void on_tree_view_wm_notify(LPNMHDR hdr);
     LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     void get_menu_items(ui_extension::menu_hook_t& p_hook) override;
 
