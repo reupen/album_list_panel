@@ -4,8 +4,6 @@
 #define IDC_FILTER 1001
 #define EDIT_TIMER_ID 2001
 
-#define USE_TIMER
-
 extern const char* directory_structure_view_name;
 
 class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic {

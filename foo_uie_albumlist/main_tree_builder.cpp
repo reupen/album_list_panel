@@ -568,10 +568,10 @@ void album_list_window::refresh_tree()
         SendMessage(m_wnd_tv, TVM_DELETEITEM, 0, (long)TVI_ROOT);
         m_selection.release();
         m_root.release();
-#ifdef USE_TIMER
+
         hires_timer timer;
         timer.start();
-#endif
+
         try {
             rebuild_nodes();
         }
@@ -587,10 +587,10 @@ void album_list_window::refresh_tree()
 
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
         }
-#ifdef USE_TIMER
+
         console::formatter formatter; 
         formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
-#endif
+
         SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
 }
