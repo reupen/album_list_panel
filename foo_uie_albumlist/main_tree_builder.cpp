@@ -398,6 +398,9 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                 entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
     }
+    if (!preserve_existing) {
+        m_root->sort_children();
+    }
 }
 
 void album_list_window::rebuild_nodes()
@@ -444,92 +447,48 @@ void album_list_window::remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggres
 
 void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
 {
-    if (!m_populated)
-        return;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add = p_const_data;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove;
 
-    TRACK_CALL_TEXT("album_list_panel_refresh_tree");
-
-    metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
-
-    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
-
-    try {
-        build_nodes(p_data, true);
-    }
-    catch (pfc::exception const& e) {
-        string_formatter formatter;
-        popup_message::g_show(
-            formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
-            popup_message::icon_error
-        );
-        m_root.release();
-    }
-
-    if (m_root.is_valid()) {
-        metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
-    }
-
-    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    update_tree(to_add, to_remove, true);
 }
 
 void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr>& p_data_const)
 {
-    if (!m_populated)
-        return;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove = p_data_const;
 
-    metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_data_const;
-
-    mmh::Permuation perm(p_data.get_count());
-    mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
-    p_data.reorder(perm.get_ptr());
-
-
-    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
-
-    try {
-        remove_nodes(p_data);
-    }
-    catch (pfc::exception const& e) {
-        string_formatter formatter;
-        popup_message::g_show(
-            formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
-            popup_message::icon_error
-        );
-        m_root.release();
-    }
-
-    if (m_root.is_valid()) {
-        if (!m_root->get_entries().get_count()) {
-            TreeView_DeleteItem(m_wnd_tv, m_root->m_ti);
-            m_root.release();
-            m_selection.release();
-        }
-        else {
-            metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
-        }
-    }
-
-    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    update_tree(to_add, to_remove, true);
 }
 
 void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
 {
-    if (!m_populated)
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> modified = p_const_data;
+
+    update_tree(modified, modified, true);
+}
+
+void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
+    metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_remove, bool preserve_existing)
+{
+    if (preserve_existing && !m_populated)
         return;
 
-    metadb_handle_list_t<pfc::alloc_fast_aggressive> p_data = p_const_data;
+    if (!preserve_existing) {
+        TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
+        m_selection.release();
+        m_root.release();
+    }
 
-    mmh::Permuation perm(p_data.get_count());
-    mmh::sort_get_permuation(p_data.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
-    p_data.reorder(perm.get_ptr());
+    mmh::Permuation perm(to_remove.get_count());
+    mmh::sort_get_permuation(to_remove.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
+    to_remove.reorder(perm.get_ptr());
 
     SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
-        remove_nodes(p_data);
-        build_nodes(p_data, true);
+        remove_nodes(to_remove);
+        build_nodes(to_add, true);
     }
     catch (pfc::exception const& e) {
         string_formatter formatter;
@@ -538,11 +497,19 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
             popup_message::icon_error
         );
         m_root.release();
+        m_selection.release();
+        TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
     }
 
     if (m_root.is_valid()) {
-        metadb_handle_list_t<pfc::alloc_fast_aggressive> entries;
-        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+        if (!m_root->get_entries().get_count()) {
+            m_root.release();
+            m_selection.release();
+            TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
+        }
+        else {
+            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+        }
     }
 
     SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
@@ -555,40 +522,22 @@ void album_list_window::refresh_tree()
     if (!m_wnd_tv)
         return;
 
-    m_populated = true;
-
     static_api_ptr_t<library_manager> api;
     if (!api->is_library_enabled())
         return;
 
-    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
-    TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
-    m_selection.release();
-    m_root.release();
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add;
+    metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove;
+    to_add.prealloc(1024);
+    api->get_all_items(to_add);
 
     hires_timer timer;
     timer.start();
 
-    try {
-        rebuild_nodes();
-    }
-    catch (pfc::exception const& e) {
-        string_formatter formatter;
-        popup_message::g_show(
-            formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
-            popup_message::icon_error
-        );
-        m_root.release();
-    }
-
-    if (m_root.is_valid()) {
-        m_root->sort_children();
-
-        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
-    }
+    update_tree(to_add, to_remove, false);
 
     console::formatter formatter;
     formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
 
-    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    m_populated = m_root.is_valid();
 }
