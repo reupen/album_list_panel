@@ -2,6 +2,7 @@
 #include "menu.h"
 #include "node.h"
 #include "tree_view_populator.h"
+#include "actions.h"
 
 //TODO: node name as field
 
@@ -409,6 +410,24 @@ void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)
     p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_select_view(this)));
     p_hook.add_node(node_filter);
     p_hook.add_node(node_settings);
+}
+
+void album_list_window::do_click_action(ClickAction click_action)
+{
+    switch (click_action) {
+    case ClickAction::send_to_playlist:
+        do_playlist(m_selection, true);
+        break;
+    case ClickAction::add_to_playlist:
+        do_playlist(m_selection, false);
+        break;
+    case ClickAction::send_to_new_playlist:
+        do_playlist(m_selection, true, true);
+        break;
+    case ClickAction::send_to_autosend_playlist:
+        do_autosend_playlist(m_selection, m_view, true);
+        break;
+    }
 }
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}

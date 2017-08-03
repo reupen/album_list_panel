@@ -133,20 +133,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
             if (cfg_middle_click_action) {
                 TreeView_SelectItem(wnd, ti.hItem);
 
-                switch (cfg_middle_click_action) {
-                case 1:
-                    do_playlist(m_selection, true);
-                    break;
-                case 2:
-                    do_playlist(m_selection, false);
-                    break;
-                case 3:
-                    do_playlist(m_selection, true, true);
-                    break;
-                case 4:
-                    do_autosend_playlist(m_selection, m_view, true);
-                    break;
-                }
+                do_click_action(static_cast<ClickAction>(cfg_middle_click_action.get_value()));
             }
         }
         break;
@@ -161,24 +148,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
 
             if (ti.flags & TVHT_ONITEM) {
 
-                switch (cfg_double_click_action) {
-                case 0:
-                    do_playlist(m_selection, true);
-                    return 0;
-                case 1:
-                    do_playlist(m_selection, true);
-                    return 0;
-                case 2:
-                    do_playlist(m_selection, false);
-                    return 0;
-                case 3:
-                    do_playlist(m_selection, true, true);
-                    return 0;
-                case 4:
-                    do_autosend_playlist(m_selection, m_view, true);
-                    return 0;
-                }
-                break;
+                do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
             }
         }
     }

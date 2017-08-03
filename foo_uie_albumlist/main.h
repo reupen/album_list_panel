@@ -6,6 +6,14 @@
 
 extern const char* directory_structure_view_name;
 
+enum class ClickAction {
+    none_or_default,
+    send_to_playlist,
+    add_to_playlist,
+    send_to_new_playlist,
+    send_to_autosend_playlist
+};
+
 class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic {
     friend class font_notify;
     friend class node;
@@ -84,6 +92,8 @@ private:
     static const GUID s_extension_guid;
     static const char* s_class_name;
     static HFONT s_font;
+
+    void do_click_action(ClickAction click_action);
 
     HWND m_wnd_tv{nullptr};
     HWND m_wnd_edit{nullptr};
