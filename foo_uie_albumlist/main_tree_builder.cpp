@@ -468,9 +468,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     }
 
     if (preserve_existing && to_remove.get_count()) {
-        mmh::Permuation perm(to_remove.get_count());
-        mmh::sort_get_permuation(to_remove.get_ptr(), perm, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
-        to_remove.reorder(perm.get_ptr());
+        mmh::in_place_sort(to_remove, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
     }
 
     SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
