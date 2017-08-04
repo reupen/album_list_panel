@@ -21,7 +21,7 @@ install:
 - cmd: git submodule update --init --recursive
 build_script:
 - ps: >-
-    $command = 'msbuild "vc15/alum_list_panel.sln" /m /verbosity:normal /p:PlatformToolset=' + $Env:PlatformToolset + ' /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"'
+    $command = 'msbuild "vc15/album_list_panel.sln" /m /verbosity:normal /p:PlatformToolset=' + $Env:PlatformToolset + ' /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"'
 
     iex $command
 
