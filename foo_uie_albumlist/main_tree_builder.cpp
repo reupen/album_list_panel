@@ -1,15 +1,6 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
-template<typename t_list, typename t_compare>
-static void g_sort_qsort(t_list& p_list, t_compare p_compare, bool stabilise)
-{
-    const size_t size = pfc::array_size_t(p_list);
-    mmh::Permuation perm(size);
-    mmh::sort_get_permuation(p_list, perm, p_compare, stabilise, false, true);
-    p_list.reorder(perm.get_ptr());
-}
-
 template<typename String>
 const char* c_str(String& string)
 {
@@ -349,7 +340,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                 entries[n].m_item = tracks[n].get_ptr();
             }
 
-            g_sort_qsort(entries, process_bydir_entry::g_compare, false);
+            mmh::single_reordering_sort(entries, process_bydir_entry::g_compare, false);
 
             if (!preserve_existing || !m_root.is_valid())
                 m_root = new node(nullptr, 0, this, 0);
