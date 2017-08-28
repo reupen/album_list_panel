@@ -282,7 +282,7 @@ size_t process_byformat_add_branches(metadb_handle* handle, const char* p_text, 
             const process_byformat_branch_choice& choice = choices[segments[segment_index].m_current_choice];
             buffer.add_string(&p_text[choice.m_start], choice.m_end - choice.m_start);
         }
-        entries.push_back(process_byformat_entry<>{handle, buffer});
+        entries.push_back(process_byformat_entry<>{handle, buffer.get_ptr()});
 
         for (size_t segment_index{0}; segment_index < segment_count; segment_index++) {
             process_byformat_branch_segment& segment = segments[segment_count - segment_index - 1];
