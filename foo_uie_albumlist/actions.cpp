@@ -37,7 +37,7 @@ void do_playlist(const node_ptr& src, bool replace, bool b_new)
         else
             src->send_to_playlist(replace);
 
-        if (replace && cfg_autoplay) {
+        if (replace && cfg_play_on_send) {
             static_api_ptr_t<playlist_manager>()->reset_playing_playlist();
             static_api_ptr_t<play_control>()->play_start();
         }
@@ -51,7 +51,7 @@ void do_autosend_playlist(const node_ptr& src, pfc::string_base& view, bool b_pl
         string8 playlist_name;
 
         titleformat_hook_view tf_hook{view};
-        static_api_ptr_t<titleformat_compiler>()->run(&tf_hook, playlist_name, cfg_playlist_name);
+        static_api_ptr_t<titleformat_compiler>()->run(&tf_hook, playlist_name, cfg_autosend_playlist_name);
         const auto index = api->find_or_create_playlist(playlist_name, pfc_infinite);
 
         api->playlist_undo_backup(index);
@@ -66,7 +66,7 @@ void do_autosend_playlist(const node_ptr& src, pfc::string_base& view, bool b_pl
 
         api->set_active_playlist(index);
 
-        if (b_play && cfg_autoplay) {
+        if (b_play && cfg_play_on_send) {
             api->reset_playing_playlist();
             static_api_ptr_t<play_control>()->play_start();
         }

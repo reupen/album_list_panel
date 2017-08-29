@@ -23,7 +23,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
         uie::window_ptr p_this{this};
         bool processed = false;
 
-        if (get_host()->get_keyboard_shortcuts_enabled() && wp != VK_LEFT && wp != VK_RIGHT && cfg_keyb)
+        if (get_host()->get_keyboard_shortcuts_enabled() && wp != VK_LEFT && wp != VK_RIGHT && cfg_process_keyboard_shortcuts)
             processed = g_process_keydown_keyboard_shortcuts(wp);
 
         m_process_char = !processed;
@@ -34,7 +34,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
         break;
     }
     case WM_CHAR:
-        if (cfg_keyb && !m_process_char) {
+        if (cfg_process_keyboard_shortcuts && !m_process_char) {
             m_process_char = true;
             return 0;
         }
@@ -51,7 +51,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
     }
     case WM_GETDLGCODE: {
         const auto lpmsg = reinterpret_cast<LPMSG>(lp);
-        if (lpmsg && cfg_keyb) {
+        if (lpmsg && cfg_process_keyboard_shortcuts) {
             // let dialog manager handle it, otherwise to kill ping we have to process WM_CHAR to return 0 on wp == 0xd and 0xa
             const auto is_keydown_or_up = lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_KEYUP;
             const auto is_return_or_tab = lpmsg->wParam == VK_RETURN || lpmsg->wParam == VK_TAB;

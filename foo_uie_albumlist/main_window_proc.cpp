@@ -15,7 +15,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         create_tree();
         create_filter();
 
-        if (cfg_populate)
+        if (cfg_populate_on_init)
             refresh_tree();
 
         static_api_ptr_t<library_manager_v3>()->register_callback(this);
@@ -135,7 +135,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     TreeView_Select(m_wnd_tv, treeitem, TVGN_DROPHILITE);
 
     HMENU menu_view = CreatePopupMenu();
-    const size_t view_count = cfg_view_list.get_count();
+    const size_t view_count = cfg_views.get_count();
 
     uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(directory_structure_view_name, m_view) ? MF_CHECKED : 0),
         ID_VIEW_BASE + 0, directory_structure_view_name);
@@ -144,7 +144,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     view_names.emplace_back(directory_structure_view_name);
 
     for (size_t i = 0; i < view_count; i++) {
-        auto view_name = cfg_view_list.get_name(i);
+        auto view_name = cfg_views.get_name(i);
         view_names.emplace_back(view_name);
         uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(view_name, m_view) ? MF_CHECKED : 0),
             ID_VIEW_BASE + i + 1, view_name);
@@ -154,7 +154,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 
     uAppendMenu(menu, MF_STRING | MF_POPUP, reinterpret_cast<UINT>(menu_view), "View");
 
-    if (!m_populated && !cfg_populate)
+    if (!m_populated && !cfg_populate_on_init)
         uAppendMenu(menu, MF_STRING, ID_REFRESH, "Populate");
     uAppendMenu(menu, MF_STRING | (m_filter ? MF_CHECKED : 0), ID_FILT, "Filter");
     uAppendMenu(menu, MF_STRING, ID_CONF, "Settings");
@@ -225,7 +225,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
                 create_or_destroy_filter();
                 break;
             case ID_REFRESH:
-                if (!m_populated && !cfg_populate)
+                if (!m_populated && !cfg_populate_on_init)
                     refresh_tree();
                 break;
             }
@@ -247,7 +247,7 @@ void album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
             TreeViewPopulator::s_setup_children(m_wnd_tv, p_node);
         }
 
-        if (cfg_picmixer && param->action == TVE_EXPAND) {
+        if (cfg_collapse_other_nodes_on_expansion && param->action == TVE_EXPAND) {
             uih::tree_view_collapse_other_nodes(param->hdr.hwndFrom, param->itemNew.hItem);
         }
         break;

@@ -145,10 +145,10 @@ void node::purge_empty_children(HWND wnd)
         }
     }
 
-    if (index_first_removed != pfc_infinite && cfg_show_numbers)
+    if (index_first_removed != pfc_infinite && cfg_show_subitem_counts)
         m_label_dirty = true;
 
-    if (index_first_removed != pfc_infinite && cfg_show_numbers2) {
+    if (index_first_removed != pfc_infinite && cfg_show_item_indices) {
         const t_size count = m_children.get_count();
         for (size_t i = index_first_removed; i < count; i++) {
             m_children[i]->m_label_dirty = true;

@@ -35,13 +35,13 @@ public:
     {
         fbh::fcl::Writer w(writer, p_abort);
         w.write_raw(static_cast<uint32_t>(stream_version));
-        const uint32_t count = pfc::downcast_guarded<uint32_t>(cfg_view_list.get_count());
+        const uint32_t count = pfc::downcast_guarded<uint32_t>(cfg_views.get_count());
         w.write_raw(count);
 
         for (uint32_t i{0}; i < count; i++) {
             w.write_raw(uint32_t{2});
-            w.write_item(view_name, cfg_view_list.get_name(i));
-            w.write_item(view_script, cfg_view_list.get_value(i));
+            w.write_item(view_name, cfg_views.get_name(i));
+            w.write_item(view_script, cfg_views.get_value(i));
         }
     }
 
@@ -52,7 +52,7 @@ public:
         const auto version = fcl_reader.read_raw_item<uint32_t>();
 
         if (version <= stream_version) {
-            cfg_view_list.remove_all();
+            cfg_views.remove_all();
             const auto count = fcl_reader.read_raw_item<uint32_t>();
 
             for (uint32_t i{0}; i < count; i++)
@@ -96,7 +96,7 @@ private:
             }
             --elems;
         }
-        cfg_view_list.add_item(name, script);
+        cfg_views.add_item(name, script);
     }
 };
 
@@ -121,15 +121,15 @@ public:
         fbh::fcl::Writer w(writer, p_abort);
 
         w.write_raw(static_cast<uint32_t>(stream_version));
-        w.write_item(id_sub_item_counts, cfg_show_numbers);
-        w.write_item(id_sub_item_indices, cfg_show_numbers2);
-        w.write_item(id_horizontal_scrollbar, cfg_hscroll);
-        w.write_item(id_root_node, cfg_show_root);
-        w.write_item(id_use_item_padding, cfg_custom_item_height);
-        w.write_item(id_item_padding, cfg_item_height);
-        w.write_item(id_use_indentation, cfg_use_custom_indent);
-        w.write_item(id_indentation, cfg_indent);
-        w.write_item(id_edge_style, cfg_frame);
+        w.write_item(id_sub_item_counts, cfg_show_subitem_counts);
+        w.write_item(id_sub_item_indices, cfg_show_item_indices);
+        w.write_item(id_horizontal_scrollbar, cfg_show_horizontal_scroll_bar);
+        w.write_item(id_root_node, cfg_show_root_node);
+        w.write_item(id_use_item_padding, cfg_use_custom_vertical_item_padding);
+        w.write_item(id_item_padding, cfg_custom_vertical_padding_amount);
+        w.write_item(id_use_indentation, cfg_use_custom_indentation);
+        w.write_item(id_indentation, cfg_custom_indentation_amount);
+        w.write_item(id_edge_style, cfg_frame_style);
     }
 
     void set_data(stream_reader* reader, size_t size, t_uint32 type, cui::fcl::t_import_feedback& feedback,
@@ -170,31 +170,31 @@ private:
 
         switch (id) {
         case id_sub_item_counts:
-            fcl_reader.read_item(cfg_show_numbers);
+            fcl_reader.read_item(cfg_show_subitem_counts);
             break;
         case id_sub_item_indices:
-            fcl_reader.read_item(cfg_show_numbers2);
+            fcl_reader.read_item(cfg_show_item_indices);
             break;
         case id_horizontal_scrollbar:
-            fcl_reader.read_item(cfg_hscroll);
+            fcl_reader.read_item(cfg_show_horizontal_scroll_bar);
             break;
         case id_root_node:
-            fcl_reader.read_item(cfg_show_root);
+            fcl_reader.read_item(cfg_show_root_node);
             break;
         case id_use_item_padding:
-            fcl_reader.read_item(cfg_custom_item_height);
+            fcl_reader.read_item(cfg_use_custom_vertical_item_padding);
             break;
         case id_item_padding:
-            fcl_reader.read_item(cfg_item_height);
+            fcl_reader.read_item(cfg_custom_vertical_padding_amount);
             break;
         case id_use_indentation:
-            fcl_reader.read_item(cfg_use_custom_indent);
+            fcl_reader.read_item(cfg_use_custom_indentation);
             break;
         case id_indentation:
-            fcl_reader.read_item(cfg_indent);
+            fcl_reader.read_item(cfg_custom_indentation_amount);
             break;
         case id_edge_style:
-            fcl_reader.read_item(cfg_frame);
+            fcl_reader.read_item(cfg_frame_style);
             break;
         default:
             fcl_reader.skip(elem_size);

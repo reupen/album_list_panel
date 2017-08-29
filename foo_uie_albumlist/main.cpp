@@ -45,8 +45,8 @@ void album_list_window::s_update_all_fonts()
         auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
             uih::set_window_font(wnd, s_font);
-            if (cfg_use_custom_indent)
-                TreeView_SetIndent(wnd, cfg_indent);
+            if (cfg_use_custom_indentation)
+                TreeView_SetIndent(wnd, cfg_custom_indentation_amount);
 
             wnd = s_instances[i]->m_wnd_edit;
             if (wnd) {
@@ -68,9 +68,9 @@ album_list_window::~album_list_window()
 void album_list_window::s_update_all_window_frames()
 {
     long flags = 0;
-    if (cfg_frame == 1)
+    if (cfg_frame_style == 1)
         flags |= WS_EX_CLIENTEDGE;
-    if (cfg_frame == 2)
+    if (cfg_frame_style == 2)
         flags |= WS_EX_STATICEDGE;
 
     const auto count = s_instances.get_count();
@@ -158,7 +158,7 @@ void album_list_window::s_update_all_indents()
     for (size_t i{0}; i < count; i++) {
         const auto wnd = s_instances[i]->get_wnd();
         if (wnd) {
-            const auto indentation = cfg_use_custom_indent ? cfg_indent : s_instances[i]->m_indent_default;
+            const auto indentation = cfg_use_custom_indentation ? cfg_custom_indentation_amount : s_instances[i]->m_indent_default;
             TreeView_SetIndent(s_instances[i]->m_wnd_tv, indentation);
         }
     }
@@ -171,9 +171,9 @@ bool album_list_window::is_bydir() const
 
 const char* album_list_window::get_hierarchy() const
 {
-    const auto index = cfg_view_list.find_item(m_view);
+    const auto index = cfg_views.find_item(m_view);
     if (index != pfc_infinite)
-        return cfg_view_list.get_value(index);
+        return cfg_views.get_value(index);
     return "N/A";
 }
 
@@ -214,8 +214,8 @@ void album_list_window::update_item_height()
 {
     const auto font = uih::get_window_font(m_wnd_tv);
     int font_height = -1;
-    if (cfg_custom_item_height) {
-        font_height = uGetFontHeight(font) + cfg_item_height;
+    if (cfg_use_custom_vertical_item_padding) {
+        font_height = uGetFontHeight(font) + cfg_custom_vertical_padding_amount;
         if (font_height < 1)
             font_height = 1;
     }
@@ -292,14 +292,14 @@ void album_list_window::create_tree()
     const auto wnd = get_wnd();
 
     auto flags = 0l;
-    if (cfg_frame == 1)
+    if (cfg_frame_style == 1)
         flags |= WS_EX_CLIENTEDGE;
-    else if (cfg_frame == 2)
+    else if (cfg_frame_style == 2)
         flags |= WS_EX_STATICEDGE;
 
     m_wnd_tv = CreateWindowEx(flags, WC_TREEVIEW, _T("Album list"),
                               TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | (
-                                  cfg_hscroll ? 0 : TVS_NOHSCROLL) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP, 0,
+                                  cfg_show_horizontal_scroll_bar ? 0 : TVS_NOHSCROLL) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP, 0,
                               0, 0, 0,
                               wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
 
@@ -313,15 +313,15 @@ void album_list_window::create_tree()
 
         if (s_font) {
             uih::set_window_font(m_wnd_tv, s_font, false);
-            if (cfg_use_custom_indent)
-                TreeView_SetIndent(wnd, cfg_indent);
+            if (cfg_use_custom_indentation)
+                TreeView_SetIndent(wnd, cfg_custom_indentation_amount);
         }
         else {
             s_update_all_fonts();
         }
 
 
-        if (cfg_custom_item_height)
+        if (cfg_use_custom_vertical_item_padding)
             update_item_height();
 
         update_colours();

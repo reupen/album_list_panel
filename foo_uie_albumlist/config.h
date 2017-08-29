@@ -88,24 +88,24 @@ extern const GUID g_guid_album_list_font,
     g_guid_album_list_colours,
     g_guid_preferences_album_list_panel;
 
-extern cfg_view_list_t cfg_view_list;
+extern cfg_view_list_t cfg_views;
 extern cfg_bool cfg_themed;
-extern cfg_int cfg_populate,
+extern cfg_int cfg_populate_on_init,
     cfg_autosend,
-    cfg_picmixer,
+    cfg_collapse_other_nodes_on_expansion,
     cfg_add_items_use_core_sort,
     cfg_add_items_select,
-    cfg_show_numbers,
-    cfg_show_numbers2,
+    cfg_show_subitem_counts,
+    cfg_show_item_indices,
     cfg_double_click_action,
-    cfg_keyb,
+    cfg_process_keyboard_shortcuts,
     cfg_middle_click_action,
-    cfg_frame,
-    cfg_hscroll,
-    cfg_show_root,
-    cfg_autoplay,
-    cfg_use_custom_indent,
-    cfg_indent,
-    cfg_item_height,
-    cfg_custom_item_height;
-extern cfg_string cfg_playlist_name;
+    cfg_frame_style,
+    cfg_show_horizontal_scroll_bar,
+    cfg_show_root_node,
+    cfg_play_on_send,
+    cfg_use_custom_indentation,
+    cfg_custom_indentation_amount,
+    cfg_custom_vertical_padding_amount,
+    cfg_use_custom_vertical_item_padding;
+extern cfg_string cfg_autosend_playlist_name;

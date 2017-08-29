@@ -21,7 +21,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
 
     ptr->purge_empty_children(m_wnd_tv);
 
-    if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root)) {
+    if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root_node)) {
         const char* text = get_item_text(ptr, idx, max_idx);
 
         m_utf16_converter.convert(text);
@@ -73,12 +73,12 @@ void TreeViewPopulator::setup_children(node_ptr ptr)
 
 const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_size item_count)
 {
-    if ((!cfg_show_numbers2 || item_count == 0) && !cfg_show_numbers)
+    if ((!cfg_show_item_indices || item_count == 0) && !cfg_show_subitem_counts)
         return ptr->get_val();
 
     m_text_buffer.reset();
 
-    if (cfg_show_numbers2 && item_count > 0) {
+    if (cfg_show_item_indices && item_count > 0) {
         t_size pad = 0;
         while (item_count > 0) {
             item_count /= 10;
@@ -92,7 +92,7 @@ const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_
 
     m_text_buffer += ptr->get_val();
 
-    if (cfg_show_numbers) {
+    if (cfg_show_subitem_counts) {
         t_size num = ptr->get_num_children();
         if (num > 0) {
             char blah[64];

@@ -33,7 +33,7 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     uMessageBox(wnd, "Please enter a valid name.", nullptr, 0);
                     break;
                 }
-                unsigned idx_find = cfg_view_list.find_item(temp);
+                unsigned idx_find = cfg_views.find_item(temp);
                 if (idx_find != -1 && (ptr->b_new || ((idx_find != ptr->idx) && (idx_find != -1)))) {
                     uMessageBox(wnd, "View of this name already exists. Please enter another one.", nullptr, 0);
                     break;
@@ -79,10 +79,10 @@ void tab_general::refresh_views()
 { {
         HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
         SendMessage(list, LB_RESETCONTENT, 0, 0);
-        unsigned n, m = cfg_view_list.get_count();
+        unsigned n, m = cfg_views.get_count();
         string8_fastalloc temp;
         for (n = 0; n < m; n++) {
-            cfg_view_list.format_display(n, temp);
+            cfg_views.format_display(n, temp);
             uSendMessageText(list, LB_ADDSTRING, 0, temp);
         }
     }
@@ -109,8 +109,8 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         refresh_views();
 
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_numbers, 0);
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_numbers2, 0);
+        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
+        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
 
         HWND list = uGetDlgItem(wnd, IDC_DBLCLK);
         uSendMessageText(list, CB_ADDSTRING, 0, "Expand/collapse (default)");
@@ -128,7 +128,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         uSendMessageText(list, CB_ADDSTRING, 0, "Send to autosend playlist");
         SendMessage(list, CB_SETCURSEL, cfg_middle_click_action, 0);
 
-        uSetDlgItemText(wnd, IDC_PLAYLIST_NAME, cfg_playlist_name);
+        uSetDlgItemText(wnd, IDC_PLAYLIST_NAME, cfg_autosend_playlist_name);
 
         uSendDlgItemMessage(wnd, IDC_AUTO_SEND, BM_SETCHECK, cfg_autosend, 0);
 
@@ -148,7 +148,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             cfg_autosend = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case (EN_KILLFOCUS << 16) | IDC_PLAYLIST_NAME:
-            cfg_playlist_name = string_utf8_from_window((HWND)lp);
+            cfg_autosend_playlist_name = string_utf8_from_window((HWND)lp);
             break;
         case IDC_VIEWS | (LBN_DBLCLK << 16): {
             const auto list = reinterpret_cast<HWND>(lp);
@@ -157,15 +157,15 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 edit_view_param p;
                 p.b_new = false;
                 p.idx = idx;
-                p.name = cfg_view_list.get_name(idx);
-                p.value = cfg_view_list.get_value(idx);
+                p.name = cfg_views.get_name(idx);
+                p.value = cfg_views.get_value(idx);
                 edit_view_param pbefore = p;
                 if (run_edit_view(p, wnd)) {
                     string8 temp;
-                    if (idx < cfg_view_list.get_count()) //modal message loop
+                    if (idx < cfg_views.get_count()) //modal message loop
                     {
-                        cfg_view_list.modify_item(idx, p.name, p.value);
-                        cfg_view_list.format_display(idx, temp);
+                        cfg_views.modify_item(idx, p.name, p.value);
+                        cfg_views.format_display(idx, temp);
                         SendMessage(list, LB_DELETESTRING, idx, 0);
                         uSendMessageText(list, LB_INSERTSTRING, idx, temp);
                         uSendMessageText(list, LB_SETCURSEL, idx, nullptr);
@@ -180,9 +180,9 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
             if (idx != LB_ERR && idx > 0) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
-                cfg_view_list.swap(idx, idx - 1);
+                cfg_views.swap(idx, idx - 1);
                 string8 temp;
-                cfg_view_list.format_display(idx - 1, temp);
+                cfg_views.format_display(idx - 1, temp);
                 uSendMessageText(list, LB_INSERTSTRING, idx - 1, temp);
                 SendMessage(list, LB_SETCURSEL, idx - 1, 0);
             }
@@ -191,11 +191,11 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         case IDC_VIEW_DOWN: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
-            if (idx != LB_ERR && idx + 1 < cfg_view_list.get_count()) {
+            if (idx != LB_ERR && idx + 1 < cfg_views.get_count()) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
-                cfg_view_list.swap(idx, idx + 1);
+                cfg_views.swap(idx, idx + 1);
                 string8 temp;
-                cfg_view_list.format_display(idx + 1, temp);
+                cfg_views.format_display(idx + 1, temp);
                 uSendMessageText(list, LB_INSERTSTRING, idx + 1, temp);
                 SendMessage(list, LB_SETCURSEL, idx + 1, 0);
             }
@@ -205,7 +205,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
             if (idx != LB_ERR) {
-                cfg_view_list.remove_item(idx);
+                cfg_views.remove_item(idx);
                 uSendDlgItemMessage(wnd, IDC_VIEWS, LB_DELETESTRING, idx, 0);
             }
             break;
@@ -216,22 +216,22 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             p.idx = -1;
             if (run_edit_view(p, wnd)) {
                 HWND list = uGetDlgItem(wnd, IDC_VIEWS);
-                unsigned n = cfg_view_list.add_item(p.name, p.value);
+                unsigned n = cfg_views.add_item(p.name, p.value);
                 string8 temp;
-                cfg_view_list.format_display(n, temp);
+                cfg_views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);
                 SendMessage(list, LB_SETCURSEL, n, 0);
             }
             break;
         }
         case IDC_VIEW_RESET: {
-            cfg_view_list.reset();
+            cfg_views.reset();
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             SendMessage(list, LB_RESETCONTENT, 0, 0);
-            unsigned n, m = cfg_view_list.get_count();
+            unsigned n, m = cfg_views.get_count();
             string8_fastalloc temp;
             for (n = 0; n < m; n++) {
-                cfg_view_list.format_display(n, temp);
+                cfg_views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);
             }
             break;
@@ -302,45 +302,45 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
     case WM_INITDIALOG: {
 
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_numbers, 0);
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_numbers2, 0);
+        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
+        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
         HWND list = uGetDlgItem(wnd, IDC_FRAME);
 
         uSendMessageText(list, CB_ADDSTRING, 0, "None");
         uSendMessageText(list, CB_ADDSTRING, 0, "Sunken");
         uSendMessageText(list, CB_ADDSTRING, 0, "Grey");
 
-        SendMessage(list, CB_SETCURSEL, cfg_frame, 0);
+        SendMessage(list, CB_SETCURSEL, cfg_frame_style, 0);
 
-        uSendDlgItemMessage(wnd, IDC_KEYB, BM_SETCHECK, cfg_keyb, 0);
-        uSendDlgItemMessage(wnd, IDC_POPULATE, BM_SETCHECK, cfg_populate, 0);
-        uSendDlgItemMessage(wnd, IDC_HSCROLL, BM_SETCHECK, cfg_hscroll, 0);
-        uSendDlgItemMessage(wnd, IDC_SHOW_ROOT, BM_SETCHECK, cfg_show_root, 0);
-        uSendDlgItemMessage(wnd, IDC_AUTOPLAY, BM_SETCHECK, cfg_autoplay, 0);
+        uSendDlgItemMessage(wnd, IDC_KEYB, BM_SETCHECK, cfg_process_keyboard_shortcuts, 0);
+        uSendDlgItemMessage(wnd, IDC_POPULATE, BM_SETCHECK, cfg_populate_on_init, 0);
+        uSendDlgItemMessage(wnd, IDC_HSCROLL, BM_SETCHECK, cfg_show_horizontal_scroll_bar, 0);
+        uSendDlgItemMessage(wnd, IDC_SHOW_ROOT, BM_SETCHECK, cfg_show_root_node, 0);
+        uSendDlgItemMessage(wnd, IDC_AUTOPLAY, BM_SETCHECK, cfg_play_on_send, 0);
         uSendDlgItemMessage(wnd, IDC_ADD_ITEMS_USE_CORE_SORT, BM_SETCHECK, cfg_add_items_use_core_sort, 0);
         uSendDlgItemMessage(wnd, IDC_ADD_ITEMS_SELECT, BM_SETCHECK, cfg_add_items_select, 0);
-        uSendDlgItemMessage(wnd, IDC_AUTOCOLLAPSE, BM_SETCHECK, cfg_picmixer, 0);
+        uSendDlgItemMessage(wnd, IDC_AUTOCOLLAPSE, BM_SETCHECK, cfg_collapse_other_nodes_on_expansion, 0);
 
-        uSendDlgItemMessage(wnd, IDC_USE_INDENT, BM_SETCHECK, cfg_use_custom_indent, 0);
+        uSendDlgItemMessage(wnd, IDC_USE_INDENT, BM_SETCHECK, cfg_use_custom_indentation, 0);
         HWND wnd_indent = GetDlgItem(wnd, IDC_INDENT);
 
-        EnableWindow(wnd_indent, cfg_use_custom_indent);
-        EnableWindow(GetDlgItem(wnd, IDC_INDENT_SPIN), cfg_use_custom_indent);
-        if (cfg_use_custom_indent)
-            SetDlgItemInt(wnd, IDC_INDENT, cfg_indent, TRUE);
+        EnableWindow(wnd_indent, cfg_use_custom_indentation);
+        EnableWindow(GetDlgItem(wnd, IDC_INDENT_SPIN), cfg_use_custom_indentation);
+        if (cfg_use_custom_indentation)
+            SetDlgItemInt(wnd, IDC_INDENT, cfg_custom_indentation_amount, TRUE);
         else
             uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
         uSendDlgItemMessage(wnd, IDC_INDENT_SPIN, UDM_SETRANGE32, 0, 999);
-        uSendDlgItemMessage(wnd, IDC_USE_ITEM_HEIGHT, BM_SETCHECK, cfg_custom_item_height, 0);
+        uSendDlgItemMessage(wnd, IDC_USE_ITEM_HEIGHT, BM_SETCHECK, cfg_use_custom_vertical_item_padding, 0);
 
         HWND wnd_item_height = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
 
-        EnableWindow(wnd_item_height, cfg_custom_item_height);
-        EnableWindow(GetDlgItem(wnd, IDC_ITEM_HEIGHT_SPIN), cfg_custom_item_height);
+        EnableWindow(wnd_item_height, cfg_use_custom_vertical_item_padding);
+        EnableWindow(GetDlgItem(wnd, IDC_ITEM_HEIGHT_SPIN), cfg_use_custom_vertical_item_padding);
 
-        if (cfg_custom_item_height)
-            SetDlgItemInt(wnd, IDC_ITEM_HEIGHT, cfg_item_height, TRUE);
+        if (cfg_use_custom_vertical_item_padding)
+            SetDlgItemInt(wnd, IDC_ITEM_HEIGHT, cfg_custom_vertical_padding_amount, TRUE);
         else
             uSendMessageText(wnd_item_height, WM_SETTEXT, 0, "");
 
@@ -353,7 +353,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         switch (wp) {
         case IDC_AUTOCOLLAPSE:
-            cfg_picmixer = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_collapse_other_nodes_on_expansion = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_ADD_ITEMS_USE_CORE_SORT:
             cfg_add_items_use_core_sort = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
@@ -362,40 +362,40 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             cfg_add_items_select = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_POPULATE:
-            cfg_populate = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_populate_on_init = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_SHOW_NUMBERS:
-            cfg_show_numbers = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_subitem_counts = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             album_list_window::s_update_all_labels();
             break;
         case IDC_AUTO_SEND:
             cfg_autosend = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_HSCROLL:
-            cfg_hscroll = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_horizontal_scroll_bar = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             album_list_window::s_update_all_showhscroll();
             break;
         case IDC_SHOW_ROOT:
-            cfg_show_root = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_root_node = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             album_list_window::s_refresh_all();
             break;
         case IDC_AUTOPLAY:
-            cfg_autoplay = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_play_on_send = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_KEYB:
-            cfg_keyb = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_process_keyboard_shortcuts = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             break;
         case IDC_SHOW_NUMBERS2:
-            cfg_show_numbers2 = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_item_indices = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             album_list_window::s_update_all_labels();
             break;
         case (CBN_SELCHANGE << 16) | IDC_FRAME: {
-            cfg_frame = SendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
+            cfg_frame_style = SendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
             album_list_window::s_update_all_window_frames();
         }
             break;
         case (EN_CHANGE << 16) | IDC_ITEM_HEIGHT: {
-            if (initialised && cfg_custom_item_height) {
+            if (initialised && cfg_use_custom_vertical_item_padding) {
                 BOOL result;
                 int new_height = GetDlgItemInt(wnd, IDC_ITEM_HEIGHT, &result, TRUE);
                 if (result) {
@@ -403,21 +403,21 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                         new_height = 99;
                     if (new_height < -99)
                         new_height = -99;
-                    cfg_item_height = new_height;
+                    cfg_custom_vertical_padding_amount = new_height;
                     album_list_window::s_update_all_item_heights();
                 }
             }
         }
             break;
         case IDC_USE_ITEM_HEIGHT: {
-            cfg_custom_item_height = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_use_custom_vertical_item_padding = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             HWND wnd_indent = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
 
-            EnableWindow(wnd_indent, cfg_custom_item_height);
-            EnableWindow(GetDlgItem(wnd, IDC_ITEM_HEIGHT_SPIN), cfg_custom_item_height);
+            EnableWindow(wnd_indent, cfg_use_custom_vertical_item_padding);
+            EnableWindow(GetDlgItem(wnd, IDC_ITEM_HEIGHT_SPIN), cfg_use_custom_vertical_item_padding);
 
-            if (cfg_custom_item_height)
-                SetDlgItemInt(wnd, IDC_ITEM_HEIGHT, cfg_item_height, TRUE);
+            if (cfg_use_custom_vertical_item_padding)
+                SetDlgItemInt(wnd, IDC_ITEM_HEIGHT, cfg_custom_vertical_padding_amount, TRUE);
             else
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
@@ -425,13 +425,13 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
             break;
         case IDC_USE_INDENT: {
-            cfg_use_custom_indent = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_use_custom_indentation = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             HWND wnd_indent = GetDlgItem(wnd, IDC_INDENT);
 
-            EnableWindow(wnd_indent, cfg_use_custom_indent);
-            EnableWindow(GetDlgItem(wnd, IDC_INDENT_SPIN), cfg_use_custom_indent);
-            if (cfg_use_custom_indent)
-                SetDlgItemInt(wnd, IDC_INDENT, cfg_indent, TRUE);
+            EnableWindow(wnd_indent, cfg_use_custom_indentation);
+            EnableWindow(GetDlgItem(wnd, IDC_INDENT_SPIN), cfg_use_custom_indentation);
+            if (cfg_use_custom_indentation)
+                SetDlgItemInt(wnd, IDC_INDENT, cfg_custom_indentation_amount, TRUE);
             else
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
@@ -439,13 +439,13 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
             break;
         case (EN_CHANGE << 16) | IDC_INDENT: {
-            if (initialised && cfg_use_custom_indent) {
+            if (initialised && cfg_use_custom_indentation) {
                 BOOL result;
                 unsigned new_height = GetDlgItemInt(wnd, IDC_INDENT, &result, TRUE);
                 if (result) {
                     if (new_height > 999)
                         new_height = 999;
-                    cfg_indent = new_height;
+                    cfg_custom_indentation_amount = new_height;
                     album_list_window::s_update_all_indents();
                 }
             }

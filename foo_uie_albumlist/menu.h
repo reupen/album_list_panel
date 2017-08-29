@@ -24,11 +24,11 @@ public:
     menu_node_select_view(album_list_window* p_wnd)
         : m_window{p_wnd}
     {
-        const auto view_count = cfg_view_list.get_count();
+        const auto view_count = cfg_views.get_count();
         add_item(directory_structure_view_name);
 
         for (size_t i = 0; i < view_count; i++) {
-            add_item(cfg_view_list.get_name(i));
+            add_item(cfg_views.get_name(i));
         }
     }
 
