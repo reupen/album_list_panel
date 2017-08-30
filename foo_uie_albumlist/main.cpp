@@ -112,6 +112,7 @@ void album_list_window::s_update_all_showhscroll()
     for (size_t i{0}; i < count; i++) {
         const auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
+            uih::DisableRedrawScope disable_redrawing(s_instances[i]->get_wnd());
             s_instances[i]->destroy_tree();
             s_instances[i]->create_tree();
             s_instances[i]->on_size();
