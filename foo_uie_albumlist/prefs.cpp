@@ -109,8 +109,8 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         refresh_views();
 
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
+        SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
+        SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
 
         HWND list = uGetDlgItem(wnd, IDC_DBLCLK);
         uSendMessageText(list, CB_ADDSTRING, 0, "Expand/collapse (default)");
@@ -130,7 +130,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         uSetDlgItemText(wnd, IDC_PLAYLIST_NAME, cfg_autosend_playlist_name);
 
-        uSendDlgItemMessage(wnd, IDC_AUTO_SEND, BM_SETCHECK, cfg_autosend, 0);
+        SendDlgItemMessage(wnd, IDC_AUTO_SEND, BM_SETCHECK, cfg_autosend, 0);
 
         m_initialised = true;
 
@@ -206,7 +206,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
             if (idx != LB_ERR) {
                 cfg_views.remove_item(idx);
-                uSendDlgItemMessage(wnd, IDC_VIEWS, LB_DELETESTRING, idx, 0);
+                SendDlgItemMessage(wnd, IDC_VIEWS, LB_DELETESTRING, idx, 0);
             }
             break;
         }
@@ -302,8 +302,8 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
     case WM_INITDIALOG: {
 
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
-        uSendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
+        SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
+        SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
         HWND list = uGetDlgItem(wnd, IDC_FRAME);
 
         uSendMessageText(list, CB_ADDSTRING, 0, "None");
@@ -312,16 +312,16 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         SendMessage(list, CB_SETCURSEL, cfg_frame_style, 0);
 
-        uSendDlgItemMessage(wnd, IDC_KEYB, BM_SETCHECK, cfg_process_keyboard_shortcuts, 0);
-        uSendDlgItemMessage(wnd, IDC_POPULATE, BM_SETCHECK, cfg_populate_on_init, 0);
-        uSendDlgItemMessage(wnd, IDC_HSCROLL, BM_SETCHECK, cfg_show_horizontal_scroll_bar, 0);
-        uSendDlgItemMessage(wnd, IDC_SHOW_ROOT, BM_SETCHECK, cfg_show_root_node, 0);
-        uSendDlgItemMessage(wnd, IDC_AUTOPLAY, BM_SETCHECK, cfg_play_on_send, 0);
-        uSendDlgItemMessage(wnd, IDC_ADD_ITEMS_USE_CORE_SORT, BM_SETCHECK, cfg_add_items_use_core_sort, 0);
-        uSendDlgItemMessage(wnd, IDC_ADD_ITEMS_SELECT, BM_SETCHECK, cfg_add_items_select, 0);
-        uSendDlgItemMessage(wnd, IDC_AUTOCOLLAPSE, BM_SETCHECK, cfg_collapse_other_nodes_on_expansion, 0);
+        SendDlgItemMessage(wnd, IDC_KEYB, BM_SETCHECK, cfg_process_keyboard_shortcuts, 0);
+        SendDlgItemMessage(wnd, IDC_POPULATE, BM_SETCHECK, cfg_populate_on_init, 0);
+        SendDlgItemMessage(wnd, IDC_HSCROLL, BM_SETCHECK, cfg_show_horizontal_scroll_bar, 0);
+        SendDlgItemMessage(wnd, IDC_SHOW_ROOT, BM_SETCHECK, cfg_show_root_node, 0);
+        SendDlgItemMessage(wnd, IDC_AUTOPLAY, BM_SETCHECK, cfg_play_on_send, 0);
+        SendDlgItemMessage(wnd, IDC_ADD_ITEMS_USE_CORE_SORT, BM_SETCHECK, cfg_add_items_use_core_sort, 0);
+        SendDlgItemMessage(wnd, IDC_ADD_ITEMS_SELECT, BM_SETCHECK, cfg_add_items_select, 0);
+        SendDlgItemMessage(wnd, IDC_AUTOCOLLAPSE, BM_SETCHECK, cfg_collapse_other_nodes_on_expansion, 0);
 
-        uSendDlgItemMessage(wnd, IDC_USE_INDENT, BM_SETCHECK, cfg_use_custom_indentation, 0);
+        SendDlgItemMessage(wnd, IDC_USE_INDENT, BM_SETCHECK, cfg_use_custom_indentation, 0);
         HWND wnd_indent = GetDlgItem(wnd, IDC_INDENT);
 
         EnableWindow(wnd_indent, cfg_use_custom_indentation);
@@ -331,8 +331,8 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         else
             uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
-        uSendDlgItemMessage(wnd, IDC_INDENT_SPIN, UDM_SETRANGE32, 0, 999);
-        uSendDlgItemMessage(wnd, IDC_USE_ITEM_HEIGHT, BM_SETCHECK, cfg_use_custom_vertical_item_padding, 0);
+        SendDlgItemMessage(wnd, IDC_INDENT_SPIN, UDM_SETRANGE32, 0, 999);
+        SendDlgItemMessage(wnd, IDC_USE_ITEM_HEIGHT, BM_SETCHECK, cfg_use_custom_vertical_item_padding, 0);
 
         HWND wnd_item_height = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
 
@@ -344,7 +344,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         else
             uSendMessageText(wnd_item_height, WM_SETTEXT, 0, "");
 
-        uSendDlgItemMessage(wnd, IDC_ITEM_HEIGHT_SPIN, UDM_SETRANGE32, -99, 99);
+        SendDlgItemMessage(wnd, IDC_ITEM_HEIGHT_SPIN, UDM_SETRANGE32, -99, 99);
 
         initialised = true;
 
