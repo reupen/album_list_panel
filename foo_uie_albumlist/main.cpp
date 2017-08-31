@@ -315,7 +315,7 @@ void album_list_window::create_tree()
         if (s_font) {
             uih::set_window_font(m_wnd_tv, s_font, false);
             if (cfg_use_custom_indentation)
-                TreeView_SetIndent(wnd, cfg_custom_indentation_amount);
+                TreeView_SetIndent(m_wnd_tv, cfg_custom_indentation_amount);
         }
         else {
             s_update_all_fonts();
