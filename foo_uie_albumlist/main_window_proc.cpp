@@ -15,8 +15,10 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         create_tree();
         create_filter();
 
-        if (cfg_populate_on_init)
+        if (cfg_populate_on_init) {
             refresh_tree();
+            restore_scroll_position();
+        }
 
         static_api_ptr_t<library_manager_v3>()->register_callback(this);
         break;

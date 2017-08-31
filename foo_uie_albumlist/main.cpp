@@ -330,26 +330,57 @@ void album_list_window::create_tree()
         SetWindowLongPtr(m_wnd_tv, GWLP_USERDATA, reinterpret_cast<LPARAM>(this));
         m_treeproc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(m_wnd_tv,GWLP_WNDPROC, reinterpret_cast<LPARAM>(s_hook_proc)));
 
-        if (m_populated)
+        if (m_populated) {
             refresh_tree();
+            restore_scroll_position();
+        }
     }
 }
 
 void album_list_window::destroy_tree()
 {
     if (m_wnd_tv) {
+        save_scroll_position();
         DestroyWindow(m_wnd_tv);
         m_wnd_tv = nullptr;
     }
 }
 
+void album_list_window::save_scroll_position() const
+{
+    if (!m_wnd_tv)
+        return;
+
+    SCROLLINFO si{};
+    si.cbSize = sizeof(SCROLLINFO);
+    si.fMask = SIF_POS;
+    m_horizontal_scroll_position = GetScrollInfo(m_wnd_tv, SB_HORZ, &si) ? si.nPos : 0;
+    m_vertical_scroll_position = GetScrollInfo(m_wnd_tv, SB_VERT, &si) ? si.nPos : 0;
+}
+
+void album_list_window::restore_scroll_position()
+{
+    if (!m_wnd_tv)
+        return;
+
+    SCROLLINFO si{};
+    si.cbSize = sizeof(SCROLLINFO);
+    si.fMask = SIF_POS;
+    si.nPos = m_horizontal_scroll_position;
+    SetScrollInfo(m_wnd_tv, SB_HORZ, &si, TRUE);
+    si.nPos = m_vertical_scroll_position;
+    SetScrollInfo(m_wnd_tv, SB_VERT, &si, TRUE);
+}
 
 void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_abort) const
 {
+    save_scroll_position();
+
     p_writer->write_string(m_view, p_abort);
     p_writer->write_lendian_t(m_filter, p_abort);
+    p_writer->write_lendian_t(m_horizontal_scroll_position, p_abort);
+    p_writer->write_lendian_t(m_vertical_scroll_position, p_abort);
 }
-
 
 void album_list_window::get_name(string_base& out) const
 {
@@ -367,6 +398,8 @@ void album_list_window::set_config(stream_reader* p_reader, t_size psize, abort_
         p_reader->read_string(m_view, p_abort);
         try {
             p_reader->read_lendian_t(m_filter, p_abort);
+            p_reader->read_lendian_t(m_horizontal_scroll_position, p_abort);
+            p_reader->read_lendian_t(m_vertical_scroll_position, p_abort);
         }
         catch (exception_io_data_truncation&) {}
     }

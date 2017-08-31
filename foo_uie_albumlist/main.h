@@ -41,6 +41,8 @@ public:
     void destroy_filter();
     void create_tree();
     void destroy_tree();
+    void save_scroll_position() const;
+    void restore_scroll_position();
     void on_size(unsigned cx, unsigned cy);
     void on_size();
 
@@ -108,6 +110,9 @@ private:
     bool m_process_char{true};
     POINT m_clickpoint{};
     int m_indent_default{0};
+    // Mutable because they are effectively used for caching
+    mutable int32_t m_horizontal_scroll_position{};
+    mutable int32_t m_vertical_scroll_position{};
     string8 m_view{"by artist/album"};
     node_ptr m_root;
     node_ptr m_selection;
