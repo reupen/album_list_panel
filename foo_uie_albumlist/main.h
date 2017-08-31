@@ -49,7 +49,6 @@ public:
     void refresh_tree();
     void update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add, 
         metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_remove, bool preserve_existing);
-    void rebuild_nodes();
     void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
     void remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks);
 
