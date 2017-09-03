@@ -461,8 +461,11 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     if (preserve_existing && !m_populated)
         return;
 
-    if (!preserve_existing) {
-        TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
+    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+
+    if (!preserve_existing && m_populated) {
+
+        TreeView_DeleteAllItems(m_wnd_tv);
         m_selection.release();
         m_root.release();
     }
@@ -470,8 +473,6 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     if (preserve_existing && to_remove.get_count()) {
         mmh::in_place_sort(to_remove, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
     }
-
-    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
 
     try {
         if (preserve_existing)
@@ -497,6 +498,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         }
         else {
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+            m_populated = true;
         }
     }
 
@@ -526,6 +528,4 @@ void album_list_window::refresh_tree()
 
     console::formatter formatter;
     formatter << "Album list panel: initialised in " << pfc::format_float(timer.query(), 0, 3) << " s";
-
-    m_populated = m_root.is_valid();
 }
