@@ -63,9 +63,9 @@ BEGIN
     PUSHBUTTON      "Reset",IDC_VIEW_RESET,12,120,37,14
     LTEXT           "Double-click action:",IDC_STATIC,4,153,82,8
     COMBOBOX        IDC_DBLCLK,4,164,149,90,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Middle button action:",IDC_STATIC,164,154,92,8
+    LTEXT           "Middle-click action:",IDC_STATIC,164,154,92,8
     COMBOBOX        IDC_MIDDLE,164,164,150,90,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Auto send to playlist:",IDC_AUTO_SEND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,188,84,10
+    CONTROL         "Auto-send to playlist:",IDC_AUTO_SEND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,188,84,10
     EDITTEXT        IDC_PLAYLIST_NAME,4,199,310,15,ES_AUTOHSCROLL
     RTEXT           "Use %_view% to retrieve the current view name",IDC_STATIC,156,216,158,8
 END
@@ -117,7 +117,8 @@ BEGIN
     CONTROL         "Select added items",IDC_ADD_ITEMS_SELECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,242,76,10
     CONTROL         "Populate on initialisation",IDC_POPULATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,206,93,10
     CONTROL         "Process keyboard shortcuts",IDC_KEYB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,224,105,10
-    CONTROL         "Auto-collapse on item expand",IDC_AUTOCOLLAPSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,243,111,10
+    CONTROL         "Auto-collapse on item expansion",IDC_AUTOCOLLAPSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,243,130,10
     LTEXT           "Note: Performance may be reduced if both themed mode (in Columns UI Colours and Fonts configuration) and 'Show horizontal scroll bar' are enabled.",IDC_STATIC,19,132,280,17
 END
 
