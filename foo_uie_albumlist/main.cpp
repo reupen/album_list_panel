@@ -8,7 +8,7 @@
 
 DECLARE_COMPONENT_VERSION("Album list panel",
 
-    "0.4.0-dev",
+    "0.4.0-beta.1",
 
     "allows you to browse through your media library\n\n"
     "based upon albumlist 3.1.0\n"
