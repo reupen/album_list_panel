@@ -398,8 +398,8 @@ void album_list_window::set_config(stream_reader* p_reader, t_size psize, abort_
         p_reader->read_string(m_view, p_abort);
         try {
             p_reader->read_lendian_t(m_filter, p_abort);
-            p_reader->read_lendian_t(m_horizontal_scroll_position, p_abort);
-            p_reader->read_lendian_t(m_vertical_scroll_position, p_abort);
+            p_reader->skip_object(sizeof(int32_t), p_abort);
+            p_reader->skip_object(sizeof(int32_t), p_abort);
         }
         catch (exception_io_data_truncation&) {}
     }
