@@ -389,7 +389,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                 entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
     }
-    if (!preserve_existing) {
+    if (!preserve_existing && m_root.is_valid()) {
         m_root->sort_children();
     }
 }
