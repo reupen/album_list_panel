@@ -3,12 +3,12 @@
 void node::sort_children()
 {
     const auto count = m_children.get_count();
-    mmh::Permuation permutation(count);
+    mmh::Permutation permutation(count);
     pfc::array_staticsize_t<pfc::stringcvt::string_wide_from_utf8_fast> sortdata(count);
 
     for (size_t n = 0; n < count; n++)
         sortdata[n].convert(m_children[n]->m_value);
-    mmh::sort_get_permuation(sortdata, permutation, StrCmpLogicalW, false, false, true);
+    mmh::sort_get_permutation(sortdata, permutation, StrCmpLogicalW, false, false, true);
 
     mmh::destructive_reorder(m_children, permutation);
     concurrency::parallel_for(size_t{0}, count, [this](size_t n) {
