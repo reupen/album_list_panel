@@ -8,21 +8,12 @@ environment:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     PlatformToolset: v141
     Configuration: Debug
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    PlatformToolset: LLVM-vs2014
-    Configuration: Release
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    PlatformToolset: LLVM-vs2014
-    Configuration: Debug
-matrix:
-  allow_failures:
-    - PlatformToolset: LLVM-vs2014
 install:
-- cmd: git submodule update --init --recursive
+- cmd: |
+    vcpkg install ms-gsl range-v3
+    git submodule update --init --recursive
 build_script:
-- ps: >-
+- ps: |
     $command = 'msbuild "vc15/album_list_panel.sln" /m /verbosity:normal /p:PlatformToolset=' + $Env:PlatformToolset + ' /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"'
-
     iex $command
-
     $host.SetShouldExit($LASTEXITCODE)

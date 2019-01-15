@@ -379,8 +379,8 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             for (size_t i{0}; i < size; ++i)
                 entries_sorted[i] = std::move(entries[i]);
 
-            mmh::Permuation perm(size);
-            mmh::sort_get_permuation(entries_sorted, perm, process_byformat_entry<>::g_compare, false, false, true);
+            mmh::Permutation perm(size);
+            mmh::sort_get_permutation(entries_sorted, perm, process_byformat_entry<>::g_compare, false, false, true);
             mmh::destructive_reorder(entries_sorted, perm);
 
             if (!preserve_existing || !m_root.is_valid())
