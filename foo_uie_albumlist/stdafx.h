@@ -4,6 +4,8 @@
 
 #include <gsl/gsl>
 
+#include <optional>
+
 #include <ppl.h>
 #include <concurrent_vector.h>
 
