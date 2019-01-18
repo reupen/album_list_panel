@@ -276,12 +276,6 @@ class appearance_client_filter_impl : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return g_guid_album_list_colours; };
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List"; };
-
-    t_size get_supported_colours() const override
-    {
-        return cui::colours::colour_flag_text | cui::colours::colour_flag_background | cui::colours::
-                colour_flag_active_item_frame;
-    }; //bit-mask
     t_size get_supported_bools() const override { return 0; }; //bit-mask
     bool get_themes_supported() const override { return true; };
 

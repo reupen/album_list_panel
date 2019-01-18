@@ -8,7 +8,7 @@
 
 DECLARE_COMPONENT_VERSION("Album list panel",
 
-    "0.4.0-beta.2",
+    "0.4.0-beta.3",
 
     "allows you to browse through your media library\n\n"
     "based upon albumlist 3.1.0\n"
@@ -200,6 +200,7 @@ void album_list_window::update_all_labels()
 
 void album_list_window::update_colours()
 {
+    SetWindowRedraw(m_wnd_tv, FALSE);
     cui::colours::helper p_colours(g_guid_album_list_colours);
     if (p_colours.get_themed())
         uih::tree_view_set_explorer_theme(m_wnd_tv);
@@ -209,6 +210,8 @@ void album_list_window::update_colours()
     TreeView_SetBkColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_background));
     TreeView_SetLineColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
     TreeView_SetTextColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_text));
+    RedrawWindow(m_wnd_tv, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME);
+    SetWindowRedraw(m_wnd_tv, TRUE);
 }
 
 void album_list_window::update_item_height()

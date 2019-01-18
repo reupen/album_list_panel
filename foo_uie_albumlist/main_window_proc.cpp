@@ -62,9 +62,12 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         auto hdr = reinterpret_cast<LPNMHDR>(lp);
 
         switch (hdr->idFrom) {
-        case IDC_TREE:
-            on_tree_view_wm_notify(hdr);
+        case IDC_TREE: {
+            const auto res = on_tree_view_wm_notify(hdr);
+            if (res)
+                return res.value();
             break;
+        }
         }
         break;
     }
@@ -238,7 +241,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     return 0;
 }
 
-void album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
+std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
 {
     switch (hdr->code) {
     case TVN_ITEMEXPANDING: {
@@ -269,5 +272,36 @@ void album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         }
         break;
     }
+    case NM_CUSTOMDRAW: {
+        const auto nmcd = (LPNMTVCUSTOMDRAW)(hdr);
+
+        switch(nmcd->nmcd.dwDrawStage) {
+        case CDDS_PREPAINT:
+            if (cui::colours::helper(g_guid_album_list_colours).get_themed())
+                return CDRF_DODEFAULT;
+            return CDRF_NOTIFYITEMDRAW;
+        case CDDS_ITEMPREPAINT: {
+            const auto is_focused = GetFocus() == hdr->hwndFrom;
+            const auto is_selected = (nmcd->nmcd.uItemState & CDIS_SELECTED) != 0;
+
+            cui::colours::helper colour_client(g_guid_album_list_colours);
+
+            if (is_selected) {
+                nmcd->clrText =
+                    is_focused
+                    ? colour_client.get_colour(cui::colours::colour_selection_text)
+                    : colour_client.get_colour(cui::colours::colour_inactive_selection_text);
+                nmcd->clrTextBk =
+                    is_focused
+                    ? colour_client.get_colour(cui::colours::colour_selection_background)
+                    : colour_client.get_colour(cui::colours::colour_inactive_selection_background);
+            }
+            return CDRF_DODEFAULT;
+        }
+        }
+
+        break;
     }
+    }
+    return {};
 }
