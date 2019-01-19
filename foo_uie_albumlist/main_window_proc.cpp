@@ -273,25 +273,26 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         break;
     }
     case NM_CUSTOMDRAW: {
-        const auto nmcd = (LPNMTVCUSTOMDRAW)(hdr);
+        const auto nmtvcd = (LPNMTVCUSTOMDRAW)(hdr);
 
-        switch(nmcd->nmcd.dwDrawStage) {
+        switch(nmtvcd->nmcd.dwDrawStage) {
         case CDDS_PREPAINT:
             if (cui::colours::helper(g_guid_album_list_colours).get_themed())
                 return CDRF_DODEFAULT;
             return CDRF_NOTIFYITEMDRAW;
         case CDDS_ITEMPREPAINT: {
             const auto is_focused = GetFocus() == hdr->hwndFrom;
-            const auto is_selected = (nmcd->nmcd.uItemState & CDIS_SELECTED) != 0;
+            const auto is_selected = (nmtvcd->nmcd.uItemState & CDIS_SELECTED) != 0;
+            const auto is_drop_highlighted = TreeView_GetItemState(hdr->hwndFrom, nmtvcd->nmcd.dwItemSpec, TVIS_DROPHILITED) != 0;
 
             cui::colours::helper colour_client(g_guid_album_list_colours);
 
-            if (is_selected) {
-                nmcd->clrText =
+            if (is_selected || is_drop_highlighted) {
+                nmtvcd->clrText =
                     is_focused
                     ? colour_client.get_colour(cui::colours::colour_selection_text)
                     : colour_client.get_colour(cui::colours::colour_inactive_selection_text);
-                nmcd->clrTextBk =
+                nmtvcd->clrTextBk =
                     is_focused
                     ? colour_client.get_colour(cui::colours::colour_selection_background)
                     : colour_client.get_colour(cui::colours::colour_inactive_selection_background);
