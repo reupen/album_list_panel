@@ -53,7 +53,7 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 static bool run_edit_view(edit_view_param& param, HWND parent)
 {
-    return uDialogBox(IDD_EDIT_VIEW, parent, EditViewProc, reinterpret_cast<LPARAM>(&param)) != 0;
+    return DialogBoxParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_EDIT_VIEW), parent, EditViewProc, reinterpret_cast<LPARAM>(&param)) != 0;
 }
 
 cfg_int cfg_child(GUID{0x637c25b6, 0x9166, 0xd8df, 0xae, 0x7a, 0x39, 0x75, 0x78, 0x08, 0xfa, 0xf0}, 0);

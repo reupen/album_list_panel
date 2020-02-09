@@ -15,7 +15,6 @@
 #include "../columns_ui-sdk/ui_extension.h"
 
 #include "../foobar2000/SDK/foobar2000.h"
-#include "../foobar2000/helpers/helpers.h"
 #include "resource.h"
 #include <commctrl.h>
 #include <windowsx.h>

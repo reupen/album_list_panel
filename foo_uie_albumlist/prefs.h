@@ -20,7 +20,7 @@ public:
 
     HWND create(HWND wnd) override
     {
-        return uCreateDialog(IDD_CONFIG, wnd, g_on_message, (LPARAM)this);
+        return CreateDialogParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_CONFIG), wnd, g_on_message, (LPARAM)this);
     }
     const char* get_name() override
     {
@@ -37,7 +37,7 @@ class tab_advanced : public preferences_tab {
 public:
     HWND create(HWND wnd) override
     {
-        return uCreateDialog(IDD_ADVANCED, wnd, ConfigProc);
+        return CreateDialogParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_ADVANCED), wnd, ConfigProc, NULL);
     }
     const char* get_name() override
     {
@@ -56,7 +56,7 @@ class config_albumlist : public preferences_page {
 public:
     HWND create(HWND parent) override
     {
-        return uCreateDialog(IDD_HOST, parent, ConfigProc);
+        return CreateDialogParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_HOST), parent, ConfigProc, NULL);
     }
 
     const char* get_name() override
