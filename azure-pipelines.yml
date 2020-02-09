@@ -1,0 +1,26 @@
+jobs:
+- job: build
+  displayName: Build
+  strategy:
+    matrix:
+      Debug:
+        configuration: Debug
+      Release:
+        configuration: Release
+  pool:
+    vmImage: windows-2019
+  steps:
+  - checkout: self
+    submodules: recursive
+  - powershell: |
+      Set-PSDebug -Trace 1
+      vcpkg integrate install
+      vcpkg install ms-gsl
+    displayName: Install dependencies
+  - task: VSBuild@1
+    displayName: Build
+    inputs:
+      solution: vc15/album_list_panel.sln
+      platform: Win32
+      configuration: $(configuration)
+      msbuildArgs: /m

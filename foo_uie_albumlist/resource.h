@@ -37,6 +37,10 @@
 #define IDC_TAB1                        1039
 #define IDC_ADD_ITEMS_USE_CORE_SORT     1041
 
+#ifndef IDC_STATIC
+#define IDC_STATIC				        -1
+#endif
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
