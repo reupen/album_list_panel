@@ -20,7 +20,7 @@ jobs:
   - task: VSBuild@1
     displayName: Build
     inputs:
-      solution: vc15/album_list_panel.sln
+      solution: vc16/album_list_panel.sln
       platform: Win32
       configuration: $(configuration)
       msbuildArgs: /m
