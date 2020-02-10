@@ -128,7 +128,7 @@ node_ptr node::find_or_add_child(const char* p_value, unsigned p_value_len, bool
         return *start;
     }
 
-    return *m_children.insert(start, new node(p_value, p_value_len, m_window, m_level + 1));
+    return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1 ));
 }
 
 node_ptr node::add_child_v2(const char* p_value, unsigned p_value_len)
@@ -137,7 +137,7 @@ node_ptr node::add_child_v2(const char* p_value, unsigned p_value_len)
         p_value = "?";
         p_value_len = 1;
     }
-    node_ptr temp = new node(p_value, p_value_len, m_window, m_level + 1);
+    node_ptr temp = std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1);
     m_children.emplace_back(temp);
     return temp;
 }

@@ -342,8 +342,8 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
 
             mmh::single_reordering_sort(entries, process_bydir_entry::g_compare, false);
 
-            if (!preserve_existing || !m_root.is_valid())
-                m_root = new node(nullptr, 0, this, 0);
+            if (!preserve_existing || !m_root)
+                m_root = std::make_shared<node>(nullptr, 0, this, 0);
 
             process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
@@ -383,20 +383,20 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             mmh::sort_get_permutation(entries_sorted, perm, process_byformat_entry<>::g_compare, false, false, true);
             mmh::destructive_reorder(entries_sorted, perm);
 
-            if (!preserve_existing || !m_root.is_valid())
-                m_root = new node(nullptr, 0, this, 0);
+            if (!preserve_existing || !m_root)
+                m_root = std::make_shared<node>(nullptr, 0, this, 0);
             process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(
                 entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
     }
-    if (!preserve_existing && m_root.is_valid()) {
+    if (!preserve_existing && m_root) {
         m_root->sort_children();
     }
 }
 
 void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
 {
-    if (!ptr.is_valid())
+    if (!ptr)
         return;
 
     size_t count{ptr->get_entries().get_count()};
@@ -466,8 +466,8 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     if (!preserve_existing && m_populated) {
 
         TreeView_DeleteAllItems(m_wnd_tv);
-        m_selection.release();
-        m_root.release();
+        m_selection.reset();
+        m_root.reset();
     }
 
     if (preserve_existing && to_remove.get_count()) {
@@ -485,15 +485,15 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
             formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
             popup_message::icon_error
         );
-        m_root.release();
-        m_selection.release();
+        m_root.reset();
+        m_selection.reset();
         TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
     }
 
-    if (m_root.is_valid()) {
+    if (m_root) {
         if (!m_root->get_entries().get_count()) {
-            m_root.release();
-            m_selection.release();
+            m_root.reset();
+            m_selection.reset();
             TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
         }
         else {

@@ -1,8 +1,8 @@
 #pragma once
 
-typedef pfc::refcounted_object_ptr_t<class node> node_ptr;
+typedef std::shared_ptr<class node> node_ptr;
 
-class node : public pfc::refcounted_object_root {
+class node : public std::enable_shared_from_this<node> {
 public:
     HTREEITEM m_ti{};
     bool m_label_dirty{};
@@ -27,7 +27,7 @@ public:
         m_bydir = p;
     }
 
-    ~node() override
+    ~node()
     {
         m_tracks.remove_all();
         m_children.clear();

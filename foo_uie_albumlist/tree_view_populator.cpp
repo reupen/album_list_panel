@@ -38,7 +38,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
             is.hInsertAfter = ti_after;
             is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
             is.item.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
-            is.item.lParam = reinterpret_cast<LPARAM>(ptr.get_ptr());
+            is.item.lParam = reinterpret_cast<LPARAM>(ptr.get());
             is.item.state = ptr->m_level < 1 ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
 
