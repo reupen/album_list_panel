@@ -2,7 +2,7 @@
 
 void node::sort_children()
 {
-    const auto count = m_children.get_count();
+    const auto count = m_children.size();
     mmh::Permutation permutation(count);
     pfc::array_staticsize_t<pfc::stringcvt::string_wide_from_utf8_fast> sortdata(count);
 
@@ -102,12 +102,33 @@ node_ptr node::find_or_add_child(const char* p_value, unsigned p_value_len, bool
     }
     t_size index = 0;
     b_new = true;
-    if (m_children.bsearch_t(g_compare_name, uTS(p_value, p_value_len), index)) {
+
+    struct Comparator {
+        bool operator() (const node_ptr& left, const wchar_t* right) const
+        {
+            const auto left_utf16 = pfc::stringcvt::string_wide_from_utf8(left->m_value);
+            return operator()(left_utf16, right);
+        }
+        bool operator() (const wchar_t* left, const node_ptr& right) const
+        {
+            const auto right_utf16 = pfc::stringcvt::string_wide_from_utf8(right->m_value);
+            return operator()(left, right_utf16);
+        }
+        bool operator() (const wchar_t* left, const wchar_t* right) const
+        {
+            return StrCmpLogicalW(left, right) < 0;
+        }
+    };
+
+    const auto value_utf16 = pfc::stringcvt::string_wide_from_utf8(p_value, p_value_len);
+    auto [start, end] = std::equal_range(m_children.cbegin(), m_children.cend(), value_utf16.get_ptr(), Comparator());
+
+    if (start != end) {
         b_new = false;
+        return *start;
     }
-    else
-        m_children.insert_item(new node(p_value, p_value_len, m_window, m_level + 1), index);
-    return m_children[index];
+
+    return *m_children.insert(start, new node(p_value, p_value_len, m_window, m_level + 1));
 }
 
 node_ptr node::add_child_v2(const char* p_value, unsigned p_value_len)
@@ -117,14 +138,14 @@ node_ptr node::add_child_v2(const char* p_value, unsigned p_value_len)
         p_value_len = 1;
     }
     node_ptr temp = new node(p_value, p_value_len, m_window, m_level + 1);
-    m_children.add_item(temp);
+    m_children.emplace_back(temp);
     return temp;
 }
 
 void node::mark_all_labels_dirty()
 {
     m_label_dirty = true;
-    t_size i = m_children.get_count();
+    t_size i = m_children.size();
     for (; i; i--) {
         m_children[i - 1]->mark_all_labels_dirty();
     }
@@ -133,25 +154,31 @@ void node::mark_all_labels_dirty()
 void node::purge_empty_children(HWND wnd)
 {
     size_t index_first_removed = pfc_infinite;
-    for (size_t i = m_children.get_count(); i; i--) {
-        auto& child = m_children[i - 1];
-        if (!child->get_entries().get_count()) {
-            if (m_window && m_window->m_selection == child)
-                m_window->m_selection = nullptr;
-            if (child->m_ti)
+
+    bool was_something_removed{};
+    for (auto iter = m_children.begin(); iter != m_children.end(); ) {
+        auto& child = *iter;
+
+        if (was_something_removed && cfg_show_item_indices) {
+            child->m_label_dirty = true;
+        }
+
+        if (child->get_entries().get_count()) {
+            ++iter;
+            continue;
+        }
+
+        if (m_window && m_window->m_selection == child)
+            m_window->m_selection = nullptr;
+
+        if (child->m_ti)
             TreeView_DeleteItem(wnd, child->m_ti);
-            m_children.remove_by_idx(i - 1);
-            index_first_removed = i - 1;
-        }
-    }
 
-    if (index_first_removed != pfc_infinite && cfg_show_subitem_counts)
-        m_label_dirty = true;
+        iter = m_children.erase(iter);
 
-    if (index_first_removed != pfc_infinite && cfg_show_item_indices) {
-        const t_size count = m_children.get_count();
-        for (size_t i = index_first_removed; i < count; i++) {
-            m_children[i]->m_label_dirty = true;
-        }
+        was_something_removed = true;
+
+        if (cfg_show_subitem_counts)
+            m_label_dirty = true;
     }
 }

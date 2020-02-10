@@ -4,6 +4,7 @@
 
 #include <gsl/gsl>
 
+#include <algorithm>
 #include <optional>
 
 #include <ppl.h>

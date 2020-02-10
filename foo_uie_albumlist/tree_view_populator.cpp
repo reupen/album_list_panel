@@ -42,7 +42,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
             is.item.state = ptr->m_level < 1 ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
 
-            const auto children_count = ptr->get_children().get_count();
+            const auto children_count = ptr->get_children().size();
             if (!populate_children && children_count > 0) {
                 is.item.mask |= TVIF_CHILDREN;
                 is.item.cChildren = 1;
@@ -60,7 +60,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
 void TreeViewPopulator::setup_children(node_ptr ptr)
 {
     const auto& children = ptr->get_children();
-    const auto children_count = children.get_count();
+    const auto children_count = children.size();
 
     for (size_t i{0}; i < children_count; i++) {
         HTREEITEM ti_aft = i ? children[i - 1]->m_ti : nullptr;

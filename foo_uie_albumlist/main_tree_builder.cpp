@@ -179,7 +179,7 @@ static void process_level_recur_t(const t_entry* p_items, size_t const p_items_c
     }
 
     if (b_node_added && cfg_show_item_indices) {
-        size_t count = p_parent->get_children().get_count();
+        size_t count = p_parent->get_children().size();
         for (size_t i{0}; i < count; i++)
             p_parent->get_children()[i]->m_label_dirty = true;
     }
@@ -409,7 +409,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     bool b_found{false};
 
     const metadb_handle_ptr* p_entries = ptr->get_entries().get_ptr();
-    const node_ptr* p_nodes = ptr->get_children().get_ptr();
+    const node_ptr* p_nodes = ptr->get_children().data();
 
     for (size_t i{0}; i < count; i++) {
         if (pfc::bsearch_simple_inline_t(p_tracks.get_ptr(), p_tracks.get_count(), p_entries[i], index)) {
@@ -421,7 +421,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     if (b_found)
         ptr->remove_entries(mask);
 
-    count = ptr->get_children().get_count();
+    count = ptr->get_children().size();
     for (size_t i{0}; i < count; i++) {
         g_node_remove_tracks_recur(p_nodes[i], p_tracks);
     }
