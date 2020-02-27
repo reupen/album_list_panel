@@ -1,8 +1,8 @@
 #pragma once
 
-typedef pfc::refcounted_object_ptr_t<class node> node_ptr;
+typedef std::shared_ptr<class node> node_ptr;
 
-class node : public pfc::refcounted_object_root {
+class node : public std::enable_shared_from_this<node> {
 public:
     HTREEITEM m_ti{};
     bool m_label_dirty{};
@@ -27,10 +27,10 @@ public:
         m_bydir = p;
     }
 
-    ~node() override
+    ~node()
     {
         m_tracks.remove_all();
-        m_children.remove_all();
+        m_children.clear();
     }
 
     const char* get_val()
@@ -47,11 +47,6 @@ public:
 
     void set_data(const list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing);
 
-    static int g_compare_name(const node_ptr& p1, const wchar_t* str)
-    {
-        return StrCmpLogicalW(uT(p1->m_value), str);
-    }
-
     node_ptr find_or_add_child(const char* p_value, unsigned p_value_len, bool b_find, bool& b_new);
 
     node_ptr add_child_v2(const char* p_value, unsigned p_value_len);
@@ -63,7 +58,7 @@ public:
 
     void reset()
     {
-        m_children.remove_all();
+        m_children.clear();
         m_tracks.remove_all();
         m_sorted = false;
     }
@@ -72,19 +67,19 @@ public:
 
     void purge_empty_children(HWND wnd);
 
-    const list_t<node_ptr>& get_children() const
+    const std::vector<node_ptr>& get_children() const
     {
         return m_children;
     }
 
-    list_t<node_ptr>& get_children()
+    std::vector<node_ptr>& get_children()
     {
         return m_children;
     }
 
     unsigned get_num_children() const
     {
-        return m_children.get_count();
+        return m_children.size();
     }
 
     unsigned get_num_entries() const
@@ -94,7 +89,7 @@ public:
 
 private:
     string_simple m_value;
-    list_t<node_ptr> m_children;
+    std::vector<node_ptr> m_children;
     metadb_handle_list m_tracks;
     bool m_sorted{};
     bool m_bydir{};

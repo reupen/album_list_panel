@@ -77,8 +77,8 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         destroy_tree();
         destroy_filter();
         m_selection_holder.release();
-        m_root.release();
-        m_selection.release();
+        m_root.reset();
+        m_selection.reset();
         if (m_dd_theme) {
             CloseThemeData(m_dd_theme);
             m_dd_theme = nullptr;
@@ -170,7 +170,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     tvi.hItem = treeitem;
     tvi.mask = TVIF_HANDLE | TVIF_PARAM;
     TreeView_GetItem(m_wnd_tv, &tvi);
-    const auto p_node = reinterpret_cast<node*>(tvi.lParam);
+    auto p_node = treeitem && tvi.lParam ? reinterpret_cast<node*>(tvi.lParam)->shared_from_this() : nullptr;
 
     if (treeitem && p_node) {
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
@@ -246,7 +246,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
     switch (hdr->code) {
     case TVN_ITEMEXPANDING: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam);
+        node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
 
         if (!p_node->m_children_inserted) {
             TreeViewPopulator::s_setup_children(m_wnd_tv, p_node);
@@ -260,13 +260,13 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
     case TVN_SELCHANGED: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
 
-        m_selection = reinterpret_cast<node*>(param->itemNew.lParam);
+        m_selection = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
         if (param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD) {
             if (cfg_autosend)
                 do_autosend_playlist(m_selection, m_view);
         }
         if (m_selection_holder.is_valid()) {
-            m_selection_holder->set_selection(m_selection.is_valid()
+            m_selection_holder->set_selection(m_selection
                 ? m_selection->get_entries()
                 : metadb_handle_list());
         }

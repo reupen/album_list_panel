@@ -179,7 +179,7 @@ static void process_level_recur_t(const t_entry* p_items, size_t const p_items_c
     }
 
     if (b_node_added && cfg_show_item_indices) {
-        size_t count = p_parent->get_children().get_count();
+        size_t count = p_parent->get_children().size();
         for (size_t i{0}; i < count; i++)
             p_parent->get_children()[i]->m_label_dirty = true;
     }
@@ -342,8 +342,8 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
 
             mmh::single_reordering_sort(entries, process_bydir_entry::g_compare, false);
 
-            if (!preserve_existing || !m_root.is_valid())
-                m_root = new node(nullptr, 0, this, 0);
+            if (!preserve_existing || !m_root)
+                m_root = std::make_shared<node>(nullptr, 0, this, 0);
 
             process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
@@ -383,20 +383,20 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             mmh::sort_get_permutation(entries_sorted, perm, process_byformat_entry<>::g_compare, false, false, true);
             mmh::destructive_reorder(entries_sorted, perm);
 
-            if (!preserve_existing || !m_root.is_valid())
-                m_root = new node(nullptr, 0, this, 0);
+            if (!preserve_existing || !m_root)
+                m_root = std::make_shared<node>(nullptr, 0, this, 0);
             process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(
                 entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
     }
-    if (!preserve_existing && m_root.is_valid()) {
+    if (!preserve_existing && m_root) {
         m_root->sort_children();
     }
 }
 
 void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
 {
-    if (!ptr.is_valid())
+    if (!ptr)
         return;
 
     size_t count{ptr->get_entries().get_count()};
@@ -409,7 +409,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     bool b_found{false};
 
     const metadb_handle_ptr* p_entries = ptr->get_entries().get_ptr();
-    const node_ptr* p_nodes = ptr->get_children().get_ptr();
+    const node_ptr* p_nodes = ptr->get_children().data();
 
     for (size_t i{0}; i < count; i++) {
         if (pfc::bsearch_simple_inline_t(p_tracks.get_ptr(), p_tracks.get_count(), p_entries[i], index)) {
@@ -421,7 +421,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     if (b_found)
         ptr->remove_entries(mask);
 
-    count = ptr->get_children().get_count();
+    count = ptr->get_children().size();
     for (size_t i{0}; i < count; i++) {
         g_node_remove_tracks_recur(p_nodes[i], p_tracks);
     }
@@ -466,8 +466,8 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     if (!preserve_existing && m_populated) {
 
         TreeView_DeleteAllItems(m_wnd_tv);
-        m_selection.release();
-        m_root.release();
+        m_selection.reset();
+        m_root.reset();
     }
 
     if (preserve_existing && to_remove.get_count()) {
@@ -485,15 +485,15 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
             formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
             popup_message::icon_error
         );
-        m_root.release();
-        m_selection.release();
+        m_root.reset();
+        m_selection.reset();
         TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
     }
 
-    if (m_root.is_valid()) {
+    if (m_root) {
         if (!m_root->get_entries().get_count()) {
-            m_root.release();
-            m_selection.release();
+            m_root.reset();
+            m_selection.reset();
             TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
         }
         else {

@@ -31,7 +31,7 @@ private:
 
 void do_playlist(const node_ptr& src, bool replace, bool b_new)
 {
-    if (src.is_valid() && src->get_entries().get_count() > 0) {
+    if (src && src->get_entries().get_count() > 0) {
         if (b_new)
             src->create_new_playlist();
         else
@@ -46,7 +46,7 @@ void do_playlist(const node_ptr& src, bool replace, bool b_new)
 
 void do_autosend_playlist(const node_ptr& src, pfc::string_base& view, bool b_play)
 {
-    if (src.is_valid()) {
+    if (src) {
         static_api_ptr_t<playlist_manager> api;
         string8 playlist_name;
 

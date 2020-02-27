@@ -41,7 +41,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
         break;
     case WM_SETFOCUS: {
         m_selection_holder = static_api_ptr_t<ui_selection_manager>()->acquire();
-        if (m_selection.is_valid())
+        if (m_selection)
             m_selection_holder->set_selection(m_selection->get_entries());
         break;
     }
@@ -85,7 +85,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
 
             TreeView_SelectItem(wnd, ti.hItem);
 
-            if (!m_selection.is_valid())
+            if (!m_selection)
                 break;
 
             static_api_ptr_t<playlist_incoming_item_filter> incoming_api;
@@ -139,7 +139,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
         break;
     }
     case WM_LBUTTONDBLCLK:
-        if (m_selection.is_valid() && m_selection->get_num_entries() > 0) {
+        if (m_selection && m_selection->get_num_entries() > 0) {
             TVHITTESTINFO ti{};
             ti.pt.x = GET_X_LPARAM(lp);
             ti.pt.y = GET_Y_LPARAM(lp);
