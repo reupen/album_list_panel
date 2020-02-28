@@ -197,11 +197,12 @@ struct process_byformat_branch_choice {
 };
 
 template<typename List>
-size_t process_byformat_add_branches(metadb_handle* handle, const char* p_text, List& entries)
+size_t process_byformat_add_branches(metadb_handle* handle, std::string text, List& entries)
 {
+    const char* p_text = text.data();
     const char* marker = strchr(p_text, 4);
     if (marker == nullptr) {
-        entries.push_back(process_byformat_entry<>{handle, p_text});
+        entries.push_back({handle, std::move(text)});
         return 1;
     }
     size_t branch_count{1};
@@ -273,16 +274,15 @@ size_t process_byformat_add_branches(metadb_handle* handle, const char* p_text, 
         }
     }
 
-    pfc::string8_fast buffer;
     // assemble branches
     for (size_t branch_index{0}; branch_index < branch_count; branch_index++) {
-        buffer.reset();
+        std::string buffer;
         const size_t segment_count{segments.get_count()};
         for (size_t segment_index{0}; segment_index < segment_count; segment_index++) {
             const process_byformat_branch_choice& choice = choices[segments[segment_index].m_current_choice];
-            buffer.add_string(&p_text[choice.m_start], choice.m_end - choice.m_start);
+            buffer.append(&p_text[choice.m_start], choice.m_end - choice.m_start);
         }
-        entries.push_back(process_byformat_entry<>{handle, buffer.get_ptr()});
+        entries.push_back({handle, std::move(buffer)});
 
         for (size_t segment_index{0}; segment_index < segment_count; segment_index++) {
             process_byformat_branch_segment& segment = segments[segment_count - segment_index - 1];
@@ -357,19 +357,18 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             concurrency::concurrent_vector<process_byformat_entry<>> entries;
 
             concurrency::parallel_for(size_t{0}, count, [&tracks, &script, &entries](size_t n) {
-                pfc::string8_fast formatted_title;
-                formatted_title.prealloc(32);
                 const playable_location& location = tracks[n]->get_location();
                 metadb_info_container::ptr info_ptr;
-                info_ptr = tracks[n]->get_info_ref();
+
+                if (!tracks[n]->get_info_ref(info_ptr))
+                    return;
 
                 titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
                 titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
-                formatted_title.prealloc(32);
-                tracks[n]->format_title(
-                    &tf_hook_file_info, formatted_title, script, &tf_hook_text_filter
-                );
-                process_byformat_add_branches(tracks[n].get_ptr(), formatted_title, entries);
+                std::string formatted_title;
+                mmh::StringAdaptor interop_title(formatted_title);
+                script->run_hook(location, &info_ptr->info(), &tf_hook_file_info, interop_title, &tf_hook_text_filter);
+                process_byformat_add_branches(tracks[n].get_ptr(), std::move(formatted_title), entries);
             });
 
             const size_t size = entries.size();
