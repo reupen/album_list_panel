@@ -366,9 +366,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                 titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
                 titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
                 formatted_title.prealloc(32);
-                tracks[n]->format_title(
-                    &tf_hook_file_info, formatted_title, script, &tf_hook_text_filter
-                );
+                script->run_hook(location, &info_ptr->info(), &tf_hook_file_info, formatted_title, &tf_hook_text_filter);
                 process_byformat_add_branches(tracks[n].get_ptr(), formatted_title, entries);
             });
 
