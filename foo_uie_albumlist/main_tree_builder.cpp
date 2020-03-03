@@ -13,6 +13,39 @@ const char* c_str(const char* const & string)
     return string;
 }
 
+class VerticalBarTitleformatTextFilter : public titleformat_text_filter {
+public:
+    static constexpr auto filter_char = '|';
+    static constexpr auto replacement_char = "_";
+
+    void write(const GUID& p_inputtype, pfc::string_receiver& p_out, const char* p_data, t_size p_data_length) override
+    {
+        // titleformat_text_filter_impl_reserved_chars only filters for titleformat_inputtypes::meta
+        if (p_inputtype != titleformat_inputtypes::meta) {
+            p_out.add_string(p_data, p_data_length);
+            return;
+        }
+
+        const size_t real_length = strnlen(p_data, p_data_length);
+
+        const std::string_view input{p_data, real_length};
+        size_t start{};
+
+        while (start < real_length) {
+            const size_t end = input.find(filter_char, start);
+
+            if (end == std::string_view::npos) {
+                p_out.add_string(p_data + start, p_data_length - start);
+                break;
+            }
+
+            p_out.add_string(p_data + start, end - start);
+            p_out.add_string(replacement_char, 1);
+            start = end + 1;
+        }
+    }
+};
+
 struct process_bydir_entry {
     metadb_handle* m_item;
     const char* m_path;
@@ -364,7 +397,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                     return;
 
                 titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
-                titleformat_text_filter_impl_reserved_chars tf_hook_text_filter("|");
+                VerticalBarTitleformatTextFilter tf_hook_text_filter;
                 std::string formatted_title;
                 mmh::StringAdaptor interop_title(formatted_title);
                 script->run_hook(location, &info_ptr->info(), &tf_hook_file_info, interop_title, &tf_hook_text_filter);
