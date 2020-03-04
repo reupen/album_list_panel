@@ -1,12 +1,11 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
-void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx,
-                                     HTREEITEM ti_after)
+void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx)
 {
     TRACK_CALL_TEXT("album_list_panel::TreeViewPopulator::s_setup_tree");
     TreeViewPopulator populater{wnd_tv, ptr->m_level};
-    populater.setup_tree(parent, ptr, idx, max_idx, ti_after);
+    populater.setup_tree(parent, ptr, idx, max_idx, TVI_FIRST);
 }
 
 void TreeViewPopulator::s_setup_children(HWND wnd_tv, node_ptr ptr)
@@ -62,12 +61,23 @@ void TreeViewPopulator::setup_children(node_ptr ptr)
     const auto& children = ptr->get_children();
     const auto children_count = children.size();
 
-    for (size_t i{0}; i < children_count; i++) {
-        HTREEITEM ti_aft = i ? children[i - 1]->m_ti : nullptr;
-        if (ti_aft == nullptr)
-            ti_aft = TVI_FIRST;
-        setup_tree(ptr->m_ti, children[i], i, children_count, ti_aft);
+    if (ptr->m_children_inserted) {
+        for (size_t i{0}; i < children_count; ++i) {
+            HTREEITEM ti_aft = i ? children[i - 1]->m_ti : nullptr;
+
+            if (ti_aft == nullptr)
+                ti_aft = TVI_FIRST;
+
+            setup_tree(ptr->m_ti, children[i], i, children_count, ti_aft);
+        }
+    } else {
+        // If there are no existing items, use a more optimised path that inserts items in reverse
+        for (auto i{ children_count }; i > 0; --i) {
+            const auto index = i - 1;
+            setup_tree(ptr->m_ti, children[index], index, children_count, TVI_FIRST);
+        }
     }
+
     ptr->m_children_inserted = true;
 }
 

@@ -529,7 +529,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
             TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
         }
         else {
-            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0, nullptr);
+            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);
             m_populated = true;
         }
     }
