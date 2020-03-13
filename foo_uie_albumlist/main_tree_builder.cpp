@@ -517,16 +517,16 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
             formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
             popup_message::icon_error
         );
-        m_root.reset();
+        TreeView_DeleteAllItems(m_wnd_tv);
         m_selection.reset();
-        TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
+        m_root.reset();
     }
 
     if (m_root) {
         if (!m_root->get_entries().get_count()) {
-            m_root.reset();
+            TreeView_DeleteAllItems(m_wnd_tv);
             m_selection.reset();
-            TreeView_DeleteItem(m_wnd_tv, TVI_ROOT);
+            m_root.reset();
         }
         else {
             TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);

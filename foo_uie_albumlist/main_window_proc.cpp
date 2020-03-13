@@ -259,8 +259,8 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
     }
     case TVN_SELCHANGED: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
+        m_selection = param->itemNew.hItem ? reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this() : nullptr;
 
-        m_selection = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
         if (param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD) {
             if (cfg_autosend)
                 do_autosend_playlist(m_selection, m_view);
