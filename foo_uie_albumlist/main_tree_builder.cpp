@@ -493,10 +493,10 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     if (preserve_existing && !m_populated)
         return;
 
-    SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+    SetWindowRedraw(m_wnd_tv, FALSE);
+	auto _ = gsl::finally([wnd_tv = m_wnd_tv]{ SetWindowRedraw(wnd_tv, TRUE); });
 
     if (!preserve_existing && m_populated) {
-
         TreeView_DeleteAllItems(m_wnd_tv);
         m_selection.reset();
         m_root.reset();
@@ -520,21 +520,18 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         TreeView_DeleteAllItems(m_wnd_tv);
         m_selection.reset();
         m_root.reset();
+        return;
     }
 
-    if (m_root) {
-        if (!m_root->get_entries().get_count()) {
-            TreeView_DeleteAllItems(m_wnd_tv);
-            m_selection.reset();
-            m_root.reset();
-        }
-        else {
-            TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);
-            m_populated = true;
-        }
+    if (!m_root || !m_root->get_entries().get_count()) {
+        TreeView_DeleteAllItems(m_wnd_tv);
+        m_selection.reset();
+        m_root.reset();
+    } else if (m_root) {
+        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);
     }
 
-    SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
+    m_populated = true;
 }
 
 void album_list_window::refresh_tree()
@@ -544,14 +541,10 @@ void album_list_window::refresh_tree()
     if (!m_wnd_tv)
         return;
 
-    static_api_ptr_t<library_manager> api;
-    if (!api->is_library_enabled())
-        return;
-
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add;
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove;
     to_add.prealloc(1024);
-    api->get_all_items(to_add);
+    library_manager::get()->get_all_items(to_add);
 
     hires_timer timer;
     timer.start();
