@@ -4,7 +4,7 @@ bool titleformat_hook_impl_file_info_branch::process_field(titleformat_text_out*
                                                            t_size p_name_length, bool& p_found_flag)
 {
     if (p_name_length > 2 && p_name[0] == '<') {
-        p_name_length = strlen_max(p_name, p_name_length);
+        p_name_length = pfc::strlen_max(p_name, p_name_length);
         if (p_name[p_name_length - 1] == '>') {
             t_size index;
             if (remap_meta(index, p_name + 1, p_name_length - 2)) {

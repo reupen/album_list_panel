@@ -45,7 +45,7 @@ public:
 
     void remove_entries(pfc::bit_array& mask);
 
-    void set_data(const list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing);
+    void set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing);
 
     node_ptr find_or_add_child(const char* p_value, unsigned p_value_len, bool b_find, bool& b_new);
 
@@ -88,7 +88,7 @@ public:
     }
 
 private:
-    string_simple m_value;
+    pfc::string_simple m_value;
     std::vector<node_ptr> m_children;
     metadb_handle_list m_tracks;
     bool m_sorted{};

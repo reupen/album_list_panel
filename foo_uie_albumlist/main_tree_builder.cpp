@@ -144,7 +144,7 @@ struct process_byformat_entry {
 };
 
 template<typename t_entry>
-class process_entry_list_wrapper_t : public list_base_const_t<metadb_handle_ptr> {
+class process_entry_list_wrapper_t : public pfc::list_base_const_t<metadb_handle_ptr> {
 public:
     process_entry_list_wrapper_t(const t_entry* p_data, size_t p_count) : m_data(p_data), m_count(p_count) {}
 
@@ -240,8 +240,8 @@ size_t process_byformat_add_branches(metadb_handle* handle, std::string text, Li
     }
     size_t branch_count{1};
 
-    list_t<process_byformat_branch_segment> segments;
-    list_t<process_byformat_branch_choice> choices;
+    pfc::list_t<process_byformat_branch_segment> segments;
+    pfc::list_t<process_byformat_branch_choice> choices;
 
     // compute segments and branch count
     size_t ptr{0};
@@ -334,7 +334,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
     m_filter_ptr.release();
 
     static_api_ptr_t<library_manager> api;
-    string8 pattern;
+    pfc::string8 pattern;
 
     if (m_wnd_edit)
         uGetWindowText(m_wnd_edit, pattern);
@@ -353,7 +353,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             pfc::array_t<bool> mask;
             mask.set_count(tracks.get_count());
             m_filter_ptr->test_multi(tracks, mask.get_ptr());
-            tracks.remove_mask(bit_array_not(bit_array_table(mask.get_ptr(), mask.get_count())));
+            tracks.remove_mask(pfc::bit_array_not(pfc::bit_array_table(mask.get_ptr(), mask.get_count())));
         }
         catch (const pfc::exception&) {}
     }
@@ -364,7 +364,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
         if (count > 0) {
             pfc::list_t<process_bydir_entry> entries;
             entries.set_size(count);
-            pfc::array_t<string8> strings;
+            pfc::array_t<pfc::string8> strings;
             strings.set_size(count);
 
             for (size_t n{0}; n < count; n++) {
@@ -512,7 +512,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         build_nodes(to_add, preserve_existing);
     }
     catch (pfc::exception const& e) {
-        string_formatter formatter;
+        pfc::string_formatter formatter;
         popup_message::g_show(
             formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
             popup_message::icon_error
@@ -546,7 +546,7 @@ void album_list_window::refresh_tree()
     to_add.prealloc(1024);
     library_manager::get()->get_all_items(to_add);
 
-    hires_timer timer;
+    pfc::hires_timer timer;
     timer.start();
 
     update_tree(to_add, to_remove, false);

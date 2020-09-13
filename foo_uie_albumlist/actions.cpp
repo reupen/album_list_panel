@@ -48,7 +48,7 @@ void do_autosend_playlist(const node_ptr& src, pfc::string_base& view, bool b_pl
 {
     if (src) {
         static_api_ptr_t<playlist_manager> api;
-        string8 playlist_name;
+        pfc::string8 playlist_name;
 
         titleformat_hook_view tf_hook{view};
         static_api_ptr_t<titleformat_compiler>()->run(&tf_hook, playlist_name, cfg_autosend_playlist_name);

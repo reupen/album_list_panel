@@ -1,10 +1,10 @@
 #pragma once
 
 class menu_node_select_view : public ui_extension::menu_node_popup_t {
-    list_t<ui_extension::menu_node_ptr> m_items;
+    pfc::list_t<ui_extension::menu_node_ptr> m_items;
     service_ptr_t<album_list_window> m_window;
 public:
-    bool get_display_data(string_base& p_out, unsigned& p_displayflags) const override
+    bool get_display_data(pfc::string_base& p_out, unsigned& p_displayflags) const override
     {
         p_out = "View";
         p_displayflags = 0;
