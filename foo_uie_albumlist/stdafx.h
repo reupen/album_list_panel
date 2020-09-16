@@ -20,8 +20,6 @@
 #include <commctrl.h>
 #include <windowsx.h>
 
-using namespace pfc;
-
 #include "node.h"
 #include "config.h"
 #include "main.h"

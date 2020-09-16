@@ -36,7 +36,7 @@ void node::sort_entries()//for contextmenu
 void node::create_new_playlist()
 {
     static_api_ptr_t<playlist_manager> api;
-    string8 name = m_value.get_ptr();
+    pfc::string8 name = m_value.get_ptr();
     if (name.is_empty())
         name = "All music";
     const size_t index = api->create_playlist(name, pfc_infinite, pfc_infinite);
@@ -84,7 +84,7 @@ void node::remove_entries(pfc::bit_array& mask)
     m_tracks.remove_mask(mask);
 }
 
-void node::set_data(const list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing)
+void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing)
 {
     if (!b_keep_existing)
         m_tracks.remove_all();

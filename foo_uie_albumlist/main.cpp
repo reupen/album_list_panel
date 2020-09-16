@@ -19,7 +19,7 @@ DECLARE_COMPONENT_VERSION("Album list panel",
 
 const char* directory_structure_view_name = "by directory structure";
 
-ptr_list_t<album_list_window> album_list_window::s_instances;
+pfc::ptr_list_t<album_list_window> album_list_window::s_instances;
 HFONT album_list_window::s_font{nullptr};
 
 void album_list_window::s_update_all_fonts()
@@ -385,12 +385,12 @@ void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_ab
     p_writer->write_lendian_t(m_vertical_scroll_position, p_abort);
 }
 
-void album_list_window::get_name(string_base& out) const
+void album_list_window::get_name(pfc::string_base& out) const
 {
     out.set_string("Album list");
 }
 
-void album_list_window::get_category(string_base& out) const
+void album_list_window::get_category(pfc::string_base& out) const
 {
     out.set_string("Panels");
 }

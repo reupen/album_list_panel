@@ -62,8 +62,8 @@ public:
         return s_extension_guid;
     }
 
-    void get_name(string_base& out) const override;
-    void get_category(string_base& out) const override;
+    void get_name(pfc::string_base& out) const override;
+    void get_category(pfc::string_base& out) const override;
 
     void set_config(stream_reader* p_reader, t_size size, abort_callback& p_abort) override;
     void get_config(stream_writer* p_writer, abort_callback& p_abort) const override;
@@ -89,7 +89,7 @@ public:
 private:
     static LRESULT WINAPI s_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    static ptr_list_t<album_list_window> s_instances;
+    static pfc::ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;
     static const char* s_class_name;
     static HFONT s_font;
@@ -112,7 +112,7 @@ private:
     // Mutable because they are effectively used for caching
     mutable int32_t m_horizontal_scroll_position{};
     mutable int32_t m_vertical_scroll_position{};
-    string8 m_view{"by artist/album"};
+    pfc::string8 m_view{"by artist/album"};
     node_ptr m_root;
     node_ptr m_selection;
     search_filter::ptr m_filter_ptr;

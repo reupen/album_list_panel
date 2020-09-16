@@ -6,7 +6,7 @@ const GUID g_guid_preferences_album_list_panel{
 
 struct edit_view_param {
     unsigned idx;
-    string8 name, value;
+    pfc::string8 name, value;
     bool b_new;
 };
 
@@ -27,7 +27,7 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDOK: {
             auto ptr = reinterpret_cast<edit_view_param*>(GetWindowLongPtr(wnd, DWLP_USER)); {
-                string8 temp;
+                pfc::string8 temp;
                 uGetDlgItemText(wnd, IDC_NAME, temp);
                 if (temp.is_empty()) {
                     uMessageBox(wnd, "Please enter a valid name.", nullptr, 0);
@@ -80,7 +80,7 @@ void tab_general::refresh_views()
         HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
         SendMessage(list, LB_RESETCONTENT, 0, 0);
         unsigned n, m = cfg_views.get_count();
-        string8_fastalloc temp;
+        pfc::string8_fastalloc temp;
         for (n = 0; n < m; n++) {
             cfg_views.format_display(n, temp);
             uSendMessageText(list, LB_ADDSTRING, 0, temp);
@@ -161,7 +161,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 p.value = cfg_views.get_value(idx);
                 edit_view_param pbefore = p;
                 if (run_edit_view(p, wnd)) {
-                    string8 temp;
+                    pfc::string8 temp;
                     if (idx < cfg_views.get_count()) //modal message loop
                     {
                         cfg_views.modify_item(idx, p.name, p.value);
@@ -181,7 +181,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             if (idx != LB_ERR && idx > 0) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
                 cfg_views.swap(idx, idx - 1);
-                string8 temp;
+                pfc::string8 temp;
                 cfg_views.format_display(idx - 1, temp);
                 uSendMessageText(list, LB_INSERTSTRING, idx - 1, temp);
                 SendMessage(list, LB_SETCURSEL, idx - 1, 0);
@@ -194,7 +194,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             if (idx != LB_ERR && idx + 1 < cfg_views.get_count()) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
                 cfg_views.swap(idx, idx + 1);
-                string8 temp;
+                pfc::string8 temp;
                 cfg_views.format_display(idx + 1, temp);
                 uSendMessageText(list, LB_INSERTSTRING, idx + 1, temp);
                 SendMessage(list, LB_SETCURSEL, idx + 1, 0);
@@ -217,7 +217,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             if (run_edit_view(p, wnd)) {
                 HWND list = uGetDlgItem(wnd, IDC_VIEWS);
                 unsigned n = cfg_views.add_item(p.name, p.value);
-                string8 temp;
+                pfc::string8 temp;
                 cfg_views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);
                 SendMessage(list, LB_SETCURSEL, n, 0);
@@ -229,7 +229,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             SendMessage(list, LB_RESETCONTENT, 0, 0);
             unsigned n, m = cfg_views.get_count();
-            string8_fastalloc temp;
+            pfc::string8_fastalloc temp;
             for (n = 0; n < m; n++) {
                 cfg_views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);

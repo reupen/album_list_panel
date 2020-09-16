@@ -68,7 +68,7 @@ public:
         reset();
     }
 
-    void format_display(size_t index, string_base& out) const
+    void format_display(size_t index, pfc::string_base& out) const
     {
         out = get_name(index);
         out += " : ";
