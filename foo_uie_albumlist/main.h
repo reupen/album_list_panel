@@ -94,7 +94,7 @@ private:
     static const char* s_class_name;
     static HFONT s_font;
 
-    void do_click_action(ClickAction click_action);
+    bool do_click_action(ClickAction click_action);
 
     HWND m_wnd_tv{nullptr};
     HWND m_wnd_edit{nullptr};

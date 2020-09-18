@@ -147,10 +147,13 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
             TreeView_HitTest(wnd, &ti);
 
             if (ti.flags & TVHT_ONITEM) {
+                const auto click_processed = do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
 
-                do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
+                if (click_processed)
+                    return 0;
             }
         }
+        break;
     }
     return CallWindowProc(m_treeproc, wnd, msg, wp, lp);
 }
