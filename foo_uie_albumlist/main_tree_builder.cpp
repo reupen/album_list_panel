@@ -400,7 +400,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                 VerticalBarTitleformatTextFilter tf_hook_text_filter;
                 std::string formatted_title;
                 mmh::StringAdaptor interop_title(formatted_title);
-                script->run_hook(location, &info_ptr->info(), &tf_hook_file_info, interop_title, &tf_hook_text_filter);
+                tracks[n]->format_title(&tf_hook_file_info, interop_title, script, &tf_hook_text_filter);
                 process_byformat_add_branches(tracks[n].get_ptr(), std::move(formatted_title), entries);
             });
 
