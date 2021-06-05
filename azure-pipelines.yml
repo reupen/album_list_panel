@@ -15,7 +15,7 @@ jobs:
   - powershell: |
       Set-PSDebug -Trace 1
       vcpkg integrate install
-      vcpkg install ms-gsl
+      vcpkg install ms-gsl wil
     displayName: Install dependencies
   - task: VSBuild@1
     displayName: Build
