@@ -126,18 +126,19 @@ struct process_byformat_entry {
 
     static int g_compare_segment(const char* p_path1, const char* p_path2)
     {
-        return stricmp_utf8_ex(p_path1, g_get_segment_length(p_path1), p_path2, g_get_segment_length(p_path2));
+        return pfc::stringCompareCaseInsensitiveEx(
+            {p_path1, g_get_segment_length(p_path1)}, {p_path2, g_get_segment_length(p_path2)});
     }
 
     static int g_compare_segment(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2)
     {
-        return stricmp_utf8_ex(c_str(p_item1.m_path), p_item1.get_segment_length(), c_str(p_item2.m_path),
-                               p_item2.get_segment_length());
+        return pfc::stringCompareCaseInsensitiveEx({c_str(p_item1.m_path), p_item1.get_segment_length()},
+            {c_str(p_item2.m_path), p_item2.get_segment_length()});
     }
 
     static int g_compare(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2)
     {
-        return stricmp_utf8(c_str(p_item1.m_path), c_str(p_item2.m_path));
+        return pfc::stringCompareCaseInsensitive(c_str(p_item1.m_path), c_str(p_item2.m_path));
     }
 
     enum { is_bydir = false };
