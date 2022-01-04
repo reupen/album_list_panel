@@ -8,7 +8,7 @@ jobs:
       Release:
         configuration: Release
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   steps:
   - checkout: self
     submodules: recursive
@@ -20,7 +20,7 @@ jobs:
   - task: VSBuild@1
     displayName: Build
     inputs:
-      solution: vc16/album_list_panel.sln
+      solution: vc17/album_list_panel.sln
       platform: Win32
       configuration: $(configuration)
       msbuildArgs: /m
