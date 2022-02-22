@@ -2,7 +2,7 @@
 
 http://yuo.be/columns_ui
 
-[![Build status](https://reupen.visualstudio.com/Columns%20UI/_apis/build/status/reupen.album_list_panel?branchName=master)](https://reupen.visualstudio.com/Columns%20UI/_build/latest?definitionId=8&branchName=master)
+[![Build status](https://github.com/reupen/album_list_panel/actions/workflows/build.yml/badge.svg)](https://github.com/reupen/album_list_panel/actions/workflows/build.yml?query=branch%3Amaster)
 
 Album list panel is released under the Lesser GNU Public Licence (see COPYING and COPYING.LESSER).
 
