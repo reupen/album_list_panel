@@ -41,6 +41,8 @@ public:
     void destroy_filter();
     void create_tree();
     void destroy_tree();
+    void update_window_theme(
+        const cui::colours::helper& colours = cui::colours::helper(g_guid_album_list_colours)) const;
     void save_scroll_position() const;
     void restore_scroll_position();
     void on_size(unsigned cx, unsigned cy);
@@ -117,4 +119,5 @@ private:
     node_ptr m_selection;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
+    std::unique_ptr<cui::colours::dark_mode_notifier> m_dark_mode_notifier;
 };

@@ -21,6 +21,9 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
 
         static_api_ptr_t<library_manager_v3>()->register_callback(this);
+
+        m_dark_mode_notifier
+            = std::make_unique<cui::colours::dark_mode_notifier>([this, ptr = this] { update_window_theme(); });
         break;
     }
     case WM_THEMECHANGED: {
@@ -72,6 +75,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
     }
     case WM_DESTROY:
+        m_dark_mode_notifier.reset();
         static_api_ptr_t<library_manager_v3>()->unregister_callback(this);
         modeless_dialog_manager::g_remove(wnd);
         destroy_tree();

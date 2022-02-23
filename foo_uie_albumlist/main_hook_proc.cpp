@@ -18,6 +18,22 @@ static bool test_point_distance(POINT pt1, POINT pt2, int test)
 LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
+    case WM_NOTIFY: {
+        const auto hdr = reinterpret_cast<LPNMHDR>(lp);
+
+        if (hdr->code != TTN_SHOW)
+            break;
+
+        std::array<wchar_t, 128> class_name{};
+        GetClassName(hdr->hwndFrom, class_name.data(), class_name.size());
+
+        if (wcsncmp(class_name.data(), TOOLTIPS_CLASSW, class_name.size()) != 0)
+            break;
+
+        const auto is_dark = cui::colours::is_dark_mode_active();
+        SetWindowTheme(hdr->hwndFrom, is_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+        break;
+    }
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         uie::window_ptr p_this{this};
