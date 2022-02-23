@@ -202,10 +202,7 @@ void album_list_window::update_colours()
 {
     SetWindowRedraw(m_wnd_tv, FALSE);
     cui::colours::helper p_colours(g_guid_album_list_colours);
-    if (p_colours.get_themed())
-        uih::tree_view_set_explorer_theme(m_wnd_tv);
-    else
-        uih::tree_view_remove_explorer_theme(m_wnd_tv);
+    update_window_theme(p_colours);
 
     TreeView_SetBkColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_background));
     TreeView_SetLineColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
@@ -308,10 +305,8 @@ void album_list_window::create_tree()
                               wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
 
     if (m_wnd_tv) {
-        if (mmh::is_windows_vista_or_newer())
-            TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_AUTOHSCROLL, TVS_EX_AUTOHSCROLL);
-        if (cui::colours::helper(g_guid_album_list_colours).get_themed())
-            uih::tree_view_set_explorer_theme(m_wnd_tv);
+        TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
+        update_window_theme();
 
         m_indent_default = TreeView_GetIndent(m_wnd_tv);
 
@@ -347,6 +342,33 @@ void album_list_window::destroy_tree()
         DestroyWindow(m_wnd_tv);
         m_wnd_tv = nullptr;
     }
+}
+
+void album_list_window::update_window_theme(const cui::colours::helper& colours) const
+{
+    if (!m_wnd_tv)
+        return;
+
+    bool is_themed{};
+
+    if (colours.get_bool(cui::colours::bool_dark_mode_enabled)) {
+        SetWindowTheme(m_wnd_tv, L"DarkMode_Explorer", nullptr);
+        is_themed = true;
+    } else if (colours.get_themed()) {
+        SetWindowTheme(m_wnd_tv, L"Explorer", nullptr);
+        is_themed = true;
+    } else {
+        SetWindowTheme(m_wnd_tv, nullptr, nullptr);
+    }
+
+    auto styles = GetWindowLongPtr(m_wnd_tv, GWL_STYLE);
+
+    if (is_themed)
+        styles &= ~TVS_HASLINES;
+    else
+        styles |= TVS_HASLINES;
+
+    SetWindowLongPtr(m_wnd_tv, GWL_STYLE, styles);
 }
 
 void album_list_window::save_scroll_position() const

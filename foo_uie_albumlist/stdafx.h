@@ -1,6 +1,6 @@
 #pragma once
 #define OEMRESOURCE
-#define _WIN32_WINNT _WIN32_WINNT_VISTA
+#define NOMINMAX
 
 #include <gsl/gsl>
 
