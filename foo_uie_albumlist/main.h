@@ -59,6 +59,7 @@ public:
     void update_tree_theme(
         const cui::colours::helper& colours = cui::colours::helper(album_list_items_colours_client_id)) const;
     void update_tree_colours();
+    void update_tooltip_theme() const;
     void update_edit_theme() const;
     void update_edit_colours() const;
     void update_item_height();
