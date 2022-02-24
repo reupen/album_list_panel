@@ -19,12 +19,9 @@ DECLARE_COMPONENT_VERSION("Album list panel",
 
 const char* directory_structure_view_name = "by directory structure";
 
-pfc::ptr_list_t<album_list_window> album_list_window::s_instances;
-HFONT album_list_window::s_font{nullptr};
-
 void album_list_window::s_update_all_fonts()
 {
-    if (s_font != nullptr) {
+    if (s_font) {
         const auto count = s_instances.get_count();
         for (size_t i{0}; i < count; i++) {
             auto wnd = s_instances[i]->m_wnd_tv;
@@ -35,22 +32,21 @@ void album_list_window::s_update_all_fonts()
             if (wnd)
                 uih::set_window_font(wnd, nullptr, false);
         }
-        DeleteObject(s_font);
     }
 
-    s_font = cui::fonts::helper(g_guid_album_list_font).get_font();
+    s_font.reset(cui::fonts::helper(album_list_font_client_id).get_font());
 
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
         auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
-            uih::set_window_font(wnd, s_font);
+            uih::set_window_font(wnd, s_font.get());
             if (cfg_use_custom_indentation)
                 TreeView_SetIndent(wnd, cfg_custom_indentation_amount);
 
             wnd = s_instances[i]->m_wnd_edit;
             if (wnd) {
-                uih::set_window_font(wnd, s_font);
+                uih::set_window_font(wnd, s_font.get());
                 s_instances[i]->on_size();
             }
         }
@@ -84,15 +80,35 @@ void album_list_window::s_update_all_window_frames()
     }
 }
 
-void album_list_window::s_update_all_colours()
+void album_list_window::s_update_all_tree_colours()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
         const auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
-            s_instances[i]->update_colours();
+            s_instances[i]->update_tree_colours();
         }
     }
+}
+
+void album_list_window::s_update_all_tree_themes()
+{
+    for (auto&& window : s_instances)
+        window->update_tree_theme();
+}
+
+void album_list_window::s_update_all_edit_themes()
+{
+    for (auto&& window : s_instances)
+        window->update_edit_theme();
+}
+
+void album_list_window::s_update_all_edit_colours()
+{
+    s_filter_background_brush.reset();
+
+    for (auto&& window : s_instances)
+        window->update_edit_colours();
 }
 
 void album_list_window::s_update_all_labels()
@@ -198,17 +214,60 @@ void album_list_window::update_all_labels()
     }
 }
 
-void album_list_window::update_colours()
+void album_list_window::update_tree_theme(const cui::colours::helper& colours) const
+{
+    if (!m_wnd_tv)
+        return;
+
+    bool is_themed{};
+
+    if (colours.get_bool(cui::colours::bool_dark_mode_enabled)) {
+        SetWindowTheme(m_wnd_tv, L"DarkMode_Explorer", nullptr);
+        is_themed = true;
+    } else if (colours.get_themed()) {
+        SetWindowTheme(m_wnd_tv, L"Explorer", nullptr);
+        is_themed = true;
+    } else {
+        SetWindowTheme(m_wnd_tv, nullptr, nullptr);
+    }
+
+    auto styles = GetWindowLongPtr(m_wnd_tv, GWL_STYLE);
+
+    if (is_themed)
+        styles &= ~TVS_HASLINES;
+    else
+        styles |= TVS_HASLINES;
+
+    SetWindowLongPtr(m_wnd_tv, GWL_STYLE, styles);
+}
+
+void album_list_window::update_tree_colours()
 {
     SetWindowRedraw(m_wnd_tv, FALSE);
-    cui::colours::helper p_colours(g_guid_album_list_colours);
-    update_window_theme(p_colours);
+    cui::colours::helper p_colours(album_list_items_colours_client_id);
+    update_tree_theme(p_colours);
 
     TreeView_SetBkColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_background));
     TreeView_SetLineColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
     TreeView_SetTextColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_text));
     RedrawWindow(m_wnd_tv, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME);
     SetWindowRedraw(m_wnd_tv, TRUE);
+}
+
+void album_list_window::update_edit_theme() const
+{
+    if (!m_wnd_edit)
+        return;
+
+    SetWindowTheme(m_wnd_edit, cui::colours::is_dark_mode_active() ? L"DarkMode_CFD" : nullptr, nullptr);
+}
+
+void album_list_window::update_edit_colours() const
+{
+    if (!m_wnd_edit)
+        return;
+
+    RedrawWindow(m_wnd_edit, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE);
 }
 
 void album_list_window::update_item_height()
@@ -245,7 +304,8 @@ void album_list_window::create_filter()
         m_wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""),
                                     WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0,
                                     get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), nullptr);
-        uih::set_window_font(m_wnd_edit, s_font, false);
+        update_edit_theme();
+        uih::set_window_font(m_wnd_edit, s_font.get(), false);
         SetFocus(m_wnd_edit);
         Edit_SetCueBannerText(m_wnd_edit, L"Search");
     }
@@ -271,7 +331,7 @@ void album_list_window::destroy_filter()
 void album_list_window::on_size(unsigned cx, unsigned cy)
 {
     HDWP dwp = BeginDeferWindowPos(2);
-    const unsigned edit_height = m_wnd_edit ? uGetFontHeight(s_font) + 4 : 0;
+    const unsigned edit_height = m_wnd_edit ? uGetFontHeight(s_font.get()) + 4 : 0;
     const unsigned tv_height = edit_height < cy ? cy - edit_height : cy;
 
     dwp = DeferWindowPos(dwp, m_wnd_tv, nullptr, 0, 0, cx, tv_height, SWP_NOZORDER);
@@ -306,12 +366,12 @@ void album_list_window::create_tree()
 
     if (m_wnd_tv) {
         TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
-        update_window_theme();
+        update_tree_theme();
 
         m_indent_default = TreeView_GetIndent(m_wnd_tv);
 
         if (s_font) {
-            uih::set_window_font(m_wnd_tv, s_font, false);
+            uih::set_window_font(m_wnd_tv, s_font.get(), false);
             if (cfg_use_custom_indentation)
                 TreeView_SetIndent(m_wnd_tv, cfg_custom_indentation_amount);
         }
@@ -323,10 +383,11 @@ void album_list_window::create_tree()
         if (cfg_use_custom_vertical_item_padding)
             update_item_height();
 
-        update_colours();
+        update_tree_colours();
 
         SetWindowLongPtr(m_wnd_tv, GWLP_USERDATA, reinterpret_cast<LPARAM>(this));
-        m_treeproc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(m_wnd_tv,GWLP_WNDPROC, reinterpret_cast<LPARAM>(s_hook_proc)));
+        m_treeproc = reinterpret_cast<WNDPROC>(
+            SetWindowLongPtr(m_wnd_tv, GWLP_WNDPROC, reinterpret_cast<LPARAM>(s_tree_hook_proc)));
 
         if (m_populated) {
             refresh_tree();
@@ -342,33 +403,6 @@ void album_list_window::destroy_tree()
         DestroyWindow(m_wnd_tv);
         m_wnd_tv = nullptr;
     }
-}
-
-void album_list_window::update_window_theme(const cui::colours::helper& colours) const
-{
-    if (!m_wnd_tv)
-        return;
-
-    bool is_themed{};
-
-    if (colours.get_bool(cui::colours::bool_dark_mode_enabled)) {
-        SetWindowTheme(m_wnd_tv, L"DarkMode_Explorer", nullptr);
-        is_themed = true;
-    } else if (colours.get_themed()) {
-        SetWindowTheme(m_wnd_tv, L"Explorer", nullptr);
-        is_themed = true;
-    } else {
-        SetWindowTheme(m_wnd_tv, nullptr, nullptr);
-    }
-
-    auto styles = GetWindowLongPtr(m_wnd_tv, GWL_STYLE);
-
-    if (is_themed)
-        styles &= ~TVS_HASLINES;
-    else
-        styles |= TVS_HASLINES;
-
-    SetWindowLongPtr(m_wnd_tv, GWL_STYLE, styles);
 }
 
 void album_list_window::save_scroll_position() const
@@ -449,14 +483,9 @@ void album_list_window::set_view(const char* view)
 
 void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)
 {
-    const auto node_settings = uie::menu_node_ptr{
-        new uie::simple_command_menu_node{
-            "Settings",
-            "Shows Album List panel settings",
-            0,
-            [] { static_api_ptr_t<ui_control>()->show_preferences(g_guid_preferences_album_list_panel); }
-        }
-    };
+    const auto node_settings
+        = uie::menu_node_ptr{new uie::simple_command_menu_node{"Settings", "Shows Album List panel settings", 0,
+            [] { static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id); }}};
     const auto node_filter = uie::menu_node_ptr{
         new uie::simple_command_menu_node{
             "Filter",

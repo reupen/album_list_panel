@@ -1,9 +1,5 @@
 #include "stdafx.h"
 
-const GUID g_guid_preferences_album_list_panel{
-    0x53c89e50, 0x685d, 0x8ed1, 0x43, 0x25, 0x6b, 0xe8, 0x0f, 0x1b, 0xe7, 0x1f
-};
-
 struct edit_view_param {
     unsigned idx;
     pfc::string8 name, value;
@@ -247,12 +243,11 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     return 0;
 }
 
+namespace {
+
 class font_client_album_list : public cui::fonts::client {
 public:
-    const GUID& get_client_guid() const override
-    {
-        return g_guid_album_list_font;
-    }
+    const GUID& get_client_guid() const override { return album_list_font_client_id; }
 
     void get_name(pfc::string_base& p_out) const override
     {
@@ -272,23 +267,45 @@ public:
 
 font_client_album_list::factory<font_client_album_list> g_font_client_album_list;
 
-class appearance_client_filter_impl : public cui::colours::client {
+class items_colours_client : public cui::colours::client {
 public:
-    const GUID& get_client_guid() const override { return g_guid_album_list_colours; };
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List"; };
-    t_size get_supported_bools() const override { return 0; }; //bit-mask
-    bool get_themes_supported() const override { return true; };
+    const GUID& get_client_guid() const override { return album_list_items_colours_client_id; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Items"; }
+    t_size get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
+    bool get_themes_supported() const override { return true; }
 
-    void on_colour_changed(t_size mask) const override
+    void on_colour_changed(t_size mask) const override { album_list_window::s_update_all_tree_colours(); };
+    void on_bool_changed(t_size mask) const override
     {
-        album_list_window::s_update_all_colours();
-    };
-    void on_bool_changed(t_size mask) const override {};
+        if (mask & cui::colours::bool_flag_dark_mode_enabled)
+            album_list_window::s_update_all_tree_themes();
+    }
 };
 
-namespace {
-    cui::colours::client::factory<appearance_client_filter_impl> g_appearance_client_impl;
+cui::colours::client::factory<items_colours_client> g_items_colours_client;
+
+class filter_colours_client : public cui::colours::client {
+public:
+    const GUID& get_client_guid() const override { return album_list_filter_colours_client_id; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Filter"; }
+    t_size get_supported_colours() const override
+    {
+        return cui::colours::colour_flag_background | cui::colours::colour_flag_text;
+    }
+    t_size get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
+    bool get_themes_supported() const override { return false; }
+
+    void on_colour_changed(t_size mask) const override { album_list_window::s_update_all_edit_colours(); }
+    void on_bool_changed(t_size mask) const override
+    {
+        if (mask & cui::colours::bool_flag_dark_mode_enabled)
+            album_list_window::s_update_all_edit_themes();
+    }
 };
+
+cui::colours::client::factory<filter_colours_client> g_filter_colours_client;
+
+}; // namespace
 
 BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
