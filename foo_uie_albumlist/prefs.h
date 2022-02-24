@@ -64,10 +64,7 @@ public:
         return "Album List Panel";
     }
 
-    GUID get_guid() override
-    {
-        return g_guid_preferences_album_list_panel;
-    }
+    GUID get_guid() override { return album_list_panel_preferences_page_id; }
 
     GUID get_parent_guid() override
     {

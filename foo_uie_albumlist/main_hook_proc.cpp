@@ -1,11 +1,10 @@
 #include "stdafx.h"
-#include "actions.h"
 
-LRESULT WINAPI album_list_window::s_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT WINAPI album_list_window::s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     auto p_this = reinterpret_cast<album_list_window*>(GetWindowLongPtr(wnd, GWLP_USERDATA));
 
-    return p_this ? p_this->on_hook(wnd, msg, wp, lp) : DefWindowProc(wnd, msg, wp, lp);
+    return p_this ? p_this->on_tree_hooked_message(wnd, msg, wp, lp) : DefWindowProc(wnd, msg, wp, lp);
 }
 
 static bool test_point_distance(POINT pt1, POINT pt2, int test)
@@ -15,7 +14,7 @@ static bool test_point_distance(POINT pt1, POINT pt2, int test)
     return dx * dx + dy * dy > test * test;
 }
 
-LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_NOTIFY: {
@@ -119,7 +118,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
             auto data_object = static_api_ptr_t<playlist_incoming_item_filter>()->create_dataobject_ex(items);
             if (data_object.is_valid()) {
                 DWORD effect;
-                auto colours = cui::colours::helper(g_guid_album_list_colours);
+                auto colours = cui::colours::helper(album_list_items_colours_client_id);
                 const auto colour_selection_background = colours.get_colour(cui::colours::colour_selection_background);
                 const auto colour_selection_text = colours.get_colour(cui::colours::colour_selection_text);
                 const auto selection_count = items.get_count();
@@ -127,7 +126,7 @@ LRESULT WINAPI album_list_window::on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM 
                 text << mmh::IntegerFormatter(selection_count) << (selection_count != 1 ? " tracks" : " track");
                 SHDRAGIMAGE sdi = {0};
                 LOGFONT lf = {0};
-                GetObject(s_font, sizeof(lf), &lf);
+                GetObject(s_font.get(), sizeof(lf), &lf);
                 uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colour_selection_background,
                                         colour_selection_text, nullptr, &lf, true, text, &sdi);
                 uih::ole::do_drag_drop(m_wnd_tv, wp, data_object.get_ptr(), DROPEFFECT_COPY | DROPEFFECT_MOVE,

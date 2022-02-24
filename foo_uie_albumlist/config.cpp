@@ -67,9 +67,3 @@ void cfg_view_list_t::reset()
         m_data.add_item(entry{cfg_view_list_defaults[i].name, cfg_view_list_defaults[i].value});
     }
 }
-
-// {06B856CC-86E7-4459-A75C-2DAB5B33B8BB}
-const GUID g_guid_album_list_font{0x6b856cc, 0x86e7, 0x4459, 0xa7, 0x5c, 0x2d, 0xab, 0x5b, 0x33, 0xb8, 0xbb};
-
-// {DA66E8F3-D210-4ad2-89D4-9B2CC58D0235}
-const GUID g_guid_album_list_colours{0xda66e8f3, 0xd210, 0x4ad2, 0x89, 0xd4, 0x9b, 0x2c, 0xc5, 0x8d, 0x2, 0x35};

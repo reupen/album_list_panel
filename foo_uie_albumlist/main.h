@@ -18,7 +18,10 @@ class album_list_window : public ui_extension::container_ui_extension, public li
     friend class font_notify;
     friend class node;
 public:
-    static void s_update_all_colours();
+    static void s_update_all_tree_colours();
+    static void s_update_all_tree_themes();
+    static void s_update_all_edit_themes();
+    static void s_update_all_edit_colours();
     static void s_update_all_item_heights();
     static void s_update_all_indents();
     static void s_update_all_labels();
@@ -41,8 +44,6 @@ public:
     void destroy_filter();
     void create_tree();
     void destroy_tree();
-    void update_window_theme(
-        const cui::colours::helper& colours = cui::colours::helper(g_guid_album_list_colours)) const;
     void save_scroll_position() const;
     void restore_scroll_position();
     void on_size(unsigned cx, unsigned cy);
@@ -55,7 +56,11 @@ public:
     void remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks);
 
     void update_all_labels();
-    void update_colours();
+    void update_tree_theme(
+        const cui::colours::helper& colours = cui::colours::helper(album_list_items_colours_client_id)) const;
+    void update_tree_colours();
+    void update_edit_theme() const;
+    void update_edit_colours() const;
     void update_item_height();
     void on_view_script_change(const char* p_view_before, const char* p_view);
 
@@ -85,16 +90,18 @@ public:
     LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
     LRESULT on_wm_contextmenu(POINT pt);
     std::optional<LRESULT> on_tree_view_wm_notify(LPNMHDR hdr);
-    LRESULT WINAPI on_hook(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     void get_menu_items(ui_extension::menu_hook_t& p_hook) override;
 
 private:
-    static LRESULT WINAPI s_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    static LRESULT WINAPI s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    static pfc::ptr_list_t<album_list_window> s_instances;
+    LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
+    static inline pfc::ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;
     static const char* s_class_name;
-    static HFONT s_font;
+    static inline wil::unique_hfont s_font;
+    static inline wil::unique_hbrush s_filter_background_brush;
 
     bool do_click_action(ClickAction click_action);
 
@@ -119,5 +126,4 @@ private:
     node_ptr m_selection;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
-    std::unique_ptr<cui::colours::dark_mode_notifier> m_dark_mode_notifier;
 };

@@ -21,17 +21,25 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
 
         static_api_ptr_t<library_manager_v3>()->register_callback(this);
-
-        m_dark_mode_notifier
-            = std::make_unique<cui::colours::dark_mode_notifier>([this, ptr = this] { update_window_theme(); });
         break;
     }
     case WM_THEMECHANGED: {
         if (m_dd_theme)
             CloseThemeData(m_dd_theme);
         m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr;
-    }
         break;
+    }
+    case WM_CTLCOLOREDIT: {
+        cui::colours::helper colours(album_list_filter_colours_client_id);
+        const auto dc = reinterpret_cast<HDC>(wp);
+        SetTextColor(dc, colours.get_colour(cui::colours::colour_text));
+        SetBkMode(dc, TRANSPARENT);
+
+        if (!s_filter_background_brush)
+            s_filter_background_brush.reset(CreateSolidBrush(colours.get_colour(cui::colours::colour_background)));
+
+        return reinterpret_cast<LPARAM>(s_filter_background_brush.get());
+    }
     case WM_SIZE:
         on_size(LOWORD(lp), HIWORD(lp));
         break;
@@ -75,7 +83,6 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
     }
     case WM_DESTROY:
-        m_dark_mode_notifier.reset();
         static_api_ptr_t<library_manager_v3>()->unregister_callback(this);
         modeless_dialog_manager::g_remove(wnd);
         destroy_tree();
@@ -88,14 +95,14 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             m_dd_theme = nullptr;
         }
 
-        if (m_initialised) {
-            s_instances.remove_item(this);
-            if (s_instances.get_count() == 0) {
-                DeleteFont(s_font);
-                s_font = nullptr;
-            }
-            m_initialised = false;
+        s_instances.remove_item(this);
+
+        if (s_instances.get_count() == 0) {
+            s_filter_background_brush.reset();
+            s_font.reset();
         }
+
+        m_initialised = false;
         break;
     }
     return DefWindowProc(wnd, msg, wp, lp);
@@ -227,7 +234,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
                 do_autosend_playlist(p_node, m_view, true);
                 break;
             case ID_CONF:
-                static_api_ptr_t<ui_control>()->show_preferences(g_guid_preferences_album_list_panel);
+                static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id);
                 break;
             case ID_FILT:
                 m_filter = !m_filter;
@@ -281,7 +288,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
 
         switch(nmtvcd->nmcd.dwDrawStage) {
         case CDDS_PREPAINT:
-            if (cui::colours::helper(g_guid_album_list_colours).get_themed())
+            if (cui::colours::helper(album_list_items_colours_client_id).get_themed())
                 return CDRF_DODEFAULT;
             return CDRF_NOTIFYITEMDRAW;
         case CDDS_ITEMPREPAINT: {
@@ -289,7 +296,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
             const auto is_selected = (nmtvcd->nmcd.uItemState & CDIS_SELECTED) != 0;
             const auto is_drop_highlighted = (TreeView_GetItemState(hdr->hwndFrom, nmtvcd->nmcd.dwItemSpec, TVIS_DROPHILITED) & TVIS_DROPHILITED) != 0;
 
-            cui::colours::helper colour_client(g_guid_album_list_colours);
+            cui::colours::helper colour_client(album_list_items_colours_client_id);
 
             if (is_selected || is_drop_highlighted) {
                 nmtvcd->clrText =
