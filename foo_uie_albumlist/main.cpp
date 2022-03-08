@@ -93,8 +93,10 @@ void album_list_window::s_update_all_tree_colours()
 
 void album_list_window::s_update_all_tree_themes()
 {
-    for (auto&& window : s_instances)
+    for (auto&& window : s_instances) {
         window->update_tree_theme();
+        window->update_tooltip_theme();
+    }
 }
 
 void album_list_window::s_update_all_edit_themes()
@@ -254,6 +256,20 @@ void album_list_window::update_tree_colours()
     SetWindowRedraw(m_wnd_tv, TRUE);
 }
 
+void album_list_window::update_tooltip_theme() const
+{
+    if (!m_wnd_tv)
+        return;
+
+    const HWND tooltip_wnd = TreeView_GetToolTips(m_wnd_tv);
+
+    if (!tooltip_wnd)
+        return;
+
+    const auto is_dark = cui::colours::is_dark_mode_active();
+    SetWindowTheme(tooltip_wnd, is_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+}
+
 void album_list_window::update_edit_theme() const
 {
     if (!m_wnd_edit)
@@ -367,6 +383,7 @@ void album_list_window::create_tree()
     if (m_wnd_tv) {
         TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
         update_tree_theme();
+        update_tooltip_theme();
 
         m_indent_default = TreeView_GetIndent(m_wnd_tv);
 
