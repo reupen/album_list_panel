@@ -12,20 +12,14 @@ public:
     node(const char* p_value, unsigned p_value_len, class album_list_window* window, uint16_t level);
 
     void sort_children();
-    void sort_entries();//for contextmenu
-    
-    const metadb_handle_list& get_entries() const
-    {
-        return m_tracks;
-    }
+    void sort_entries(); // for contextmenu
+
+    const metadb_handle_list& get_entries() const { return m_tracks; }
 
     void create_new_playlist();
     void send_to_playlist(bool replace);
 
-    void set_bydir(bool p)
-    {
-        m_bydir = p;
-    }
+    void set_bydir(bool p) { m_bydir = p; }
 
     ~node()
     {
@@ -33,15 +27,9 @@ public:
         m_children.clear();
     }
 
-    const char* get_val()
-    {
-        return m_value.is_empty() ? "All music" : m_value.get_ptr();
-    }
+    const char* get_val() { return m_value.is_empty() ? "All music" : m_value.get_ptr(); }
 
-    void add_entry(const metadb_handle_ptr& p_entry)
-    {
-        m_tracks.add_item(p_entry);
-    }
+    void add_entry(const metadb_handle_ptr& p_entry) { m_tracks.add_item(p_entry); }
 
     void remove_entries(pfc::bit_array& mask);
 
@@ -51,10 +39,7 @@ public:
 
     node_ptr add_child_v2(const char* p_value, unsigned p_value_len);
 
-    node_ptr add_child_v2(const char* p_value)
-    {
-        return add_child_v2(p_value, strlen(p_value));
-    }
+    node_ptr add_child_v2(const char* p_value) { return add_child_v2(p_value, strlen(p_value)); }
 
     void reset()
     {
@@ -67,25 +52,13 @@ public:
 
     void purge_empty_children(HWND wnd);
 
-    const std::vector<node_ptr>& get_children() const
-    {
-        return m_children;
-    }
+    const std::vector<node_ptr>& get_children() const { return m_children; }
 
-    std::vector<node_ptr>& get_children()
-    {
-        return m_children;
-    }
+    std::vector<node_ptr>& get_children() { return m_children; }
 
-    unsigned get_num_children() const
-    {
-        return m_children.size();
-    }
+    unsigned get_num_children() const { return m_children.size(); }
 
-    unsigned get_num_entries() const
-    {
-        return m_tracks.get_count();
-    }
+    unsigned get_num_entries() const { return m_tracks.get_count(); }
 
 private:
     pfc::string_simple m_value;

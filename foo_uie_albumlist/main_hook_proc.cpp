@@ -22,7 +22,8 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
         uie::window_ptr p_this{this};
         bool processed = false;
 
-        if (get_host()->get_keyboard_shortcuts_enabled() && wp != VK_LEFT && wp != VK_RIGHT && cfg_process_keyboard_shortcuts)
+        if (get_host()->get_keyboard_shortcuts_enabled() && wp != VK_LEFT && wp != VK_RIGHT
+            && cfg_process_keyboard_shortcuts)
             processed = g_process_keydown_keyboard_shortcuts(wp);
 
         m_process_char = !processed;
@@ -51,7 +52,8 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
     case WM_GETDLGCODE: {
         const auto lpmsg = reinterpret_cast<LPMSG>(lp);
         if (lpmsg && cfg_process_keyboard_shortcuts) {
-            // let dialog manager handle it, otherwise to kill ping we have to process WM_CHAR to return 0 on wp == 0xd and 0xa
+            // let dialog manager handle it, otherwise to kill ping we have to process WM_CHAR to return 0 on wp == 0xd
+            // and 0xa
             const auto is_keydown_or_up = lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_KEYUP;
             const auto is_return_or_tab = lpmsg->wParam == VK_RETURN || lpmsg->wParam == VK_TAB;
 
@@ -73,8 +75,7 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
         if (!(wp & MK_LBUTTON)) {
             m_dragging = false;
             m_clicked = false;
-        }
-        else if (!m_dragging && m_clicked && test_point_distance(m_clickpoint, pt, 5)) {
+        } else if (!m_dragging && m_clicked && test_point_distance(m_clickpoint, pt, 5)) {
             TVHITTESTINFO ti{};
             ti.pt = m_clickpoint;
             TreeView_HitTest(wnd, &ti);
@@ -92,8 +93,7 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
 
             if (cfg_add_items_use_core_sort) {
                 incoming_api->filter_items(m_selection->get_entries(), items);
-            }
-            else {
+            } else {
                 m_selection->sort_entries();
                 items = m_selection->get_entries();
             }
@@ -111,10 +111,10 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
                 SHDRAGIMAGE sdi = {0};
                 LOGFONT lf = {0};
                 GetObject(s_font.get(), sizeof(lf), &lf);
-                uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colour_selection_background,
-                                        colour_selection_text, nullptr, &lf, true, text, &sdi);
+                uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colour_selection_background, colour_selection_text,
+                    nullptr, &lf, true, text, &sdi);
                 uih::ole::do_drag_drop(m_wnd_tv, wp, data_object.get_ptr(), DROPEFFECT_COPY | DROPEFFECT_MOVE,
-                                        DROPEFFECT_COPY, &effect, &sdi);
+                    DROPEFFECT_COPY, &effect, &sdi);
             }
             m_dragging = false;
             m_clicked = false;
@@ -146,7 +146,8 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
             TreeView_HitTest(wnd, &ti);
 
             if (ti.flags & TVHT_ONITEM) {
-                const auto click_processed = do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
+                const auto click_processed
+                    = do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
 
                 if (click_processed)
                     return 0;

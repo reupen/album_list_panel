@@ -14,9 +14,12 @@ enum class ClickAction {
     send_to_autosend_playlist
 };
 
-class album_list_window : public ui_extension::container_ui_extension, public library_callback_dynamic {
+class album_list_window
+    : public uie::container_uie_window_v3
+    , public library_callback_dynamic {
     friend class font_notify;
     friend class node;
+
 public:
     static void s_update_all_tree_colours();
     static void s_update_all_tree_themes();
@@ -50,7 +53,7 @@ public:
     void on_size();
 
     void refresh_tree();
-    void update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add, 
+    void update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
         metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_remove, bool preserve_existing);
     void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
     void remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks);
@@ -65,10 +68,7 @@ public:
     void update_item_height();
     void on_view_script_change(const char* p_view_before, const char* p_view);
 
-    const GUID& get_extension_guid() const override
-    {
-        return s_extension_guid;
-    }
+    const GUID& get_extension_guid() const override { return s_extension_guid; }
 
     void get_name(pfc::string_base& out) const override;
     void get_category(pfc::string_base& out) const override;
@@ -78,10 +78,7 @@ public:
 
     unsigned get_type() const override { return ui_extension::type_panel; }
 
-    class_data& get_class_data() const override
-    {
-        __implement_get_class_data(_T("{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"), false);
-    }
+    uie::container_window_v3_config get_window_config() override { return {L"{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"}; }
 
     void on_task_completion(t_uint32 task, t_uint32 code);
     void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;

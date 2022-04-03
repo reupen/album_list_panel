@@ -30,8 +30,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
             tvi.mask = TVIF_TEXT;
             tvi.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
             TreeView_SetItem(m_wnd_tv, &tvi);
-        }
-        else {
+        } else {
             TVINSERTSTRUCT is{};
             is.hParent = parent;
             is.hInsertAfter = ti_after;
@@ -72,7 +71,7 @@ void TreeViewPopulator::setup_children(node_ptr ptr)
         }
     } else {
         // If there are no existing items, use a more optimised path that inserts items in reverse
-        for (auto i{ children_count }; i > 0; --i) {
+        for (auto i{children_count}; i > 0; --i) {
             const auto index = i - 1;
             setup_tree(ptr->m_ti, children[index], index, children_count, TVI_FIRST);
         }

@@ -10,7 +10,8 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG:
-        SetWindowLongPtr(wnd, DWLP_USER, lp); {
+        SetWindowLongPtr(wnd, DWLP_USER, lp);
+        {
             const auto ptr = reinterpret_cast<edit_view_param*>(lp);
             uSetDlgItemText(wnd, IDC_NAME, ptr->name);
             uSetDlgItemText(wnd, IDC_VALUE, ptr->value);
@@ -22,7 +23,8 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             EndDialog(wnd, 0);
             break;
         case IDOK: {
-            auto ptr = reinterpret_cast<edit_view_param*>(GetWindowLongPtr(wnd, DWLP_USER)); {
+            auto ptr = reinterpret_cast<edit_view_param*>(GetWindowLongPtr(wnd, DWLP_USER));
+            {
                 pfc::string8 temp;
                 uGetDlgItemText(wnd, IDC_NAME, temp);
                 if (temp.is_empty()) {
@@ -49,7 +51,9 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 static bool run_edit_view(edit_view_param& param, HWND parent)
 {
-    return DialogBoxParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_EDIT_VIEW), parent, EditViewProc, reinterpret_cast<LPARAM>(&param)) != 0;
+    return DialogBoxParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_EDIT_VIEW), parent, EditViewProc,
+               reinterpret_cast<LPARAM>(&param))
+        != 0;
 }
 
 cfg_int cfg_child(GUID{0x637c25b6, 0x9166, 0xd8df, 0xae, 0x7a, 0x39, 0x75, 0x78, 0x08, 0xfa, 0xf0}, 0);
@@ -58,12 +62,10 @@ tab_general g_config_general;
 
 tab_advanced g_config_advanced;
 
-static preferences_tab* g_tabs[] =
-{
+static preferences_tab* g_tabs[] = {
     &g_config_general,
     &g_config_advanced,
 };
-
 
 HWND config_albumlist::child = nullptr;
 
@@ -72,7 +74,8 @@ static preferences_page_factory_t<config_albumlist> foo3;
 bool tab_advanced::initialised = false;
 
 void tab_general::refresh_views()
-{ {
+{
+    {
         HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
         SendMessage(list, LB_RESETCONTENT, 0, 0);
         unsigned n, m = cfg_views.get_count();
@@ -90,8 +93,7 @@ BOOL tab_general::g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     if (msg == WM_INITDIALOG) {
         p_data = reinterpret_cast<tab_general*>(lp);
         SetWindowLongPtr(wnd, DWL_USER, lp);
-    }
-    else
+    } else
         p_data = reinterpret_cast<tab_general*>(GetWindowLongPtr(wnd, DWL_USER));
     return p_data ? p_data->on_message(wnd, msg, wp, lp) : FALSE;
 }
@@ -99,7 +101,6 @@ BOOL tab_general::g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
-
     case WM_INITDIALOG: {
         m_wnd = wnd;
 
@@ -158,7 +159,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 edit_view_param pbefore = p;
                 if (run_edit_view(p, wnd)) {
                     pfc::string8 temp;
-                    if (idx < cfg_views.get_count()) //modal message loop
+                    if (idx < cfg_views.get_count()) // modal message loop
                     {
                         cfg_views.modify_item(idx, p.name, p.value);
                         cfg_views.format_display(idx, temp);
@@ -235,7 +236,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         break;
     case WM_DESTROY:
-        //history_sort.add_item(cfg_sort_order);
+        // history_sort.add_item(cfg_sort_order);
         m_initialised = false;
         m_wnd = nullptr;
         break;
@@ -249,20 +250,11 @@ class font_client_album_list : public cui::fonts::client {
 public:
     const GUID& get_client_guid() const override { return album_list_font_client_id; }
 
-    void get_name(pfc::string_base& p_out) const override
-    {
-        p_out = "Album List";
-    }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album List"; }
 
-    cui::fonts::font_type_t get_default_font_type() const override
-    {
-        return cui::fonts::font_type_items;
-    }
+    cui::fonts::font_type_t get_default_font_type() const override { return cui::fonts::font_type_items; }
 
-    void on_font_changed() const override
-    {
-        album_list_window::s_update_all_fonts();
-    }
+    void on_font_changed() const override { album_list_window::s_update_all_fonts(); }
 };
 
 font_client_album_list::factory<font_client_album_list> g_font_client_album_list;
@@ -310,9 +302,7 @@ cui::colours::client::factory<filter_colours_client> g_filter_colours_client;
 BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
-
     case WM_INITDIALOG: {
-
         SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
         SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
         HWND list = uGetDlgItem(wnd, IDC_FRAME);
@@ -403,8 +393,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         case (CBN_SELCHANGE << 16) | IDC_FRAME: {
             cfg_frame_style = SendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
             album_list_window::s_update_all_window_frames();
-        }
-            break;
+        } break;
         case (EN_CHANGE << 16) | IDC_ITEM_HEIGHT: {
             if (initialised && cfg_use_custom_vertical_item_padding) {
                 BOOL result;
@@ -418,8 +407,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     album_list_window::s_update_all_item_heights();
                 }
             }
-        }
-            break;
+        } break;
         case IDC_USE_ITEM_HEIGHT: {
             cfg_use_custom_vertical_item_padding = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             HWND wnd_indent = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
@@ -433,8 +421,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
             album_list_window::s_update_all_item_heights();
-        }
-            break;
+        } break;
         case IDC_USE_INDENT: {
             cfg_use_custom_indentation = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
             HWND wnd_indent = GetDlgItem(wnd, IDC_INDENT);
@@ -447,8 +434,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
             album_list_window::s_update_all_indents();
-        }
-            break;
+        } break;
         case (EN_CHANGE << 16) | IDC_INDENT: {
             if (initialised && cfg_use_custom_indentation) {
                 BOOL result;
@@ -460,8 +446,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     album_list_window::s_update_all_indents();
                 }
             }
-        }
-            break;
+        } break;
         }
         break;
     case WM_DESTROY:
@@ -496,7 +481,8 @@ void config_albumlist::make_child(HWND wnd)
         child = g_tabs[cfg_child]->create(wnd);
     }
 
-    if (child) { {
+    if (child) {
+        {
             EnableThemeDialogTexture(child, ETDT_ENABLETAB);
         }
     }
@@ -518,8 +504,7 @@ BOOL config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         TabCtrl_SetCurSel(wnd_tab, cfg_child);
         make_child(wnd);
-    }
-        break;
+    } break;
     case WM_NOTIFY:
         switch (((LPNMHDR)lp)->idFrom) {
         case IDC_TAB1:
@@ -527,8 +512,7 @@ BOOL config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             case TCN_SELCHANGE: {
                 cfg_child = TabCtrl_GetCurSel(GetDlgItem(wnd, IDC_TAB1));
                 make_child(wnd);
-            }
-                break;
+            } break;
             }
             break;
         }
@@ -538,8 +522,7 @@ BOOL config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         case WM_DESTROY: {
             if (child && (HWND)lp == child)
                 child = nullptr;
-        }
-            break;
+        } break;
         }
         break;
     }

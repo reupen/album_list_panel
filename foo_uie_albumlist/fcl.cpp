@@ -2,36 +2,24 @@
 
 // {3E3F5B9F-5599-417e-A867-AC690EF01A8A}
 const GUID g_guid_fcl_group_album_list_views{
-    0x3e3f5b9f, 0x5599, 0x417e, {0xa8, 0x67, 0xac, 0x69, 0xe, 0xf0, 0x1a, 0x8a}
-};
+    0x3e3f5b9f, 0x5599, 0x417e, {0xa8, 0x67, 0xac, 0x69, 0xe, 0xf0, 0x1a, 0x8a}};
 
 // {F45D4B85-FA35-4abd-A04B-345D06C39E38}
 const GUID g_guid_fcl_dataset_album_list_views{
-    0xf45d4b85, 0xfa35, 0x4abd, {0xa0, 0x4b, 0x34, 0x5d, 0x6, 0xc3, 0x9e, 0x38}
-};
+    0xf45d4b85, 0xfa35, 0x4abd, {0xa0, 0x4b, 0x34, 0x5d, 0x6, 0xc3, 0x9e, 0x38}};
 
 // {E93DF451-6196-48fd-A67B-F9056705336A}
 const GUID g_guid_fcl_dataset_album_list_appearance{
-    0xe93df451, 0x6196, 0x48fd, {0xa6, 0x7b, 0xf9, 0x5, 0x67, 0x5, 0x33, 0x6a}
-};
+    0xe93df451, 0x6196, 0x48fd, {0xa6, 0x7b, 0xf9, 0x5, 0x67, 0x5, 0x33, 0x6a}};
 
 class album_list_fcl_views : public cui::fcl::dataset {
 public:
-    void get_name(pfc::string_base& p_out) const override
-    {
-        p_out = "Album List Views";
-    }
-    const GUID& get_guid() const override
-    {
-        return g_guid_fcl_dataset_album_list_views;
-    }
-    const GUID& get_group() const override
-    {
-        return g_guid_fcl_group_album_list_views;
-    }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album List Views"; }
+    const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_views; }
+    const GUID& get_group() const override { return g_guid_fcl_group_album_list_views; }
 
     void get_data(stream_writer* writer, t_uint32 type, cui::fcl::t_export_feedback& feedback,
-                  abort_callback& p_abort) const override
+        abort_callback& p_abort) const override
     {
         fbh::fcl::Writer w(writer, p_abort);
         w.write_raw(static_cast<uint32_t>(stream_version));
@@ -46,7 +34,7 @@ public:
     }
 
     void set_data(stream_reader* reader, size_t size, t_uint32 type, cui::fcl::t_import_feedback& feedback,
-                  abort_callback& p_abort) override
+        abort_callback& p_abort) override
     {
         fbh::fcl::Reader fcl_reader(reader, size, p_abort);
         const auto version = fcl_reader.read_raw_item<uint32_t>();
@@ -62,15 +50,11 @@ public:
             g_config_general.refresh_views();
         album_list_window::s_refresh_all();
     }
-private:
-    enum {
-        stream_version = 0
-    };
 
-    enum {
-        view_name,
-        view_script
-    };
+private:
+    enum { stream_version = 0 };
+
+    enum { view_name, view_script };
 
     static void read_item(fbh::fcl::Reader& fcl_reader)
     {
@@ -102,18 +86,9 @@ private:
 
 class album_list_fcl_appearance : public cui::fcl::dataset {
 public:
-    void get_name(pfc::string_base& p_out) const override
-    {
-        p_out = "Album List appearance settings";
-    }
-    const GUID& get_guid() const override
-    {
-        return g_guid_fcl_dataset_album_list_appearance;
-    }
-    const GUID& get_group() const override
-    {
-        return cui::fcl::groups::colours_and_fonts;
-    }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album List appearance settings"; }
+    const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_appearance; }
+    const GUID& get_group() const override { return cui::fcl::groups::colours_and_fonts; }
 
     void get_data(stream_writer* writer, t_uint32 type, cui::fcl::t_export_feedback& feedback,
         abort_callback& p_abort) const override
@@ -146,10 +121,9 @@ public:
             album_list_window::s_update_all_window_frames();
         }
     }
+
 private:
-    enum {
-        stream_version = 0
-    };
+    enum { stream_version = 0 };
 
     enum {
         id_sub_item_counts,
@@ -203,10 +177,8 @@ private:
     }
 };
 
-cui::fcl::group_impl_factory g_fclgroup{
-    g_guid_fcl_group_album_list_views, "Album List Views",
-    "Album List view title format scripts", cui::fcl::groups::title_scripts
-};
+cui::fcl::group_impl_factory g_fclgroup{g_guid_fcl_group_album_list_views, "Album List Views",
+    "Album List view title format scripts", cui::fcl::groups::title_scripts};
 
 cui::fcl::dataset_factory<album_list_fcl_views> g_album_list_fcl_views;
 cui::fcl::dataset_factory<album_list_fcl_appearance> g_album_list_fcl_appearance;

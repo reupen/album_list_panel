@@ -1,14 +1,14 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
-template<typename String>
+template <typename String>
 const char* c_str(String& string)
 {
     return string.c_str();
 }
 
-template<>
-const char* c_str(const char* const & string)
+template <>
+const char* c_str(const char* const& string)
 {
     return string;
 }
@@ -70,10 +70,7 @@ struct process_bydir_entry {
         return ret;
     }
 
-    size_t get_segment_length() const
-    {
-        return g_get_segment_length(m_path);
-    }
+    size_t get_segment_length() const { return g_get_segment_length(m_path); }
 
     static int g_compare_segment(const char* p_path1, const char* p_path2)
     {
@@ -82,8 +79,8 @@ struct process_bydir_entry {
 
     static int g_compare_segment(const process_bydir_entry& p_item1, const process_bydir_entry& p_item2)
     {
-        return metadb::path_compare_ex(p_item1.m_path, p_item1.get_segment_length(), p_item2.m_path,
-                                       p_item2.get_segment_length());
+        return metadb::path_compare_ex(
+            p_item1.m_path, p_item1.get_segment_length(), p_item2.m_path, p_item2.get_segment_length());
     }
 
     static int g_compare(const process_bydir_entry& p_item1, const process_bydir_entry& p_item2)
@@ -94,7 +91,7 @@ struct process_bydir_entry {
     enum { is_bydir = true };
 };
 
-template<typename String = std::string>
+template <typename String = std::string>
 struct process_byformat_entry {
     metadb_handle* m_item;
     String m_path;
@@ -119,10 +116,7 @@ struct process_byformat_entry {
         return ret;
     }
 
-    size_t get_segment_length() const
-    {
-        return g_get_segment_length(c_str(m_path));
-    }
+    size_t get_segment_length() const { return g_get_segment_length(c_str(m_path)); }
 
     static int g_compare_segment(const char* p_path1, const char* p_path2)
     {
@@ -143,29 +137,23 @@ struct process_byformat_entry {
     enum { is_bydir = false };
 };
 
-template<typename t_entry>
+template <typename t_entry>
 class process_entry_list_wrapper_t : public pfc::list_base_const_t<metadb_handle_ptr> {
 public:
     process_entry_list_wrapper_t(const t_entry* p_data, size_t p_count) : m_data(p_data), m_count(p_count) {}
 
-    size_t get_count() const override
-    {
-        return m_count;
-    }
+    size_t get_count() const override { return m_count; }
 
-    void get_item_ex(metadb_handle_ptr& p_out, size_t n) const override
-    {
-        p_out = m_data[n].m_item;
-    }
+    void get_item_ex(metadb_handle_ptr& p_out, size_t n) const override { p_out = m_data[n].m_item; }
 
 private:
     const t_entry* m_data;
     size_t m_count;
 };
 
-template<typename t_entry, typename t_local_entry = t_entry>
-static void process_level_recur_t(const t_entry* p_items, size_t const p_items_count, node_ptr p_parent,
-                                  bool b_add_only)
+template <typename t_entry, typename t_local_entry = t_entry>
+static void process_level_recur_t(
+    const t_entry* p_items, size_t const p_items_count, node_ptr p_parent, bool b_add_only)
 {
     p_parent->set_bydir(t_entry::is_bydir);
     p_parent->set_data(process_entry_list_wrapper_t<t_entry>(p_items, p_items_count), !b_add_only);
@@ -183,8 +171,8 @@ static void process_level_recur_t(const t_entry* p_items, size_t const p_items_c
             current_path++;
         if (items_local_ptr > 0 && t_entry::g_compare_segment(last_path, current_path) != 0) {
             bool b_new = false;
-            node_ptr p_node = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path),
-                                                          !b_add_only, b_new);
+            node_ptr p_node
+                = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only, b_new);
             if (b_new)
                 b_node_added = true;
             process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
@@ -202,8 +190,8 @@ static void process_level_recur_t(const t_entry* p_items, size_t const p_items_c
 
     if (items_local_ptr > 0) {
         bool b_new{false};
-        node_ptr p_node = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only,
-                                                      b_new);
+        node_ptr p_node
+            = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only, b_new);
         if (b_new)
             b_node_added = true;
         process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
@@ -229,7 +217,7 @@ struct process_byformat_branch_choice {
     size_t m_end;
 };
 
-template<typename List>
+template <typename List>
 size_t process_byformat_add_branches(metadb_handle* handle, std::string text, List& entries)
 {
     const char* p_text = text.data();
@@ -266,8 +254,7 @@ size_t process_byformat_add_branches(metadb_handle* handle, std::string text, Li
                     choices.add_item(choice);
                     ptr++;
                     choice.m_start = ptr;
-                }
-                else
+                } else
                     ptr++;
             }
 
@@ -287,8 +274,7 @@ size_t process_byformat_add_branches(metadb_handle* handle, std::string text, Li
             segments.add_item(segment);
 
             branch_count *= segment.m_last_choice - segment.m_first_choice;
-        }
-        else {
+        } else {
             process_byformat_branch_segment segment;
             segment.m_first_choice = choices.get_count();
             segment.m_current_choice = segment.m_first_choice;
@@ -340,22 +326,20 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
         uGetWindowText(m_wnd_edit, pattern);
 
     if (m_wnd_edit && !pattern.is_empty()) {
-        const auto callback = [p_this = service_ptr_t<album_list_window>{this}](auto&& code) {
-            p_this->on_task_completion(0, code);
-        };
+        const auto callback
+            = [p_this = service_ptr_t<album_list_window>{this}](auto&& code) { p_this->on_task_completion(0, code); };
         const auto completion_notify_ptr = fb2k::makeCompletionNotify(callback);
 
         try {
-            m_filter_ptr = static_api_ptr_t<search_filter_manager_v2>()->create_ex(
-                pattern, completion_notify_ptr, NULL
-            );
+            m_filter_ptr
+                = static_api_ptr_t<search_filter_manager_v2>()->create_ex(pattern, completion_notify_ptr, NULL);
 
             pfc::array_t<bool> mask;
             mask.set_count(tracks.get_count());
             m_filter_ptr->test_multi(tracks, mask.get_ptr());
             tracks.remove_mask(pfc::bit_array_not(pfc::bit_array_table(mask.get_ptr(), mask.get_count())));
+        } catch (const pfc::exception&) {
         }
-        catch (const pfc::exception&) {}
     }
 
     if (is_bydir()) {
@@ -380,8 +364,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
 
             process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
-    }
-    else {
+    } else {
         const size_t count{tracks.get_count()};
 
         if (count > 0) {
@@ -494,7 +477,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         return;
 
     SetWindowRedraw(m_wnd_tv, FALSE);
-	auto _ = gsl::finally([wnd_tv = m_wnd_tv]{ SetWindowRedraw(wnd_tv, TRUE); });
+    auto _ = gsl::finally([wnd_tv = m_wnd_tv] { SetWindowRedraw(wnd_tv, TRUE); });
 
     if (!preserve_existing && m_populated) {
         TreeView_DeleteAllItems(m_wnd_tv);
@@ -510,13 +493,11 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         if (preserve_existing)
             remove_nodes(to_remove);
         build_nodes(to_add, preserve_existing);
-    }
-    catch (pfc::exception const& e) {
+    } catch (pfc::exception const& e) {
         pfc::string_formatter formatter;
         popup_message::g_show(
             formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
-            popup_message::icon_error
-        );
+            popup_message::icon_error);
         TreeView_DeleteAllItems(m_wnd_tv);
         m_selection.reset();
         m_root.reset();

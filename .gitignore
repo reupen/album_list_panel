@@ -125,7 +125,7 @@ publish/
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
-# TODO: Comment the next line if you want to checkin your web deploy settings 
+# TODO: Comment the next line if you want to checkin your web deploy settings
 # but database connection strings (with potential passwords) will be unencrypted
 *.pubxml
 *.publishproj
@@ -182,10 +182,11 @@ UpgradeLog*.htm
 # Microsoft Fakes
 FakesAssemblies/
 
-Debug.Win32
-Release.Win32
+release-*/
+debug-*/
 *.opendb
 *.db
 .vs
-
+doxygen/
+.idea/
 vcpkg_installed/

@@ -31,20 +31,11 @@ public:
         return (std::numeric_limits<size_t>::max)();
     }
 
-    size_t add_item(const char* name, const char* value)
-    {
-        return m_data.add_item(entry{name, value});
-    }
+    size_t add_item(const char* name, const char* value) { return m_data.add_item(entry{name, value}); }
 
-    void remove_item(size_t index)
-    {
-        m_data.remove_by_idx(index);
-    }
+    void remove_item(size_t index) { m_data.remove_by_idx(index); }
 
-    void remove_all()
-    {
-        m_data.remove_all();
-    }
+    void remove_all() { m_data.remove_all(); }
 
     void modify_item(size_t index, const char* name, const char* value)
     {
@@ -53,20 +44,11 @@ public:
         p_entry.value = value;
     }
 
-    size_t get_count() const
-    {
-        return m_data.get_count();
-    }
+    size_t get_count() const { return m_data.get_count(); }
 
-    void swap(size_t index1, size_t index2)
-    {
-        m_data.swap_items(index1, index2);
-    }
+    void swap(size_t index1, size_t index2) { m_data.swap_items(index1, index2); }
 
-    cfg_view_list_t(const GUID& p_guid) : cfg_var(p_guid)
-    {
-        reset();
-    }
+    cfg_view_list_t(const GUID& p_guid) : cfg_var(p_guid) { reset(); }
 
     void format_display(size_t index, pfc::string_base& out) const
     {

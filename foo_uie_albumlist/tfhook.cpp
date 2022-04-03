@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-bool titleformat_hook_impl_file_info_branch::process_field(titleformat_text_out* p_out, const char* p_name,
-                                                           t_size p_name_length, bool& p_found_flag)
+bool titleformat_hook_impl_file_info_branch::process_field(
+    titleformat_text_out* p_out, const char* p_name, t_size p_name_length, bool& p_found_flag)
 {
     if (p_name_length > 2 && p_name[0] == '<') {
         p_name_length = pfc::strlen_max(p_name, p_name_length);
@@ -9,8 +9,7 @@ bool titleformat_hook_impl_file_info_branch::process_field(titleformat_text_out*
             t_size index;
             if (remap_meta(index, p_name + 1, p_name_length - 2)) {
                 p_found_flag = process_meta_branch(p_out, index);
-            }
-            else
+            } else
                 p_found_flag = false;
             if (!p_found_flag)
                 p_out->write(titleformat_inputtypes::meta, "?", 1);
@@ -21,9 +20,7 @@ bool titleformat_hook_impl_file_info_branch::process_field(titleformat_text_out*
 }
 
 bool titleformat_hook_impl_file_info_branch::process_function(titleformat_text_out* p_out, const char* p_name,
-                                                              t_size p_name_length,
-                                                              titleformat_hook_function_params* p_params,
-                                                              bool& p_found_flag)
+    t_size p_name_length, titleformat_hook_function_params* p_params, bool& p_found_flag)
 {
     bool strip = false, remapswap = false, remapstrip = false;
     if (!stricmp_utf8_ex(p_name, p_name_length, "meta_branch", pfc_infinite)) {
@@ -45,16 +42,14 @@ bool titleformat_hook_impl_file_info_branch::process_function(titleformat_text_o
         t_size index;
         if (remap_meta(index, name, name_length)) {
             p_found_flag = process_meta_branch(p_out, index);
-        }
-        else
+        } else
             p_found_flag = false;
         return true;
     }
     if (!stricmp_utf8_ex(p_name, p_name_length, "meta_branch_swapprefix", pfc_infinite)
         || (strip = !stricmp_utf8_ex(p_name, p_name_length, "meta_branch_stripprefix", pfc_infinite))
         || (remapstrip = !stricmp_utf8_ex(p_name, p_name_length, "meta_branch_remap_stripprefix", pfc_infinite))
-        || (remapswap = !stricmp_utf8_ex(p_name, p_name_length, "meta_branch_remap_swapprefix", pfc_infinite))
-    ) {
+        || (remapswap = !stricmp_utf8_ex(p_name, p_name_length, "meta_branch_remap_swapprefix", pfc_infinite))) {
         strip = strip || remapstrip;
         bool remap = remapstrip || remapswap;
 
@@ -69,8 +64,7 @@ bool titleformat_hook_impl_file_info_branch::process_function(titleformat_text_o
         if (param_count == 1) {
             articles.add_item("The ");
             articles.add_item("A ");
-        }
-        else {
+        } else {
             for (t_size i{1}; i < param_count; i++) {
                 const char* article;
                 t_size article_length;
@@ -88,17 +82,15 @@ bool titleformat_hook_impl_file_info_branch::process_function(titleformat_text_o
         if (remap) {
             if (!remap_meta(index, value, value_length))
                 index = pfc_infinite;
-        }
-        else
+        } else
             index = m_info->meta_find_ex(value, value_length);
 
         p_found_flag = false;
         if (index != pfc_infinite) {
-
             t_size article_count = articles.get_count();
 
             t_size m = m_info->meta_enum_value_count(index);
-            //bool found = false;
+            // bool found = false;
             p_out->write(titleformat_inputtypes::meta, "\4", 1);
             for (t_size n{0}; n < m; n++) {
                 if (n > 0) {
