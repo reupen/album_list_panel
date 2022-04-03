@@ -15,7 +15,7 @@ enum class ClickAction {
 };
 
 class album_list_window
-    : public ui_extension::container_ui_extension
+    : public uie::container_uie_window_v3
     , public library_callback_dynamic {
     friend class font_notify;
     friend class node;
@@ -78,10 +78,7 @@ public:
 
     unsigned get_type() const override { return ui_extension::type_panel; }
 
-    class_data& get_class_data() const override
-    {
-        __implement_get_class_data(_T("{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"), false);
-    }
+    uie::container_window_v3_config get_window_config() override { return {L"{606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}"}; }
 
     void on_task_completion(t_uint32 task, t_uint32 code);
     void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
