@@ -110,7 +110,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/permissive- /source-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -146,7 +146,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/permissive- /source-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -183,7 +183,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/permissive- /source-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -219,7 +219,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
-      <AdditionalOptions>/permissive- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/permissive- /source-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
