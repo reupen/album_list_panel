@@ -110,16 +110,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 {
-    enum {
-        ID_SEND = 1,
-        ID_ADD,
-        ID_NEW,
-        ID_AUTOSEND,
-        ID_REFRESH,
-        ID_FILT,
-        ID_CONF,
-        ID_VIEW_BASE
-    };
+    enum { ID_SEND = 1, ID_ADD, ID_NEW, ID_AUTOSEND, ID_REFRESH, ID_FILT, ID_CONF, ID_VIEW_BASE };
 
     const HMENU menu{CreatePopupMenu()};
     service_ptr_t<contextmenu_manager> p_menu_manager;
@@ -133,8 +124,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         if (ti.hItem && (ti.flags & TVHT_ONITEM)) {
             treeitem = ti.hItem;
         }
-    }
-    else {
+    } else {
         treeitem = TreeView_GetSelection(m_wnd_tv);
         RECT rc;
         if (treeitem && TreeView_GetItemRect(m_wnd_tv, treeitem, &rc, TRUE)) {
@@ -142,8 +132,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 
             pt.x = rc.left;
             pt.y = rc.top + (rc.bottom - rc.top) / 2;
-        }
-        else {
+        } else {
             GetMessagePos(&pt);
         }
     }
@@ -162,8 +151,8 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     for (size_t i = 0; i < view_count; i++) {
         auto view_name = cfg_views.get_name(i);
         view_names.emplace_back(view_name);
-        uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(view_name, m_view) ? MF_CHECKED : 0),
-            ID_VIEW_BASE + i + 1, view_name);
+        uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(view_name, m_view) ? MF_CHECKED : 0), ID_VIEW_BASE + i + 1,
+            view_name);
     }
 
     const unsigned IDM_MANAGER_BASE = ID_VIEW_BASE + view_names.size();
@@ -187,8 +176,8 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
         uAppendMenu(menu, MF_STRING, ID_SEND, (show_shortcuts ? "&Send to playlist\tEnter" : "&Send to playlist"));
         uAppendMenu(menu, MF_STRING, ID_ADD, show_shortcuts ? "&Add to playlist\tShift+Enter" : "&Add to playlist");
-        uAppendMenu(menu, MF_STRING, ID_NEW,
-            show_shortcuts ? "Send to &new playlist\tCtrl+Enter" : "Send to &new playlist");
+        uAppendMenu(
+            menu, MF_STRING, ID_NEW, show_shortcuts ? "Send to &new playlist\tCtrl+Enter" : "Send to &new playlist");
         uAppendMenu(menu, MF_STRING, ID_AUTOSEND, "Send to &autosend playlist");
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
 
@@ -202,8 +191,8 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         }
     }
 
-    const int cmd = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(),
-        nullptr);
+    const int cmd
+        = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(), nullptr);
     DestroyMenu(menu);
 
     TreeView_Select(m_wnd_tv, NULL, TVGN_DROPHILITE);
@@ -211,15 +200,13 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     if (cmd > 0) {
         if (p_menu_manager.is_valid() && static_cast<unsigned>(cmd) >= IDM_MANAGER_BASE) {
             p_menu_manager->execute_by_id(cmd - IDM_MANAGER_BASE);
-        }
-        else if (cmd >= ID_VIEW_BASE) {
+        } else if (cmd >= ID_VIEW_BASE) {
             const unsigned view_index = cmd - ID_VIEW_BASE;
             if (view_index < view_names.size()) {
                 m_view = view_names[view_index].c_str();
                 refresh_tree();
             }
-        }
-        else if (cmd < ID_VIEW_BASE) {
+        } else if (cmd < ID_VIEW_BASE) {
             switch (cmd) {
             case ID_NEW:
                 do_playlist(p_node, true, true);
@@ -270,23 +257,22 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
     }
     case TVN_SELCHANGED: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        m_selection = param->itemNew.hItem ? reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this() : nullptr;
+        m_selection
+            = param->itemNew.hItem ? reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this() : nullptr;
 
         if (param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD) {
             if (cfg_autosend)
                 do_autosend_playlist(m_selection, m_view);
         }
         if (m_selection_holder.is_valid()) {
-            m_selection_holder->set_selection(m_selection
-                ? m_selection->get_entries()
-                : metadb_handle_list());
+            m_selection_holder->set_selection(m_selection ? m_selection->get_entries() : metadb_handle_list());
         }
         break;
     }
     case NM_CUSTOMDRAW: {
         const auto nmtvcd = (LPNMTVCUSTOMDRAW)(hdr);
 
-        switch(nmtvcd->nmcd.dwDrawStage) {
+        switch (nmtvcd->nmcd.dwDrawStage) {
         case CDDS_PREPAINT:
             if (cui::colours::helper(album_list_items_colours_client_id).get_themed())
                 return CDRF_DODEFAULT;
@@ -294,17 +280,17 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         case CDDS_ITEMPREPAINT: {
             const auto is_window_focused = GetFocus() == hdr->hwndFrom;
             const auto is_selected = (nmtvcd->nmcd.uItemState & CDIS_SELECTED) != 0;
-            const auto is_drop_highlighted = (TreeView_GetItemState(hdr->hwndFrom, nmtvcd->nmcd.dwItemSpec, TVIS_DROPHILITED) & TVIS_DROPHILITED) != 0;
+            const auto is_drop_highlighted
+                = (TreeView_GetItemState(hdr->hwndFrom, nmtvcd->nmcd.dwItemSpec, TVIS_DROPHILITED) & TVIS_DROPHILITED)
+                != 0;
 
             cui::colours::helper colour_client(album_list_items_colours_client_id);
 
             if (is_selected || is_drop_highlighted) {
-                nmtvcd->clrText =
-                    is_window_focused
+                nmtvcd->clrText = is_window_focused
                     ? colour_client.get_colour(cui::colours::colour_selection_text)
                     : colour_client.get_colour(cui::colours::colour_inactive_selection_text);
-                nmtvcd->clrTextBk =
-                    is_window_focused
+                nmtvcd->clrTextBk = is_window_focused
                     ? colour_client.get_colour(cui::colours::colour_selection_background)
                     : colour_client.get_colour(cui::colours::colour_inactive_selection_background);
             }

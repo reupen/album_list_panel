@@ -3,8 +3,8 @@
 
 class titleformat_hook_view : public titleformat_hook {
 public:
-    bool process_field(titleformat_text_out* p_out, const char* p_name, unsigned p_name_length,
-        bool& p_found_flag) override
+    bool process_field(
+        titleformat_text_out* p_out, const char* p_name, unsigned p_name_length, bool& p_found_flag) override
     {
         p_found_flag = false;
         if (m_view) {
@@ -25,6 +25,7 @@ public:
     }
 
     titleformat_hook_view(const char* p_view) : m_view{p_view} {}
+
 private:
     const char* m_view;
 };

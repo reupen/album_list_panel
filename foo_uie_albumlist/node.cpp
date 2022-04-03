@@ -11,12 +11,10 @@ void node::sort_children()
     mmh::sort_get_permutation(sortdata, permutation, StrCmpLogicalW, false, false, true);
 
     mmh::destructive_reorder(m_children, permutation);
-    concurrency::parallel_for(size_t{0}, count, [this](size_t n) {
-        m_children[n]->sort_children();
-    });
+    concurrency::parallel_for(size_t{0}, count, [this](size_t n) { m_children[n]->sort_children(); });
 }
 
-void node::sort_entries()//for contextmenu
+void node::sort_entries() // for contextmenu
 {
     if (!m_sorted) {
         pfc::string8 tf_string;
@@ -71,7 +69,8 @@ void node::send_to_playlist(bool replace)
 }
 
 node::node(const char* p_value, unsigned p_value_len, album_list_window* window, uint16_t level)
-    : m_level(level), m_window(window)
+    : m_level(level)
+    , m_window(window)
 {
     if (p_value && p_value_len > 0) {
         m_value.set_string(p_value, p_value_len);
@@ -104,20 +103,17 @@ node_ptr node::find_or_add_child(const char* p_value, unsigned p_value_len, bool
     b_new = true;
 
     struct Comparator {
-        bool operator() (const node_ptr& left, const wchar_t* right) const
+        bool operator()(const node_ptr& left, const wchar_t* right) const
         {
             const auto left_utf16 = pfc::stringcvt::string_wide_from_utf8(left->m_value);
             return operator()(left_utf16, right);
         }
-        bool operator() (const wchar_t* left, const node_ptr& right) const
+        bool operator()(const wchar_t* left, const node_ptr& right) const
         {
             const auto right_utf16 = pfc::stringcvt::string_wide_from_utf8(right->m_value);
             return operator()(left, right_utf16);
         }
-        bool operator() (const wchar_t* left, const wchar_t* right) const
-        {
-            return StrCmpLogicalW(left, right) < 0;
-        }
+        bool operator()(const wchar_t* left, const wchar_t* right) const { return StrCmpLogicalW(left, right) < 0; }
     };
 
     const auto value_utf16 = pfc::stringcvt::string_wide_from_utf8(p_value, p_value_len);
@@ -128,7 +124,7 @@ node_ptr node::find_or_add_child(const char* p_value, unsigned p_value_len, bool
         return *start;
     }
 
-    return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1 ));
+    return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1));
 }
 
 node_ptr node::add_child_v2(const char* p_value, unsigned p_value_len)
@@ -156,7 +152,7 @@ void node::purge_empty_children(HWND wnd)
     size_t index_first_removed = pfc_infinite;
 
     bool was_something_removed{};
-    for (auto iter = m_children.begin(); iter != m_children.end(); ) {
+    for (auto iter = m_children.begin(); iter != m_children.end();) {
         auto& child = *iter;
 
         if (was_something_removed && cfg_show_item_indices) {

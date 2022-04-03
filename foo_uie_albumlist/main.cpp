@@ -4,7 +4,7 @@
 #include "tree_view_populator.h"
 #include "actions.h"
 
-//TODO: node name as field
+// TODO: node name as field
 
 DECLARE_COMPONENT_VERSION("Album list panel",
 
@@ -75,7 +75,7 @@ void album_list_window::s_update_all_window_frames()
         const auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
             SetWindowLongPtr(wnd, GWL_EXSTYLE, flags);
-            SetWindowPos(wnd, nullptr, 0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+            SetWindowPos(wnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
         }
     }
 }
@@ -177,7 +177,8 @@ void album_list_window::s_update_all_indents()
     for (size_t i{0}; i < count; i++) {
         const auto wnd = s_instances[i]->get_wnd();
         if (wnd) {
-            const auto indentation = cfg_use_custom_indentation ? cfg_custom_indentation_amount : s_instances[i]->m_indent_default;
+            const auto indentation
+                = cfg_use_custom_indentation ? cfg_custom_indentation_amount : s_instances[i]->m_indent_default;
             TreeView_SetIndent(s_instances[i]->m_wnd_tv, indentation);
         }
     }
@@ -210,9 +211,9 @@ void album_list_window::update_all_labels()
 {
     if (m_root) {
         m_root->mark_all_labels_dirty();
-        SendMessage(m_wnd_tv,WM_SETREDRAW, FALSE, 0);
-        TreeViewPopulator::s_setup_tree(m_wnd_tv,TVI_ROOT, m_root, 0, 0);
-        SendMessage(m_wnd_tv,WM_SETREDRAW, TRUE, 0);
+        SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
+        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);
+        SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
 }
 
@@ -317,9 +318,8 @@ void album_list_window::create_filter()
 {
     if (m_filter && !m_wnd_edit) {
         const auto flags = WS_EX_CLIENTEDGE;
-        m_wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""),
-                                    WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0,
-                                    get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), nullptr);
+        m_wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0,
+            0, 0, get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), nullptr);
         update_edit_theme();
         uih::set_window_font(m_wnd_edit, s_font.get(), false);
         SetFocus(m_wnd_edit);
@@ -352,8 +352,7 @@ void album_list_window::on_size(unsigned cx, unsigned cy)
 
     dwp = DeferWindowPos(dwp, m_wnd_tv, nullptr, 0, 0, cx, tv_height, SWP_NOZORDER);
     if (m_wnd_edit)
-        dwp = DeferWindowPos(dwp, m_wnd_edit, nullptr, 0, tv_height, cx, edit_height,
-                             SWP_NOZORDER);
+        dwp = DeferWindowPos(dwp, m_wnd_edit, nullptr, 0, tv_height, cx, edit_height, SWP_NOZORDER);
     EndDeferWindowPos(dwp);
 }
 
@@ -375,10 +374,9 @@ void album_list_window::create_tree()
         flags |= WS_EX_STATICEDGE;
 
     m_wnd_tv = CreateWindowEx(flags, WC_TREEVIEW, _T("Album list"),
-                              TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | (
-                                  cfg_show_horizontal_scroll_bar ? 0 : TVS_NOHSCROLL) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP, 0,
-                              0, 0, 0,
-                              wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
+        TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT
+            | (cfg_show_horizontal_scroll_bar ? 0 : TVS_NOHSCROLL) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP,
+        0, 0, 0, 0, wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
 
     if (m_wnd_tv) {
         TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
@@ -391,11 +389,9 @@ void album_list_window::create_tree()
             uih::set_window_font(m_wnd_tv, s_font.get(), false);
             if (cfg_use_custom_indentation)
                 TreeView_SetIndent(m_wnd_tv, cfg_custom_indentation_amount);
-        }
-        else {
+        } else {
             s_update_all_fonts();
         }
-
 
         if (cfg_use_custom_vertical_item_padding)
             update_item_height();
@@ -476,8 +472,8 @@ void album_list_window::set_config(stream_reader* p_reader, t_size psize, abort_
             p_reader->read_lendian_t(m_filter, p_abort);
             p_reader->skip_object(sizeof(int32_t), p_abort);
             p_reader->skip_object(sizeof(int32_t), p_abort);
+        } catch (exception_io_data_truncation&) {
         }
-        catch (exception_io_data_truncation&) {}
     }
 }
 
@@ -503,14 +499,9 @@ void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)
     const auto node_settings
         = uie::menu_node_ptr{new uie::simple_command_menu_node{"Settings", "Shows Album List panel settings", 0,
             [] { static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id); }}};
-    const auto node_filter = uie::menu_node_ptr{
-        new uie::simple_command_menu_node{
-            "Filter",
-            "Shows the filter bar",
-            m_filter ? uie::menu_node_t::state_checked : 0,
-            [instance = service_ptr_t<album_list_window>{this}] { instance->toggle_show_filter(); }
-        }
-    };
+    const auto node_filter = uie::menu_node_ptr{new uie::simple_command_menu_node{"Filter", "Shows the filter bar",
+        m_filter ? uie::menu_node_t::state_checked : 0,
+        [instance = service_ptr_t<album_list_window>{this}] { instance->toggle_show_filter(); }}};
 
     p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_select_view(this)));
     p_hook.add_node(node_filter);
@@ -539,7 +530,7 @@ bool album_list_window::do_click_action(ClickAction click_action)
 }
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
-const GUID album_list_window::s_extension_guid =
-    {0x606e9cdd, 0x45ee, 0x4c3b, {0x9f, 0xd5, 0x49, 0x38, 0x1c, 0xeb, 0xe8, 0xae}};
+const GUID album_list_window::s_extension_guid
+    = {0x606e9cdd, 0x45ee, 0x4c3b, {0x9f, 0xd5, 0x49, 0x38, 0x1c, 0xeb, 0xe8, 0xae}};
 
 ui_extension::window_factory<album_list_window> blah;
