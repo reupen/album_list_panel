@@ -101,7 +101,8 @@ public:
         w.write_item(id_horizontal_scrollbar, cfg_show_horizontal_scroll_bar);
         w.write_item(id_root_node, cfg_show_root_node);
         w.write_item(id_use_item_padding, cfg_use_custom_vertical_item_padding);
-        w.write_item(id_item_padding, cfg_custom_vertical_padding_amount);
+        w.write_item(id_item_padding, cfg_custom_vertical_padding_amount.get_raw_value().value);
+        w.write_item(id_item_padding_dpi, cfg_custom_vertical_padding_amount.get_raw_value().dpi);
         w.write_item(id_use_indentation, cfg_use_custom_indentation);
         w.write_item(id_indentation, cfg_custom_indentation_amount.get_raw_value().value);
         w.write_item(id_indentation_dpi, cfg_custom_indentation_amount.get_raw_value().dpi);
@@ -135,11 +136,13 @@ private:
         id_indentation,
         id_edge_style,
         id_indentation_dpi,
+        id_item_padding_dpi,
     };
 
     static void read_items(fbh::fcl::Reader& fcl_reader)
     {
         uih::IntegerAndDpi<int32_t> indentation(0, uih::get_system_dpi_cached().cx);
+        uih::IntegerAndDpi<int32_t> item_padding(0, uih::get_system_dpi_cached().cx);
         std::unordered_set<uint32_t> read_element_ids;
 
         while (fcl_reader.get_remaining()) {
@@ -165,7 +168,10 @@ private:
                 fcl_reader.read_item(cfg_use_custom_vertical_item_padding);
                 break;
             case id_item_padding:
-                fcl_reader.read_item(cfg_custom_vertical_padding_amount);
+                fcl_reader.read_item(item_padding.value);
+                break;
+            case id_item_padding_dpi:
+                fcl_reader.read_item(item_padding.dpi);
                 break;
             case id_use_indentation:
                 fcl_reader.read_item(cfg_use_custom_indentation);
@@ -187,6 +193,10 @@ private:
 
         if (read_element_ids.contains(id_indentation)) {
             cfg_custom_indentation_amount = indentation;
+        }
+
+        if (read_element_ids.contains(id_item_padding)) {
+            cfg_custom_vertical_padding_amount = item_padding;
         }
     }
 };

@@ -290,7 +290,7 @@ void album_list_window::update_item_height()
     const auto font = uih::get_window_font(m_wnd_tv);
     int font_height = -1;
     if (cfg_use_custom_vertical_item_padding) {
-        font_height = uGetFontHeight(font) + cfg_custom_vertical_padding_amount;
+        font_height = uih::get_font_height(font) + cfg_custom_vertical_padding_amount;
         if (font_height < 1)
             font_height = 1;
     }
