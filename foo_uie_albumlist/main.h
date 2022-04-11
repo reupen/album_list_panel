@@ -115,7 +115,6 @@ private:
     bool m_timer{false};
     bool m_process_char{true};
     POINT m_clickpoint{};
-    int m_indent_default{0};
     // Mutable because they are effectively used for caching
     mutable int32_t m_horizontal_scroll_position{};
     mutable int32_t m_vertical_scroll_position{};
