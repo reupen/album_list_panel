@@ -41,8 +41,7 @@ void album_list_window::s_update_all_fonts()
         auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
             uih::set_window_font(wnd, s_font.get());
-            if (cfg_use_custom_indentation)
-                TreeView_SetIndent(wnd, cfg_custom_indentation_amount);
+            TreeView_SetIndent(wnd, cfg_use_custom_indentation ? cfg_custom_indentation_amount : 0);
 
             wnd = s_instances[i]->m_wnd_edit;
             if (wnd) {
@@ -177,8 +176,7 @@ void album_list_window::s_update_all_indents()
     for (size_t i{0}; i < count; i++) {
         const auto wnd = s_instances[i]->get_wnd();
         if (wnd) {
-            const auto indentation
-                = cfg_use_custom_indentation ? cfg_custom_indentation_amount : s_instances[i]->m_indent_default;
+            const auto indentation = cfg_use_custom_indentation ? cfg_custom_indentation_amount : 0;
             TreeView_SetIndent(s_instances[i]->m_wnd_tv, indentation);
         }
     }
@@ -292,7 +290,7 @@ void album_list_window::update_item_height()
     const auto font = uih::get_window_font(m_wnd_tv);
     int font_height = -1;
     if (cfg_use_custom_vertical_item_padding) {
-        font_height = uGetFontHeight(font) + cfg_custom_vertical_padding_amount;
+        font_height = uih::get_font_height(font) + cfg_custom_vertical_padding_amount;
         if (font_height < 1)
             font_height = 1;
     }
@@ -383,12 +381,9 @@ void album_list_window::create_tree()
         update_tree_theme();
         update_tooltip_theme();
 
-        m_indent_default = TreeView_GetIndent(m_wnd_tv);
-
         if (s_font) {
             uih::set_window_font(m_wnd_tv, s_font.get(), false);
-            if (cfg_use_custom_indentation)
-                TreeView_SetIndent(m_wnd_tv, cfg_custom_indentation_amount);
+            TreeView_SetIndent(m_wnd_tv, cfg_use_custom_indentation ? cfg_custom_indentation_amount : 0);
         } else {
             s_update_all_fonts();
         }

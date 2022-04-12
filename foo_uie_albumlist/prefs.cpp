@@ -332,7 +332,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         else
             uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
-        SendDlgItemMessage(wnd, IDC_INDENT_SPIN, UDM_SETRANGE32, 0, 999);
+        SendDlgItemMessage(wnd, IDC_INDENT_SPIN, UDM_SETRANGE32, 1, 999);
         SendDlgItemMessage(wnd, IDC_USE_ITEM_HEIGHT, BM_SETCHECK, cfg_use_custom_vertical_item_padding, 0);
 
         HWND wnd_item_height = GetDlgItem(wnd, IDC_ITEM_HEIGHT);

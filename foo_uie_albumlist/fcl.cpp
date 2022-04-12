@@ -101,9 +101,11 @@ public:
         w.write_item(id_horizontal_scrollbar, cfg_show_horizontal_scroll_bar);
         w.write_item(id_root_node, cfg_show_root_node);
         w.write_item(id_use_item_padding, cfg_use_custom_vertical_item_padding);
-        w.write_item(id_item_padding, cfg_custom_vertical_padding_amount);
+        w.write_item(id_item_padding, cfg_custom_vertical_padding_amount.get_raw_value().value);
+        w.write_item(id_item_padding_dpi, cfg_custom_vertical_padding_amount.get_raw_value().dpi);
         w.write_item(id_use_indentation, cfg_use_custom_indentation);
-        w.write_item(id_indentation, cfg_custom_indentation_amount);
+        w.write_item(id_indentation, cfg_custom_indentation_amount.get_raw_value().value);
+        w.write_item(id_indentation_dpi, cfg_custom_indentation_amount.get_raw_value().dpi);
         w.write_item(id_edge_style, cfg_frame_style);
     }
 
@@ -113,9 +115,7 @@ public:
         fbh::fcl::Reader fcl_reader(reader, size, p_abort);
         const auto version = fcl_reader.read_raw_item<uint32_t>();
         if (version <= stream_version) {
-            while (fcl_reader.get_remaining()) {
-                read_item(fcl_reader);
-            }
+            read_items(fcl_reader);
             album_list_window::s_update_all_item_heights();
             album_list_window::s_update_all_indents();
             album_list_window::s_update_all_window_frames();
@@ -134,45 +134,69 @@ private:
         id_item_padding,
         id_use_indentation,
         id_indentation,
-        id_edge_style
+        id_edge_style,
+        id_indentation_dpi,
+        id_item_padding_dpi,
     };
 
-    static void read_item(fbh::fcl::Reader& fcl_reader)
+    static void read_items(fbh::fcl::Reader& fcl_reader)
     {
-        const auto id = fcl_reader.read_raw_item<uint32_t>();
-        const auto elem_size = fcl_reader.read_raw_item<uint32_t>();
+        uih::IntegerAndDpi<int32_t> indentation(0, uih::get_system_dpi_cached().cx);
+        uih::IntegerAndDpi<int32_t> item_padding(0, uih::get_system_dpi_cached().cx);
+        std::unordered_set<uint32_t> read_element_ids;
 
-        switch (id) {
-        case id_sub_item_counts:
-            fcl_reader.read_item(cfg_show_subitem_counts);
-            break;
-        case id_sub_item_indices:
-            fcl_reader.read_item(cfg_show_item_indices);
-            break;
-        case id_horizontal_scrollbar:
-            fcl_reader.read_item(cfg_show_horizontal_scroll_bar);
-            break;
-        case id_root_node:
-            fcl_reader.read_item(cfg_show_root_node);
-            break;
-        case id_use_item_padding:
-            fcl_reader.read_item(cfg_use_custom_vertical_item_padding);
-            break;
-        case id_item_padding:
-            fcl_reader.read_item(cfg_custom_vertical_padding_amount);
-            break;
-        case id_use_indentation:
-            fcl_reader.read_item(cfg_use_custom_indentation);
-            break;
-        case id_indentation:
-            fcl_reader.read_item(cfg_custom_indentation_amount);
-            break;
-        case id_edge_style:
-            fcl_reader.read_item(cfg_frame_style);
-            break;
-        default:
-            fcl_reader.skip(elem_size);
-            break;
+        while (fcl_reader.get_remaining()) {
+            const auto id = fcl_reader.read_raw_item<uint32_t>();
+            const auto elem_size = fcl_reader.read_raw_item<uint32_t>();
+
+            read_element_ids.emplace(id);
+
+            switch (id) {
+            case id_sub_item_counts:
+                fcl_reader.read_item(cfg_show_subitem_counts);
+                break;
+            case id_sub_item_indices:
+                fcl_reader.read_item(cfg_show_item_indices);
+                break;
+            case id_horizontal_scrollbar:
+                fcl_reader.read_item(cfg_show_horizontal_scroll_bar);
+                break;
+            case id_root_node:
+                fcl_reader.read_item(cfg_show_root_node);
+                break;
+            case id_use_item_padding:
+                fcl_reader.read_item(cfg_use_custom_vertical_item_padding);
+                break;
+            case id_item_padding:
+                fcl_reader.read_item(item_padding.value);
+                break;
+            case id_item_padding_dpi:
+                fcl_reader.read_item(item_padding.dpi);
+                break;
+            case id_use_indentation:
+                fcl_reader.read_item(cfg_use_custom_indentation);
+                break;
+            case id_indentation:
+                fcl_reader.read_item(indentation.value);
+                break;
+            case id_indentation_dpi:
+                fcl_reader.read_item(indentation.dpi);
+                break;
+            case id_edge_style:
+                fcl_reader.read_item(cfg_frame_style);
+                break;
+            default:
+                fcl_reader.skip(elem_size);
+                break;
+            }
+        }
+
+        if (read_element_ids.contains(id_indentation)) {
+            cfg_custom_indentation_amount = indentation;
+        }
+
+        if (read_element_ids.contains(id_item_padding)) {
+            cfg_custom_vertical_padding_amount = item_padding;
         }
     }
 };
