@@ -155,9 +155,9 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
             view_name);
     }
 
-    const unsigned IDM_MANAGER_BASE = ID_VIEW_BASE + view_names.size();
+    const int IDM_MANAGER_BASE = ID_VIEW_BASE + gsl::narrow<int>(view_names.size());
 
-    uAppendMenu(menu, MF_STRING | MF_POPUP, reinterpret_cast<UINT>(menu_view), "View");
+    uAppendMenu(menu, MF_STRING | MF_POPUP, reinterpret_cast<UINT_PTR>(menu_view), "View");
 
     if (!m_populated && !cfg_populate_on_init)
         uAppendMenu(menu, MF_STRING, ID_REFRESH, "Populate");
@@ -198,7 +198,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     TreeView_Select(m_wnd_tv, NULL, TVGN_DROPHILITE);
 
     if (cmd > 0) {
-        if (p_menu_manager.is_valid() && static_cast<unsigned>(cmd) >= IDM_MANAGER_BASE) {
+        if (p_menu_manager.is_valid() && cmd >= IDM_MANAGER_BASE) {
             p_menu_manager->execute_by_id(cmd - IDM_MANAGER_BASE);
         } else if (cmd >= ID_VIEW_BASE) {
             const unsigned view_index = cmd - ID_VIEW_BASE;
