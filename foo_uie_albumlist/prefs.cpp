@@ -263,11 +263,24 @@ class items_colours_client : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return album_list_items_colours_client_id; }
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Items"; }
-    t_size get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
+    uint32_t get_supported_colours() const override
+    {
+        uint32_t flags = cui::colours::colour_flag_all
+            & ~(cui::colours::colour_flag_group_foreground | cui::colours::colour_flag_group_background);
+
+        if (cui::colours::is_dark_mode_active()) {
+            flags &= ~(cui::colours::colour_flag_selection_background
+                | cui::colours::colour_flag_inactive_selection_background
+                | cui::colours::colour_flag_active_item_frame);
+        }
+
+        return flags;
+    }
+    uint32_t get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
     bool get_themes_supported() const override { return true; }
 
-    void on_colour_changed(t_size mask) const override { album_list_window::s_update_all_tree_colours(); };
-    void on_bool_changed(t_size mask) const override
+    void on_colour_changed(uint32_t mask) const override { album_list_window::s_update_all_tree_colours(); };
+    void on_bool_changed(uint32_t mask) const override
     {
         if (mask & cui::colours::bool_flag_dark_mode_enabled)
             album_list_window::s_update_all_tree_themes();
@@ -280,15 +293,15 @@ class filter_colours_client : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return album_list_filter_colours_client_id; }
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Filter"; }
-    t_size get_supported_colours() const override
+    uint32_t get_supported_colours() const override
     {
         return cui::colours::colour_flag_background | cui::colours::colour_flag_text;
     }
-    t_size get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
+    uint32_t get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
     bool get_themes_supported() const override { return false; }
 
-    void on_colour_changed(t_size mask) const override { album_list_window::s_update_all_edit_colours(); }
-    void on_bool_changed(t_size mask) const override
+    void on_colour_changed(uint32_t mask) const override { album_list_window::s_update_all_edit_colours(); }
+    void on_bool_changed(uint32_t mask) const override
     {
         if (mask & cui::colours::bool_flag_dark_mode_enabled)
             album_list_window::s_update_all_edit_themes();
