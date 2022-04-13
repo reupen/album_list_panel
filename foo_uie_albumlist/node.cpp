@@ -68,7 +68,7 @@ void node::send_to_playlist(bool replace)
     }
 }
 
-node::node(const char* p_value, unsigned p_value_len, album_list_window* window, uint16_t level)
+node::node(const char* p_value, size_t p_value_len, album_list_window* window, uint16_t level)
     : m_level(level)
     , m_window(window)
 {
@@ -91,7 +91,7 @@ void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, boo
     m_sorted = false;
 }
 
-node_ptr node::find_or_add_child(const char* p_value, unsigned p_value_len, bool b_find, bool& b_new)
+node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new)
 {
     if (!b_find)
         return add_child_v2(p_value, p_value_len);
@@ -127,7 +127,7 @@ node_ptr node::find_or_add_child(const char* p_value, unsigned p_value_len, bool
     return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1));
 }
 
-node_ptr node::add_child_v2(const char* p_value, unsigned p_value_len)
+node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
 {
     if (p_value_len == 0 || *p_value == 0) {
         p_value = "?";

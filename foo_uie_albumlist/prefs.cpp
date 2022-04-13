@@ -6,7 +6,7 @@ struct edit_view_param {
     bool b_new;
 };
 
-static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG:
@@ -31,7 +31,7 @@ static BOOL CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     uMessageBox(wnd, "Please enter a valid name.", nullptr, 0);
                     break;
                 }
-                unsigned idx_find = cfg_views.find_item(temp);
+                size_t idx_find = cfg_views.find_item(temp);
                 if (idx_find != -1 && (ptr->b_new || ((idx_find != ptr->idx) && (idx_find != -1)))) {
                     uMessageBox(wnd, "View of this name already exists. Please enter another one.", nullptr, 0);
                     break;
@@ -78,7 +78,7 @@ void tab_general::refresh_views()
     {
         HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
         SendMessage(list, LB_RESETCONTENT, 0, 0);
-        unsigned n, m = cfg_views.get_count();
+        size_t n, m = cfg_views.get_count();
         pfc::string8_fastalloc temp;
         for (n = 0; n < m; n++) {
             cfg_views.format_display(n, temp);
@@ -87,18 +87,18 @@ void tab_general::refresh_views()
     }
 }
 
-BOOL tab_general::g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR tab_general::g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     tab_general* p_data = nullptr;
     if (msg == WM_INITDIALOG) {
         p_data = reinterpret_cast<tab_general*>(lp);
-        SetWindowLongPtr(wnd, DWL_USER, lp);
+        SetWindowLongPtr(wnd, DWLP_USER, lp);
     } else
-        p_data = reinterpret_cast<tab_general*>(GetWindowLongPtr(wnd, DWL_USER));
+        p_data = reinterpret_cast<tab_general*>(GetWindowLongPtr(wnd, DWLP_USER));
     return p_data ? p_data->on_message(wnd, msg, wp, lp) : FALSE;
 }
 
-BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
@@ -136,20 +136,20 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         switch (wp) {
         case IDC_MIDDLE | (CBN_SELCHANGE << 16):
-            cfg_middle_click_action = SendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
+            cfg_middle_click_action = ComboBox_GetCurSel(reinterpret_cast<HWND>(lp));
             break;
         case IDC_DBLCLK | (CBN_SELCHANGE << 16):
-            cfg_double_click_action = SendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
+            cfg_double_click_action = ComboBox_GetCurSel(reinterpret_cast<HWND>(lp));
             break;
         case IDC_AUTO_SEND:
-            cfg_autosend = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_autosend = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case (EN_KILLFOCUS << 16) | IDC_PLAYLIST_NAME:
             cfg_autosend_playlist_name = string_utf8_from_window((HWND)lp);
             break;
         case IDC_VIEWS | (LBN_DBLCLK << 16): {
             const auto list = reinterpret_cast<HWND>(lp);
-            unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
+            unsigned idx = ListBox_GetCurSel(list);
             if (idx != LB_ERR) {
                 edit_view_param p;
                 p.b_new = false;
@@ -174,7 +174,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         case IDC_VIEW_UP: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
-            unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
+            auto idx = ListBox_GetCurSel(list);
             if (idx != LB_ERR && idx > 0) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
                 cfg_views.swap(idx, idx - 1);
@@ -187,7 +187,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         case IDC_VIEW_DOWN: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
-            unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
+            auto idx = ListBox_GetCurSel(list);
             if (idx != LB_ERR && idx + 1 < cfg_views.get_count()) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
                 cfg_views.swap(idx, idx + 1);
@@ -200,7 +200,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         case IDC_VIEW_DELETE: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
-            unsigned idx = SendMessage(list, LB_GETCURSEL, 0, 0);
+            auto idx = ListBox_GetCurSel(list);
             if (idx != LB_ERR) {
                 cfg_views.remove_item(idx);
                 SendDlgItemMessage(wnd, IDC_VIEWS, LB_DELETESTRING, idx, 0);
@@ -213,7 +213,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             p.idx = -1;
             if (run_edit_view(p, wnd)) {
                 HWND list = uGetDlgItem(wnd, IDC_VIEWS);
-                unsigned n = cfg_views.add_item(p.name, p.value);
+                size_t n = cfg_views.add_item(p.name, p.value);
                 pfc::string8 temp;
                 cfg_views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);
@@ -225,7 +225,7 @@ BOOL tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             cfg_views.reset();
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             SendMessage(list, LB_RESETCONTENT, 0, 0);
-            unsigned n, m = cfg_views.get_count();
+            size_t n, m = cfg_views.get_count();
             pfc::string8_fastalloc temp;
             for (n = 0; n < m; n++) {
                 cfg_views.format_display(n, temp);
@@ -312,7 +312,7 @@ cui::colours::client::factory<filter_colours_client> g_filter_colours_client;
 
 }; // namespace
 
-BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
@@ -367,44 +367,44 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         switch (wp) {
         case IDC_AUTOCOLLAPSE:
-            cfg_collapse_other_nodes_on_expansion = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_collapse_other_nodes_on_expansion = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_ADD_ITEMS_USE_CORE_SORT:
-            cfg_add_items_use_core_sort = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_add_items_use_core_sort = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_ADD_ITEMS_SELECT:
-            cfg_add_items_select = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_add_items_select = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_POPULATE:
-            cfg_populate_on_init = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_populate_on_init = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_SHOW_NUMBERS:
-            cfg_show_subitem_counts = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_subitem_counts = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             album_list_window::s_update_all_labels();
             break;
         case IDC_AUTO_SEND:
-            cfg_autosend = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_autosend = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_HSCROLL:
-            cfg_show_horizontal_scroll_bar = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_horizontal_scroll_bar = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             album_list_window::s_update_all_showhscroll();
             break;
         case IDC_SHOW_ROOT:
-            cfg_show_root_node = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_root_node = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             album_list_window::s_refresh_all();
             break;
         case IDC_AUTOPLAY:
-            cfg_play_on_send = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_play_on_send = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_KEYB:
-            cfg_process_keyboard_shortcuts = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_process_keyboard_shortcuts = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_SHOW_NUMBERS2:
-            cfg_show_item_indices = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_show_item_indices = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             album_list_window::s_update_all_labels();
             break;
         case (CBN_SELCHANGE << 16) | IDC_FRAME: {
-            cfg_frame_style = SendMessage((HWND)lp, CB_GETCURSEL, 0, 0);
+            cfg_frame_style = ComboBox_GetCurSel(reinterpret_cast<HWND>(lp));
             album_list_window::s_update_all_window_frames();
         } break;
         case (EN_CHANGE << 16) | IDC_ITEM_HEIGHT: {
@@ -422,7 +422,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             }
         } break;
         case IDC_USE_ITEM_HEIGHT: {
-            cfg_use_custom_vertical_item_padding = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_use_custom_vertical_item_padding = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             HWND wnd_indent = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
 
             EnableWindow(wnd_indent, cfg_use_custom_vertical_item_padding);
@@ -436,7 +436,7 @@ BOOL tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             album_list_window::s_update_all_item_heights();
         } break;
         case IDC_USE_INDENT: {
-            cfg_use_custom_indentation = SendMessage((HWND)lp, BM_GETCHECK, 0, 0);
+            cfg_use_custom_indentation = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             HWND wnd_indent = GetDlgItem(wnd, IDC_INDENT);
 
             EnableWindow(wnd_indent, cfg_use_custom_indentation);
@@ -506,7 +506,7 @@ void config_albumlist::make_child(HWND wnd)
     ShowWindow(child, SW_SHOWNORMAL);
 }
 
-BOOL config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {

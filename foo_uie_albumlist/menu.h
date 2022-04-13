@@ -12,9 +12,9 @@ public:
         return true;
     }
 
-    unsigned get_children_count() const override { return m_items.get_count(); }
+    size_t get_children_count() const override { return m_items.get_count(); }
 
-    void get_child(unsigned p_index, uie::menu_node_ptr& p_out) const override { p_out = m_items[p_index].get_ptr(); }
+    void get_child(size_t p_index, uie::menu_node_ptr& p_out) const override { p_out = m_items[p_index].get_ptr(); }
 
     menu_node_select_view(album_list_window* p_wnd) : m_window{p_wnd}
     {

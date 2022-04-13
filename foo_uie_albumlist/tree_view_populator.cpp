@@ -88,7 +88,7 @@ const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_
     m_text_buffer.reset();
 
     if (cfg_show_item_indices && item_count > 0) {
-        t_size pad = 0;
+        uint32_t pad = 0;
         while (item_count > 0) {
             item_count /= 10;
             pad++;
@@ -105,7 +105,7 @@ const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_
         t_size num = ptr->get_num_children();
         if (num > 0) {
             char blah[64];
-            sprintf_s(blah, " (%u)", num);
+            sprintf_s(blah, " (%zu)", num);
             m_text_buffer += blah;
         }
     }

@@ -13,8 +13,8 @@ class tab_general : public preferences_tab {
 public:
     bool is_active() { return m_wnd != nullptr; }
     void refresh_views();
-    static BOOL CALLBACK g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-    BOOL CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    static INT_PTR CALLBACK g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    INT_PTR CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     HWND create(HWND wnd) override
     {
@@ -29,7 +29,7 @@ public:
 class tab_advanced : public preferences_tab {
     static bool initialised;
 
-    static BOOL CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    static INT_PTR CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
 public:
     HWND create(HWND wnd) override
@@ -44,7 +44,7 @@ class config_albumlist : public preferences_page {
 
     static void make_child(HWND wnd);
 
-    static BOOL CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    static INT_PTR CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
 public:
     HWND create(HWND parent) override

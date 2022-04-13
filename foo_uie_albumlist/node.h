@@ -9,7 +9,7 @@ public:
     bool m_children_inserted{};
     uint16_t m_level;
 
-    node(const char* p_value, unsigned p_value_len, class album_list_window* window, uint16_t level);
+    node(const char* p_value, size_t p_value_len, class album_list_window* window, uint16_t level);
 
     void sort_children();
     void sort_entries(); // for contextmenu
@@ -35,9 +35,9 @@ public:
 
     void set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing);
 
-    node_ptr find_or_add_child(const char* p_value, unsigned p_value_len, bool b_find, bool& b_new);
+    node_ptr find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new);
 
-    node_ptr add_child_v2(const char* p_value, unsigned p_value_len);
+    node_ptr add_child_v2(const char* p_value, size_t p_value_len);
 
     node_ptr add_child_v2(const char* p_value) { return add_child_v2(p_value, strlen(p_value)); }
 
@@ -56,9 +56,9 @@ public:
 
     std::vector<node_ptr>& get_children() { return m_children; }
 
-    unsigned get_num_children() const { return m_children.size(); }
+    size_t get_num_children() const { return m_children.size(); }
 
-    unsigned get_num_entries() const { return m_tracks.get_count(); }
+    size_t get_num_entries() const { return m_tracks.get_count(); }
 
 private:
     pfc::string_simple m_value;
