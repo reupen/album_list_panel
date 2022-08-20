@@ -3,6 +3,8 @@ name: VS 2022
 on:
   workflow_dispatch:
   pull_request:
+  schedule:
+    - cron: 0 4 * * WED
   push:
     branches:
       - master
@@ -14,6 +16,7 @@ jobs:
     strategy:
       matrix:
         configuration: ["release", "debug"]
+        platform: ["win32", "x64"]
 
     steps:
       - uses: actions/checkout@v3
@@ -42,4 +45,16 @@ jobs:
 
       - name: Build
         run: |
-          msbuild /m '/p:Platform=Win32;Configuration=${{ matrix.configuration }}' "/logger:$Env:Temp\Reupen.MSBuild.GitHubLogger.dll" vc17\album_list_panel.sln
+          msbuild /m '/p:Platform=${{ matrix.platform }};Configuration=${{ matrix.configuration }}' "/logger:$Env:Temp\Reupen.MSBuild.GitHubLogger.dll" vc17\album_list_panel.sln
+
+      - uses: actions/upload-artifact@v3
+        if: matrix.configuration == 'release'
+        with:
+          name: Component package (${{ matrix.configuration }}, ${{ matrix.platform }})
+          path: vc17\release-*\*.fb2k-component
+
+      - uses: actions/upload-artifact@v3
+        if: matrix.configuration == 'release'
+        with:
+          name: Symbols for debugging (${{ matrix.configuration }}, ${{ matrix.platform }})
+          path: vc17\release-*\*.pdb
