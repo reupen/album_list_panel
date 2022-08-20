@@ -1,0 +1,5 @@
+component_name = "foo_uie_albumlist"
+solution_path = "vc17\\album_list_panel.sln"
+output_path = "component-packages"
+x86_build_path = "vc17\\release-win32-v143"
+x64_build_path = "vc17\\release-x64-v143"

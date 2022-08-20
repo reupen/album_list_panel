@@ -145,7 +145,7 @@ INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             cfg_autosend = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case (EN_KILLFOCUS << 16) | IDC_PLAYLIST_NAME:
-            cfg_autosend_playlist_name = string_utf8_from_window((HWND)lp);
+            cfg_autosend_playlist_name = uGetWindowText(reinterpret_cast<HWND>(lp));
             break;
         case IDC_VIEWS | (LBN_DBLCLK << 16): {
             const auto list = reinterpret_cast<HWND>(lp);
@@ -188,7 +188,7 @@ INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         case IDC_VIEW_DOWN: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             auto idx = ListBox_GetCurSel(list);
-            if (idx != LB_ERR && idx + 1 < cfg_views.get_count()) {
+            if (idx != LB_ERR && gsl::narrow<size_t>(idx) + 1 < cfg_views.get_count()) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
                 cfg_views.swap(idx, idx + 1);
                 pfc::string8 temp;

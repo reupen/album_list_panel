@@ -1,18 +1,20 @@
 #include "stdafx.h"
+
 #include "menu.h"
 #include "node.h"
 #include "tree_view_populator.h"
 #include "actions.h"
+#include "version.h"
 
 // TODO: node name as field
 
 DECLARE_COMPONENT_VERSION("Album list panel",
 
-    "1.0.0-beta.1",
+    album_list_panel::version,
 
     "allows you to browse through your media library\n\n"
     "based upon albumlist 3.1.0\n"
-    "compiled: " __DATE__ "\n"
+    "compiled: " COMPILATION_DATE "\n"
     "with Columns UI SDK version: " UI_EXTENSION_VERSION
 
 )
