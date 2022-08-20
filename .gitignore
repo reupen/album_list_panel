@@ -191,3 +191,5 @@ doxygen/
 .idea/
 vcpkg_installed/
 component-packages/
+
+/foo_uie_albumlist/version.h
