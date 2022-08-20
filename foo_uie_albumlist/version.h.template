@@ -1,0 +1,12 @@
+#pragma once
+
+// Note that version.h is automatically generated from version.h.template
+// by the pre-build script scripts\pre-build.py
+
+#define COMPILATION_DATE "${{ Date }}"
+
+namespace album_list_panel {
+
+constexpr auto version = "${{ Version }}";
+
+}

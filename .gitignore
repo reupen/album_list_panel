@@ -190,3 +190,4 @@ debug-*/
 doxygen/
 .idea/
 vcpkg_installed/
+component-packages/
