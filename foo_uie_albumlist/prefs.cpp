@@ -6,24 +6,20 @@ struct edit_view_param {
     bool b_new;
 };
 
-static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp, edit_view_param& state)
 {
     switch (msg) {
-    case WM_INITDIALOG:
-        SetWindowLongPtr(wnd, DWLP_USER, lp);
-        {
-            const auto ptr = reinterpret_cast<edit_view_param*>(lp);
-            uSetDlgItemText(wnd, IDC_NAME, ptr->name);
-            uSetDlgItemText(wnd, IDC_VALUE, ptr->value);
-        }
+    case WM_INITDIALOG: {
+        uSetDlgItemText(wnd, IDC_NAME, state.name);
+        uSetDlgItemText(wnd, IDC_VALUE, state.value);
         break;
+    }
     case WM_COMMAND:
         switch (wp) {
         case IDCANCEL:
             EndDialog(wnd, 0);
             break;
         case IDOK: {
-            auto ptr = reinterpret_cast<edit_view_param*>(GetWindowLongPtr(wnd, DWLP_USER));
             {
                 pfc::string8 temp;
                 uGetDlgItemText(wnd, IDC_NAME, temp);
@@ -32,13 +28,13 @@ static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     break;
                 }
                 size_t idx_find = cfg_views.find_item(temp);
-                if (idx_find != -1 && (ptr->b_new || ((idx_find != ptr->idx) && (idx_find != -1)))) {
+                if (idx_find != -1 && (state.b_new || ((idx_find != state.idx) && (idx_find != -1)))) {
                     uMessageBox(wnd, "View of this name already exists. Please enter another one.", nullptr, 0);
                     break;
                 }
-                ptr->name = temp;
+                state.name = temp;
             }
-            uGetDlgItemText(wnd, IDC_VALUE, ptr->value);
+            uGetDlgItemText(wnd, IDC_VALUE, state.value);
             EndDialog(wnd, 1);
 
             break;
@@ -51,9 +47,9 @@ static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 static bool run_edit_view(edit_view_param& param, HWND parent)
 {
-    return DialogBoxParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_EDIT_VIEW), parent, EditViewProc,
-               reinterpret_cast<LPARAM>(&param))
-        != 0;
+    return fbh::auto_dark_modal_dialog_box(IDD_EDIT_VIEW, parent, [&param](auto&&... args) {
+        return EditViewProc(std::forward<decltype(args)>(args)..., param);
+    }) != 0;
 }
 
 cfg_int cfg_child(GUID{0x637c25b6, 0x9166, 0xd8df, 0xae, 0x7a, 0x39, 0x75, 0x78, 0x08, 0xfa, 0xf0}, 0);
@@ -67,11 +63,7 @@ static preferences_tab* g_tabs[] = {
     &g_config_advanced,
 };
 
-HWND config_albumlist::child = nullptr;
-
-static preferences_page_factory_t<config_albumlist> foo3;
-
-bool tab_advanced::initialised = false;
+static preferences_page_factory_t<albumlist_prefs> foo3;
 
 void tab_general::refresh_views()
 {
@@ -85,17 +77,6 @@ void tab_general::refresh_views()
             uSendMessageText(list, LB_ADDSTRING, 0, temp);
         }
     }
-}
-
-INT_PTR tab_general::g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-    tab_general* p_data = nullptr;
-    if (msg == WM_INITDIALOG) {
-        p_data = reinterpret_cast<tab_general*>(lp);
-        SetWindowLongPtr(wnd, DWLP_USER, lp);
-    } else
-        p_data = reinterpret_cast<tab_general*>(GetWindowLongPtr(wnd, DWLP_USER));
-    return p_data ? p_data->on_message(wnd, msg, wp, lp) : FALSE;
 }
 
 INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -133,6 +114,10 @@ INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         break;
     }
+    case WM_DESTROY:
+        m_initialised = false;
+        m_wnd = nullptr;
+        break;
     case WM_COMMAND:
         switch (wp) {
         case IDC_MIDDLE | (CBN_SELCHANGE << 16):
@@ -235,11 +220,6 @@ INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         }
         break;
-    case WM_DESTROY:
-        // history_sort.add_item(cfg_sort_order);
-        m_initialised = false;
-        m_wnd = nullptr;
-        break;
     }
     return 0;
 }
@@ -312,7 +292,7 @@ cui::colours::client::factory<filter_colours_client> g_filter_colours_client;
 
 }; // namespace
 
-INT_PTR tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
@@ -360,10 +340,13 @@ INT_PTR tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         SendDlgItemMessage(wnd, IDC_ITEM_HEIGHT_SPIN, UDM_SETRANGE32, -99, 99);
 
-        initialised = true;
+        m_initialised = true;
 
         break;
     }
+    case WM_DESTROY:
+        m_initialised = false;
+        break;
     case WM_COMMAND:
         switch (wp) {
         case IDC_AUTOCOLLAPSE:
@@ -408,7 +391,7 @@ INT_PTR tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             album_list_window::s_update_all_window_frames();
         } break;
         case (EN_CHANGE << 16) | IDC_ITEM_HEIGHT: {
-            if (initialised && cfg_use_custom_vertical_item_padding) {
+            if (m_initialised && cfg_use_custom_vertical_item_padding) {
                 BOOL result;
                 int new_height = GetDlgItemInt(wnd, IDC_ITEM_HEIGHT, &result, TRUE);
                 if (result) {
@@ -449,7 +432,7 @@ INT_PTR tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             album_list_window::s_update_all_indents();
         } break;
         case (EN_CHANGE << 16) | IDC_INDENT: {
-            if (initialised && cfg_use_custom_indentation) {
+            if (m_initialised && cfg_use_custom_indentation) {
                 BOOL result;
                 unsigned new_height = GetDlgItemInt(wnd, IDC_INDENT, &result, TRUE);
                 if (result) {
@@ -462,19 +445,16 @@ INT_PTR tab_advanced::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         } break;
         }
         break;
-    case WM_DESTROY:
-        initialised = false;
-        break;
     }
     return 0;
 }
 
-void config_albumlist::make_child(HWND wnd)
+void albumlist_prefs_instance::make_child(HWND wnd)
 {
-    if (child) {
-        ShowWindow(child, SW_HIDE);
-        DestroyWindow(child);
-        child = nullptr;
+    if (m_child) {
+        ShowWindow(m_child, SW_HIDE);
+        DestroyWindow(m_child);
+        m_child = nullptr;
     }
 
     HWND wnd_tab = GetDlgItem(wnd, IDC_TAB1);
@@ -491,25 +471,24 @@ void config_albumlist::make_child(HWND wnd)
         cfg_child = 0;
 
     if ((unsigned)cfg_child < count && cfg_child >= 0) {
-        child = g_tabs[cfg_child]->create(wnd);
+        m_child = g_tabs[cfg_child]->create(wnd);
     }
 
-    if (child) {
-        {
-            EnableThemeDialogTexture(child, ETDT_ENABLETAB);
-        }
+    if (m_child) {
+        EnableThemeDialogTexture(m_child, ETDT_ENABLETAB);
     }
 
-    SetWindowPos(child, nullptr, tab.left, tab.top, tab.right - tab.left, tab.bottom - tab.top, SWP_NOZORDER);
+    SetWindowPos(m_child, nullptr, tab.left, tab.top, tab.right - tab.left, tab.bottom - tab.top, SWP_NOZORDER);
     SetWindowPos(wnd_tab, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-    ShowWindow(child, SW_SHOWNORMAL);
+    ShowWindow(m_child, SW_SHOWNORMAL);
 }
 
-INT_PTR config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR albumlist_prefs_instance::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
+        m_wnd = wnd;
         HWND wnd_tab = GetDlgItem(wnd, IDC_TAB1);
         unsigned n, count = tabsize(g_tabs);
         for (n = 0; n < count; n++) {
@@ -517,7 +496,11 @@ INT_PTR config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         TabCtrl_SetCurSel(wnd_tab, cfg_child);
         make_child(wnd);
-    } break;
+        break;
+    }
+    case WM_DESTROY:
+        m_wnd = nullptr;
+        break;
     case WM_NOTIFY:
         switch (((LPNMHDR)lp)->idFrom) {
         case IDC_TAB1:
@@ -533,8 +516,8 @@ INT_PTR config_albumlist::ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_PARENTNOTIFY:
         switch (wp) {
         case WM_DESTROY: {
-            if (child && (HWND)lp == child)
-                child = nullptr;
+            if (m_wnd && (HWND)lp == m_wnd)
+                m_wnd = nullptr;
         } break;
         }
         break;
