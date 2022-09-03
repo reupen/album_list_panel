@@ -7,60 +7,76 @@ public:
 };
 
 class tab_general : public preferences_tab {
-    bool m_initialised{false};
-    HWND m_wnd{nullptr};
-
 public:
     bool is_active() { return m_wnd != nullptr; }
     void refresh_views();
-    static INT_PTR CALLBACK g_on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-    INT_PTR CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    HWND create(HWND wnd) override
+    HWND create(HWND parent_window) override
     {
-        return CreateDialogParam(
-            mmh::get_current_instance(), MAKEINTRESOURCE(IDD_CONFIG), wnd, g_on_message, (LPARAM)this);
+        const auto [wnd, _] = fbh::auto_dark_modeless_dialog_box(IDD_CONFIG, parent_window,
+            [this](auto&&... args) { return on_message(std::forward<decltype(args)>(args)...); });
+        return wnd;
     }
     const char* get_name() override { return "General"; }
 
-    tab_general() {}
+private:
+    INT_PTR CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
+    bool m_initialised{false};
+    HWND m_wnd{nullptr};
 };
 
 class tab_advanced : public preferences_tab {
-    static bool initialised;
-
-    static INT_PTR CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-
 public:
-    HWND create(HWND wnd) override
+    HWND create(HWND parent_window) override
     {
-        return CreateDialogParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_ADVANCED), wnd, ConfigProc, NULL);
+        const auto [wnd, _] = fbh::auto_dark_modeless_dialog_box(IDD_ADVANCED, parent_window,
+            [this](auto&&... args) { return on_message(std::forward<decltype(args)>(args)...); });
+        return wnd;
     }
     const char* get_name() override { return "Advanced"; }
+
+private:
+    INT_PTR CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
+    bool m_initialised{};
 };
 
-class config_albumlist : public preferences_page {
-    static HWND child;
-
-    static void make_child(HWND wnd);
-
-    static INT_PTR CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
-
+class albumlist_prefs_instance : public preferences_page_instance {
 public:
-    HWND create(HWND parent) override
+    explicit albumlist_prefs_instance(HWND parent)
     {
-        return CreateDialogParam(mmh::get_current_instance(), MAKEINTRESOURCE(IDD_HOST), parent, ConfigProc, NULL);
+        const auto [_, has_dark_mode] = fbh::auto_dark_modeless_dialog_box(
+            IDD_HOST, parent, [this](auto&&... args) { return on_message(std::forward<decltype(args)>(args)...); });
+
+        m_has_dark_mode = has_dark_mode;
     }
 
+    t_uint32 get_state() override { return m_has_dark_mode ? preferences_state::dark_mode_supported : 0; }
+    fb2k::hwnd_t get_wnd() override { return m_wnd; }
+    void apply() override {}
+    void reset() override {}
+
+private:
+    void make_child(HWND wnd);
+    INT_PTR CALLBACK on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
+    HWND m_wnd{};
+    HWND m_child{};
+    bool m_has_dark_mode{};
+};
+
+class albumlist_prefs : public preferences_page_v3 {
+public:
     const char* get_name() override { return "Album List Panel"; }
 
     GUID get_guid() override { return album_list_panel_preferences_page_id; }
 
     GUID get_parent_guid() override { return guid_media_library; }
-
-    bool reset_query() override { return false; }
-
-    void reset() override {}
+    preferences_page_instance::ptr instantiate(fb2k::hwnd_t parent, preferences_page_callback::ptr callback) override
+    {
+        return fb2k::service_new<albumlist_prefs_instance>(parent);
+    }
 };
 
 extern tab_general g_config_general;
