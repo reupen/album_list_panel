@@ -372,20 +372,41 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             static_api_ptr_t<titleformat_compiler>()->compile_safe(script, get_hierarchy());
             concurrency::concurrent_vector<process_byformat_entry<>> entries;
 
-            concurrency::parallel_for(size_t{0}, count, [&tracks, &script, &entries](size_t n) {
-                const playable_location& location = tracks[n]->get_location();
-                metadb_info_container::ptr info_ptr;
+            const auto metadb_v2_api = metadb_v2::tryGet();
 
-                if (!tracks[n]->get_info_ref(info_ptr))
-                    return;
+            if (metadb_v2_api.is_valid()) {
+                metadb_v2_api->queryMultiParallel_(
+                    tracks, [&tracks, &script, &entries](size_t index, const metadb_v2::rec_t& rec) {
+                        if (!rec.info.is_valid())
+                            return;
 
-                titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
-                VerticalBarTitleformatTextFilter tf_hook_text_filter;
-                std::string formatted_title;
-                mmh::StringAdaptor interop_title(formatted_title);
-                tracks[n]->format_title(&tf_hook_file_info, interop_title, script, &tf_hook_text_filter);
-                process_byformat_add_branches(tracks[n].get_ptr(), std::move(formatted_title), entries);
-            });
+                        metadb_handle_v2::ptr track;
+                        track &= tracks[index];
+                        const playable_location& location = track->get_location();
+
+                        titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &rec.info->info());
+                        VerticalBarTitleformatTextFilter tf_hook_text_filter;
+                        std::string formatted_title;
+                        mmh::StringAdaptor interop_title(formatted_title);
+                        track->formatTitle_v2(rec, &tf_hook_file_info, interop_title, script, &tf_hook_text_filter);
+                        process_byformat_add_branches(track.get_ptr(), std::move(formatted_title), entries);
+                    });
+            } else {
+                concurrency::parallel_for(size_t{0}, count, [&tracks, &script, &entries](size_t n) {
+                    metadb_info_container::ptr info_ptr;
+
+                    if (!tracks[n]->get_info_ref(info_ptr))
+                        return;
+
+                    const playable_location& location = tracks[n]->get_location();
+                    titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
+                    VerticalBarTitleformatTextFilter tf_hook_text_filter;
+                    std::string formatted_title;
+                    mmh::StringAdaptor interop_title(formatted_title);
+                    tracks[n]->format_title(&tf_hook_file_info, interop_title, script, &tf_hook_text_filter);
+                    process_byformat_add_branches(tracks[n].get_ptr(), std::move(formatted_title), entries);
+                });
+            }
 
             const size_t size = entries.size();
 
