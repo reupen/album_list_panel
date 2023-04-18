@@ -276,7 +276,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         case CDDS_PREPAINT:
             if (cui::colours::helper(album_list_items_colours_client_id).get_themed())
                 return CDRF_DODEFAULT;
-            return CDRF_NOTIFYITEMDRAW;
+            return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTERASE;
         case CDDS_ITEMPREPAINT: {
             const auto is_window_focused = GetFocus() == hdr->hwndFrom;
             const auto is_selected = (nmtvcd->nmcd.uItemState & CDIS_SELECTED) != 0;
@@ -284,16 +284,42 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
                 = (TreeView_GetItemState(hdr->hwndFrom, nmtvcd->nmcd.dwItemSpec, TVIS_DROPHILITED) & TVIS_DROPHILITED)
                 != 0;
 
-            cui::colours::helper colour_client(album_list_items_colours_client_id);
-
             if (is_selected || is_drop_highlighted) {
+                cui::colours::helper colour_client(album_list_items_colours_client_id);
+
                 nmtvcd->clrText = is_window_focused
                     ? colour_client.get_colour(cui::colours::colour_selection_text)
                     : colour_client.get_colour(cui::colours::colour_inactive_selection_text);
                 nmtvcd->clrTextBk = is_window_focused
                     ? colour_client.get_colour(cui::colours::colour_selection_background)
                     : colour_client.get_colour(cui::colours::colour_inactive_selection_background);
+
+                if (cui::colours::is_dark_mode_active())
+                    return CDRF_NOTIFYPOSTPAINT;
             }
+
+            return CDRF_DODEFAULT;
+        }
+        case CDDS_ITEMPOSTPAINT: {
+            if (!nmtvcd->nmcd.lItemlParam)
+                return CDRF_DODEFAULT;
+
+            const auto draw_node = reinterpret_cast<node*>(nmtvcd->nmcd.lItemlParam)->shared_from_this();
+
+            RECT rc{};
+            TreeView_GetItemRect(
+                nmtvcd->nmcd.hdr.hwndFrom, reinterpret_cast<HTREEITEM>(nmtvcd->nmcd.dwItemSpec), &rc, TRUE);
+            InflateRect(&rc, 1, -1);
+
+            wil::unique_hbrush brush(CreateSolidBrush(nmtvcd->clrTextBk));
+            FillRect(nmtvcd->nmcd.hdc, &rc, brush.get());
+
+            const pfc::stringcvt::string_wide_from_utf8 text(draw_node->get_val());
+
+            SetTextColor(nmtvcd->nmcd.hdc, nmtvcd->clrText);
+            DrawTextEx(nmtvcd->nmcd.hdc, const_cast<wchar_t*>(text.get_ptr()), gsl::narrow<int>(text.length()), &rc,
+                DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER, nullptr);
+
             return CDRF_DODEFAULT;
         }
         }

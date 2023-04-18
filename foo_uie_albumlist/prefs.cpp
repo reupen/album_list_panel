@@ -249,9 +249,7 @@ public:
             & ~(cui::colours::colour_flag_group_foreground | cui::colours::colour_flag_group_background);
 
         if (cui::colours::is_dark_mode_active()) {
-            flags &= ~(cui::colours::colour_flag_selection_background
-                | cui::colours::colour_flag_inactive_selection_background
-                | cui::colours::colour_flag_active_item_frame);
+            flags &= ~(cui::colours::colour_flag_active_item_frame);
         }
 
         return flags;
