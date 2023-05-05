@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
 
+#include "node_formatter.h"
+
 void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx)
 {
     TRACK_CALL_TEXT("album_list_panel::TreeViewPopulator::s_setup_tree");
@@ -21,9 +23,9 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
     ptr->purge_empty_children(m_wnd_tv);
 
     if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root_node)) {
-        const char* text = get_item_text(ptr, idx, max_idx);
+        auto text = m_node_formatter.format(ptr, idx, max_idx);
 
-        m_utf16_converter.convert(text);
+        m_utf16_converter.convert(text.data(), text.size());
         if (ptr->m_ti) {
             TVITEM tvi{};
             tvi.hItem = ptr->m_ti;
@@ -78,36 +80,4 @@ void TreeViewPopulator::setup_children(node_ptr ptr)
     }
 
     ptr->m_children_inserted = true;
-}
-
-const char* TreeViewPopulator::get_item_text(node_ptr ptr, t_size item_index, t_size item_count)
-{
-    if ((!cfg_show_item_indices || item_count == 0) && !cfg_show_subitem_counts)
-        return ptr->get_val();
-
-    m_text_buffer.reset();
-
-    if (cfg_show_item_indices && item_count > 0) {
-        uint32_t pad = 0;
-        while (item_count > 0) {
-            item_count /= 10;
-            pad++;
-        }
-        char temp1[128], temp2[128];
-        sprintf_s(temp1, "%%0%uu. ", pad);
-        sprintf_s(temp2, temp1, item_index + 1);
-        m_text_buffer += temp2;
-    }
-
-    m_text_buffer += ptr->get_val();
-
-    if (cfg_show_subitem_counts) {
-        t_size num = ptr->get_num_children();
-        if (num > 0) {
-            char blah[64];
-            sprintf_s(blah, " (%zu)", num);
-            m_text_buffer += blah;
-        }
-    }
-    return m_text_buffer.get_ptr();
 }

@@ -3,6 +3,7 @@
 #define NOMINMAX
 
 #include <gsl/gsl>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <optional>
