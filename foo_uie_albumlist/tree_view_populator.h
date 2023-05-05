@@ -1,5 +1,7 @@
 #pragma once
 
+#include "node_formatter.h"
+
 class TreeViewPopulator {
 public:
     TreeViewPopulator(HWND wnd_tv, uint16_t initial_level = 0) : m_wnd_tv{wnd_tv}, m_initial_level{initial_level} {}
@@ -14,7 +16,6 @@ private:
     HWND m_wnd_tv;
     uint16_t m_initial_level;
 
-    const char* get_item_text(node_ptr ptr, t_size item_index, t_size child_count);
-    pfc::string8_fast_aggressive m_text_buffer;
+    NodeFormatter m_node_formatter;
     pfc::stringcvt::string_wide_from_utf8_fast m_utf16_converter;
 };

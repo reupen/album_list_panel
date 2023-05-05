@@ -304,8 +304,6 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
             if (!nmtvcd->nmcd.lItemlParam)
                 return CDRF_DODEFAULT;
 
-            const auto draw_node = reinterpret_cast<node*>(nmtvcd->nmcd.lItemlParam)->shared_from_this();
-
             RECT rc{};
             TreeView_GetItemRect(
                 nmtvcd->nmcd.hdr.hwndFrom, reinterpret_cast<HTREEITEM>(nmtvcd->nmcd.dwItemSpec), &rc, TRUE);
@@ -314,10 +312,17 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
             wil::unique_hbrush brush(CreateSolidBrush(nmtvcd->clrTextBk));
             FillRect(nmtvcd->nmcd.hdc, &rc, brush.get());
 
-            const pfc::stringcvt::string_wide_from_utf8 text(draw_node->get_val());
+            // Tree view does not display more than 260 code units (including null terminator)
+            std::array<wchar_t, 260> text{};
+            TVITEMEX tvi{};
+            tvi.mask = TVIF_TEXT;
+            tvi.hItem = reinterpret_cast<HTREEITEM>(nmtvcd->nmcd.dwItemSpec);
+            tvi.cchTextMax = gsl::narrow<int>(text.size());
+            tvi.pszText = text.data();
+            TreeView_GetItem(nmtvcd->nmcd.hdr.hwndFrom, &tvi);
 
             SetTextColor(nmtvcd->nmcd.hdc, nmtvcd->clrText);
-            DrawTextEx(nmtvcd->nmcd.hdc, const_cast<wchar_t*>(text.get_ptr()), gsl::narrow<int>(text.length()), &rc,
+            DrawTextEx(nmtvcd->nmcd.hdc, text.data(), gsl::narrow<int>(wcsnlen(text.data(), text.size())), &rc,
                 DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER, nullptr);
 
             return CDRF_DODEFAULT;
