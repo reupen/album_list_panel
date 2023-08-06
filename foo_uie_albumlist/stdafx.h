@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <optional>
+#include <ranges>
+#include <string_view>
 
 #include <ppl.h>
 #include <concurrent_vector.h>
@@ -26,3 +28,5 @@
 #include "main.h"
 #include "tfhook.h"
 #include "prefs.h"
+
+using namespace std::literals;

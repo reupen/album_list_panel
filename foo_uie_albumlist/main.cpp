@@ -212,7 +212,7 @@ void album_list_window::update_all_labels()
     if (m_root) {
         m_root->mark_all_labels_dirty();
         SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
-        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);
+        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, std::nullopt, 0, 0);
         SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
 }
@@ -367,16 +367,25 @@ void album_list_window::create_tree()
 {
     const auto wnd = get_wnd();
 
-    auto flags = 0l;
+    auto ex_styles = 0l;
     if (cfg_frame_style == 1)
-        flags |= WS_EX_CLIENTEDGE;
+        ex_styles |= WS_EX_CLIENTEDGE;
     else if (cfg_frame_style == 2)
-        flags |= WS_EX_STATICEDGE;
+        ex_styles |= WS_EX_STATICEDGE;
 
-    m_wnd_tv = CreateWindowEx(flags, WC_TREEVIEW, _T("Album list"),
-        TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT
-            | (cfg_show_horizontal_scroll_bar ? 0 : TVS_NOHSCROLL) | WS_CHILD | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP,
-        0, 0, 0, 0, wnd, HMENU(IDC_TREE), core_api::get_my_instance(), nullptr);
+    auto styles = TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | WS_CHILD | WS_VSCROLL
+        | WS_VISIBLE | WS_TABSTOP;
+
+    if (!cfg_show_horizontal_scroll_bar)
+        styles |= TVS_NOHSCROLL;
+
+    m_enabled = !m_library_v4.is_valid() || m_library_v4->is_initialized();
+
+    if (!m_enabled)
+        styles |= WS_DISABLED;
+
+    m_wnd_tv = CreateWindowEx(ex_styles, WC_TREEVIEW, L"Album list", styles, 0, 0, 0, 0, wnd,
+        reinterpret_cast<HMENU>(IDC_TREE), core_api::get_my_instance(), nullptr);
 
     if (m_wnd_tv) {
         TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
@@ -401,7 +410,6 @@ void album_list_window::create_tree()
 
         if (m_populated) {
             refresh_tree();
-            restore_scroll_position();
         }
     }
 }
@@ -420,25 +428,65 @@ void album_list_window::save_scroll_position() const
     if (!m_wnd_tv)
         return;
 
-    SCROLLINFO si{};
-    si.cbSize = sizeof(SCROLLINFO);
-    si.fMask = SIF_POS;
-    m_horizontal_scroll_position = GetScrollInfo(m_wnd_tv, SB_HORZ, &si) ? si.nPos : 0;
-    m_vertical_scroll_position = GetScrollInfo(m_wnd_tv, SB_VERT, &si) ? si.nPos : 0;
+    m_saved_scroll_position.reset();
+
+    SCROLLINFO si_horz{};
+    si_horz.cbSize = sizeof(SCROLLINFO);
+    si_horz.fMask = SIF_POS;
+
+    SCROLLINFO si_vert{};
+    si_vert.cbSize = sizeof(SCROLLINFO);
+    si_vert.fMask = SIF_POS | SIF_RANGE;
+
+    if (!GetScrollInfo(m_wnd_tv, SB_HORZ, &si_horz) || !GetScrollInfo(m_wnd_tv, SB_VERT, &si_vert))
+        return;
+
+    m_saved_scroll_position = {si_horz.nPos, si_vert.nPos, si_vert.nMax};
 }
 
 void album_list_window::restore_scroll_position()
 {
-    if (!m_wnd_tv)
+    if (!m_wnd_tv || !m_saved_scroll_position)
+        return;
+
+    const auto is_initialised = !m_library_v4.is_valid() || m_library_v4->is_initialized();
+
+    // Ensure scroll bar state has been updated; apparently the tree
+    // view does this when rendering
+    if (is_initialised)
+        UpdateWindow(m_wnd_tv);
+
+    SCROLLINFO si_vert_current{};
+    si_vert_current.cbSize = sizeof(SCROLLINFO);
+    si_vert_current.fMask = SIF_RANGE | SIF_POS;
+
+    if (!GetScrollInfo(m_wnd_tv, SB_VERT, &si_vert_current))
         return;
 
     SCROLLINFO si{};
     si.cbSize = sizeof(SCROLLINFO);
     si.fMask = SIF_POS;
-    si.nPos = m_horizontal_scroll_position;
-    SetScrollInfo(m_wnd_tv, SB_HORZ, &si, TRUE);
-    si.nPos = m_vertical_scroll_position;
-    SetScrollInfo(m_wnd_tv, SB_VERT, &si, TRUE);
+    si.nPos = m_saved_scroll_position->horizontal_position;
+    const auto new_horizontal_position = SetScrollInfo(m_wnd_tv, SB_HORZ, &si, is_initialised);
+
+    si.nPos = MulDiv(
+        si_vert_current.nMax, m_saved_scroll_position->vertical_position, m_saved_scroll_position->vertical_max);
+    const auto new_vertical_position = SetScrollInfo(m_wnd_tv, SB_VERT, &si, is_initialised);
+
+    SendMessage(m_wnd_tv, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, new_horizontal_position), 0);
+    SendMessage(m_wnd_tv, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, new_vertical_position), 0);
+
+    if (is_initialised) {
+        m_saved_scroll_position.reset();
+    }
+}
+
+void album_list_window::enable_tree_view()
+{
+    if (!m_enabled)
+        EnableWindow(m_wnd_tv, TRUE);
+
+    m_enabled = true;
 }
 
 void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_abort) const
@@ -447,8 +495,16 @@ void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_ab
 
     p_writer->write_string(m_view, p_abort);
     p_writer->write_lendian_t(m_filter, p_abort);
-    p_writer->write_lendian_t(m_horizontal_scroll_position, p_abort);
-    p_writer->write_lendian_t(m_vertical_scroll_position, p_abort);
+    const auto saved_scroll_position = m_saved_scroll_position.value_or(alp::SavedScrollPosition{});
+    p_writer->write_lendian_t(saved_scroll_position.horizontal_position, p_abort);
+    p_writer->write_lendian_t(saved_scroll_position.vertical_position, p_abort);
+    p_writer->write_lendian_t(saved_scroll_position.vertical_max, p_abort);
+
+    if (get_wnd() && m_root) {
+        write_node_state(p_writer, m_root->get_state(), p_abort);
+    } else if (m_node_state) {
+        write_node_state(p_writer, *m_node_state, p_abort);
+    }
 }
 
 void album_list_window::get_name(pfc::string_base& out) const
@@ -467,8 +523,14 @@ void album_list_window::set_config(stream_reader* p_reader, t_size psize, abort_
         p_reader->read_string(m_view, p_abort);
         try {
             p_reader->read_lendian_t(m_filter, p_abort);
-            p_reader->skip_object(sizeof(int32_t), p_abort);
-            p_reader->skip_object(sizeof(int32_t), p_abort);
+            const auto horizontal_scroll_position = p_reader->read_lendian_t<int32_t>(p_abort);
+            const auto vertical_scroll_position = p_reader->read_lendian_t<int32_t>(p_abort);
+            const auto vertical_scroll_max = p_reader->read_lendian_t<int32_t>(p_abort);
+            m_node_state = alp::read_node_state(p_reader, p_abort);
+
+            // Only set scroll positions if expansion state was read
+            m_saved_scroll_position
+                = alp::SavedScrollPosition{horizontal_scroll_position, vertical_scroll_position, vertical_scroll_max};
         } catch (exception_io_data_truncation&) {
         }
     }

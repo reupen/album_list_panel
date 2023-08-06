@@ -91,38 +91,43 @@ void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, boo
     m_sorted = false;
 }
 
+alp::SavedNodeState node::get_state()
+{
+    alp::SavedNodeState state;
+    state.name = m_value;
+    state.expanded = m_expanded;
+
+    state.children = m_children | std::ranges::views::filter([](auto& child) { return child->is_expanded(); })
+        | std::ranges::views::transform([](auto& child) { return child->get_state(); }) | ranges::to_vector;
+
+    return state;
+}
+
+std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> node::find_child(
+    std::string_view name) const
+{
+    auto normalised_name = name.empty() ? "?"sv : name;
+    const auto value_utf16 = pfc::stringcvt::string_wide_from_utf8(normalised_name.data(), normalised_name.size());
+
+    return std::ranges::equal_range(
+        m_children, value_utf16.get_ptr(),
+        [](const wchar_t* left, const wchar_t* right) { return StrCmpLogicalW(left, right) < 0; },
+        [](auto& node) { return pfc::stringcvt::string_wide_from_utf8(node->m_value); });
+}
+
 node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new)
 {
     if (!b_find)
         return add_child_v2(p_value, p_value_len);
-    if (p_value_len == 0 || *p_value == 0) {
-        p_value = "?";
-        p_value_len = 1;
-    }
-    t_size index = 0;
-    b_new = true;
 
-    struct Comparator {
-        bool operator()(const node_ptr& left, const wchar_t* right) const
-        {
-            const auto left_utf16 = pfc::stringcvt::string_wide_from_utf8(left->m_value);
-            return operator()(left_utf16, right);
-        }
-        bool operator()(const wchar_t* left, const node_ptr& right) const
-        {
-            const auto right_utf16 = pfc::stringcvt::string_wide_from_utf8(right->m_value);
-            return operator()(left, right_utf16);
-        }
-        bool operator()(const wchar_t* left, const wchar_t* right) const { return StrCmpLogicalW(left, right) < 0; }
-    };
-
-    const auto value_utf16 = pfc::stringcvt::string_wide_from_utf8(p_value, p_value_len);
-    auto [start, end] = std::equal_range(m_children.cbegin(), m_children.cend(), value_utf16.get_ptr(), Comparator());
+    auto [start, end] = find_child({p_value, p_value_len});
 
     if (start != end) {
         b_new = false;
         return *start;
     }
+
+    b_new = true;
 
     return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1));
 }

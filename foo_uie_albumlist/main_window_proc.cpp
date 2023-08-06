@@ -12,15 +12,20 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr;
 
+        m_library_v3 = library_manager_v3::get();
+        m_library_v3->service_query_t(m_library_v4);
+
         create_tree();
         create_filter();
 
-        if (cfg_populate_on_init) {
+        if (cfg_populate_on_init)
             refresh_tree();
-            restore_scroll_position();
-        }
 
-        static_api_ptr_t<library_manager_v3>()->register_callback(this);
+        if (m_library_v4.is_valid())
+            m_library_v4->register_callback_v2(this);
+        else
+            m_library_v3->register_callback(this);
+
         break;
     }
     case WM_THEMECHANGED: {
@@ -83,8 +88,18 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
     }
     case WM_DESTROY:
-        static_api_ptr_t<library_manager_v3>()->unregister_callback(this);
+        if (m_library_v4.is_valid())
+            m_library_v4->unregister_callback_v2(this);
+        else
+            m_library_v3->unregister_callback(this);
+
+        m_library_v4.reset();
+        m_library_v3.reset();
+
         modeless_dialog_manager::g_remove(wnd);
+        if (m_root) {
+            m_node_state = m_root->get_state();
+        }
         destroy_tree();
         destroy_filter();
         m_selection_holder.release();
@@ -253,6 +268,12 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         if (cfg_collapse_other_nodes_on_expansion && param->action == TVE_EXPAND) {
             uih::tree_view_collapse_other_nodes(param->hdr.hwndFrom, param->itemNew.hItem);
         }
+        break;
+    }
+    case TVN_ITEMEXPANDED: {
+        auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
+        node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
+        p_node->set_expanded((param->action & TVE_EXPAND) != 0);
         break;
     }
     case TVN_SELCHANGED: {

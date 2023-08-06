@@ -491,6 +491,20 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
     update_tree(modified, modified, true);
 }
 
+void album_list_window::on_items_modified_v2(metadb_handle_list_cref items, metadb_io_callback_v2_data& data)
+{
+    on_items_modified(items);
+}
+
+void album_list_window::on_library_initialized()
+{
+    m_node_state.reset();
+    if (m_wnd_tv && m_populated) {
+        enable_tree_view();
+        restore_scroll_position();
+    }
+}
+
 void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
     metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_remove, bool preserve_existing)
 {
@@ -498,7 +512,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         return;
 
     SetWindowRedraw(m_wnd_tv, FALSE);
-    auto _ = gsl::finally([wnd_tv = m_wnd_tv] { SetWindowRedraw(wnd_tv, TRUE); });
+    std::optional redraw_on_reset = gsl::finally([wnd_tv = m_wnd_tv] { SetWindowRedraw(wnd_tv, TRUE); });
 
     if (!preserve_existing && m_populated) {
         TreeView_DeleteAllItems(m_wnd_tv);
@@ -517,7 +531,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     } catch (pfc::exception const& e) {
         pfc::string_formatter formatter;
         popup_message::g_show(
-            formatter << "Album list panel: An error occured while generating the tree (" << e << ").", "Error",
+            formatter << "Album list panel: An error occurred while generating the tree (" << e << ").", "Error",
             popup_message::icon_error);
         TreeView_DeleteAllItems(m_wnd_tv);
         m_selection.reset();
@@ -530,10 +544,21 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         m_selection.reset();
         m_root.reset();
     } else if (m_root) {
-        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, 0, 0);
+        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, m_node_state, 0, 0);
     }
 
+    if (m_node_state && (!m_library_v4.is_valid() || m_library_v4->is_initialized()))
+        m_node_state.reset();
+
     m_populated = true;
+
+    if (m_library_v4.is_valid() && m_library_v4->is_initialized()) {
+        enable_tree_view();
+    }
+
+    redraw_on_reset.reset();
+
+    restore_scroll_position();
 }
 
 void album_list_window::refresh_tree()

@@ -293,6 +293,7 @@
     <ClCompile Include=".\node.cpp" />
     <ClCompile Include=".\prefs.cpp" />
     <ClCompile Include=".\tfhook.cpp" />
+    <ClCompile Include="node_state.cpp" />
     <ClCompile Include="tree_view_populator.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -306,6 +307,7 @@
     <ClInclude Include="actions.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="node_formatter.h" />
+    <ClInclude Include="node_state.h" />
     <ClInclude Include="tree_view_populator.h" />
   </ItemGroup>
   <ItemGroup>
