@@ -3,22 +3,25 @@
 
 #include "node_formatter.h"
 
-void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx)
+void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr,
+    std::optional<alp::SavedNodeState> node_state, t_size idx, t_size max_idx)
 {
     TRACK_CALL_TEXT("album_list_panel::TreeViewPopulator::s_setup_tree");
     TreeViewPopulator populater{wnd_tv, ptr->m_level};
-    populater.setup_tree(parent, ptr, idx, max_idx, TVI_FIRST);
+    populater.setup_tree(parent, ptr, node_state, idx, max_idx, TVI_FIRST);
 }
 
 void TreeViewPopulator::s_setup_children(HWND wnd_tv, node_ptr ptr)
 {
     TreeViewPopulator populater{wnd_tv, ptr->m_level};
-    populater.setup_children(ptr);
+    populater.setup_children(ptr, std::nullopt);
 }
 
-void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t_size max_idx, HTREEITEM ti_after)
+void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional<alp::SavedNodeState> node_state,
+    t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
-    const auto populate_children = ptr->m_children_inserted || ptr->m_level < 1 + m_initial_level;
+    const auto expanded = node_state ? node_state->expanded : ptr->m_level < 1;
+    const auto populate_children = ptr->m_children_inserted || ptr->m_level < 1 + m_initial_level || expanded;
 
     ptr->purge_empty_children(m_wnd_tv);
 
@@ -39,7 +42,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
             is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
             is.item.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
             is.item.lParam = reinterpret_cast<LPARAM>(ptr.get());
-            is.item.state = ptr->m_level < 1 ? TVIS_EXPANDED : 0;
+            is.item.state = expanded ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
 
             const auto children_count = ptr->get_children().size();
@@ -49,15 +52,17 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, t_size idx, t
             }
 
             ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);
+
+            ptr->set_expanded(expanded);
         }
         ptr->m_label_dirty = false;
     }
 
     if (populate_children)
-        setup_children(ptr);
+        setup_children(ptr, node_state);
 }
 
-void TreeViewPopulator::setup_children(node_ptr ptr)
+void TreeViewPopulator::setup_children(node_ptr ptr, std::optional<alp::SavedNodeState> node_state)
 {
     const auto& children = ptr->get_children();
     const auto children_count = children.size();
@@ -69,13 +74,23 @@ void TreeViewPopulator::setup_children(node_ptr ptr)
             if (ti_aft == nullptr)
                 ti_aft = TVI_FIRST;
 
-            setup_tree(ptr->m_ti, children[i], i, children_count, ti_aft);
+            auto& child = children[i];
+
+            std::optional<alp::SavedNodeState> child_state
+                = node_state ? find_node_state(node_state->children, child->get_val()) : std::nullopt;
+
+            setup_tree(ptr->m_ti, child, std::move(child_state), i, children_count, ti_aft);
         }
     } else {
         // If there are no existing items, use a more optimised path that inserts items in reverse
         for (auto i{children_count}; i > 0; --i) {
             const auto index = i - 1;
-            setup_tree(ptr->m_ti, children[index], index, children_count, TVI_FIRST);
+            auto& child = children[index];
+
+            std::optional<alp::SavedNodeState> child_state
+                = node_state ? find_node_state(node_state->children, child->get_val()) : std::nullopt;
+
+            setup_tree(ptr->m_ti, child, std::move(child_state), index, children_count, TVI_FIRST);
         }
     }
 

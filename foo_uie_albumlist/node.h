@@ -1,5 +1,7 @@
 #pragma once
 
+#include "node_state.h"
+
 typedef std::shared_ptr<class node> node_ptr;
 
 class node : public std::enable_shared_from_this<node> {
@@ -35,6 +37,13 @@ public:
 
     void set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing);
 
+    bool is_expanded() const { return m_expanded; }
+    void set_expanded(bool expanded) { m_expanded = expanded; }
+
+    alp::SavedNodeState get_state();
+
+    std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> find_child(
+        std::string_view name) const;
     node_ptr find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new);
 
     node_ptr add_child_v2(const char* p_value, size_t p_value_len);
@@ -64,7 +73,8 @@ private:
     pfc::string_simple m_value;
     std::vector<node_ptr> m_children;
     metadb_handle_list m_tracks;
-    bool m_sorted{};
-    bool m_bydir{};
+    bool m_sorted : 1 {};
+    bool m_bydir : 1 {};
+    bool m_expanded : 1 {};
     class album_list_window* m_window{};
 };

@@ -4,6 +4,16 @@
 #define IDC_FILTER 1001
 #define EDIT_TIMER_ID 2001
 
+namespace alp {
+
+struct SavedScrollPosition {
+    int horizontal_position{};
+    int vertical_position{};
+    int vertical_max{};
+};
+
+} // namespace alp
+
 extern const char* directory_structure_view_name;
 
 enum class ClickAction {
@@ -16,7 +26,8 @@ enum class ClickAction {
 
 class album_list_window
     : public uie::container_uie_window_v3
-    , public library_callback_dynamic {
+    , public library_callback_dynamic
+    , public library_callback_v2_dynamic {
     friend class font_notify;
     friend class node;
 
@@ -84,6 +95,8 @@ public:
     void on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
     void on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
     void on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr>& p_data) override;
+    void on_items_modified_v2(metadb_handle_list_cref items, metadb_io_callback_v2_data& data) override;
+    void on_library_initialized() override;
 
     LRESULT on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp) override;
     LRESULT on_wm_contextmenu(POINT pt);
@@ -94,6 +107,8 @@ private:
     static LRESULT WINAPI s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+
+    void enable_tree_view();
 
     static inline pfc::ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;
@@ -109,18 +124,21 @@ private:
     WNDPROC m_treeproc{nullptr};
     bool m_initialised{false};
     bool m_populated{false};
+    bool m_enabled{};
     bool m_dragging{false};
     bool m_clicked{false};
     bool m_filter{false};
     bool m_timer{false};
     bool m_process_char{true};
     POINT m_clickpoint{};
-    // Mutable because they are effectively used for caching
-    mutable int32_t m_horizontal_scroll_position{};
-    mutable int32_t m_vertical_scroll_position{};
+    mutable std::optional<alp::SavedScrollPosition> m_saved_scroll_position{};
     pfc::string8 m_view{"by artist/album"};
     node_ptr m_root;
     node_ptr m_selection;
+    std::optional<alp::SavedNodeState> m_node_state;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
+
+    library_manager_v4::ptr m_library_v4;
+    library_manager_v3::ptr m_library_v3;
 };
