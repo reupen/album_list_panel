@@ -98,7 +98,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         modeless_dialog_manager::g_remove(wnd);
         if (m_root) {
-            m_node_state = m_root->get_state();
+            m_node_state = m_root->get_state(m_selection);
         }
         destroy_tree();
         destroy_filter();
