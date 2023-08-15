@@ -501,7 +501,7 @@ void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_ab
     p_writer->write_lendian_t(saved_scroll_position.vertical_max, p_abort);
 
     if (get_wnd() && m_root) {
-        write_node_state(p_writer, m_root->get_state(), p_abort);
+        write_node_state(p_writer, m_root->get_state(m_selection), p_abort);
     } else if (m_node_state) {
         write_node_state(p_writer, *m_node_state, p_abort);
     }

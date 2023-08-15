@@ -21,6 +21,7 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional
     t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
     const auto expanded = node_state ? node_state->expanded : ptr->m_level < 1;
+    const auto selected = node_state ? node_state->selected : false;
     const auto populate_children = ptr->m_children_inserted || ptr->m_level < 1 + m_initial_level || expanded;
 
     ptr->purge_empty_children(m_wnd_tv);
@@ -52,6 +53,11 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional
             }
 
             ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);
+
+            if (selected && !m_has_selection) {
+                TreeView_SelectItem(m_wnd_tv, ptr->m_ti);
+                m_has_selection = true;
+            }
 
             ptr->set_expanded(expanded);
         }

@@ -32,6 +32,8 @@ void write_node_state(stream_writer* writer, const SavedNodeState& state, abort_
         temp_writer.write(child_writer.m_data.get_ptr(), child_writer.m_data.get_size(), aborter);
     }
 
+    temp_writer.write_lendian_t(state.selected, aborter);
+
     writer->write_lendian_t(gsl::narrow<uint32_t>(temp_writer.m_data.get_size()), aborter);
     writer->write(temp_writer.m_data.get_ptr(), temp_writer.m_data.get_size(), aborter);
 }
@@ -57,6 +59,7 @@ auto read_node_state(stream_reader* reader, abort_callback& aborter) -> SavedNod
         state.children, [](auto&& left, auto&& right) { return StrCmpLogicalW(left, right) < 0; },
         [](auto& item) { return pfc::stringcvt::string_wide_from_utf8(item.name); });
 
+    state.selected = limited_reader.read_lendian_t<bool>(aborter);
     limited_reader.flush_remaining(aborter);
 
     return state;

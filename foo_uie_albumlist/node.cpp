@@ -91,14 +91,17 @@ void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, boo
     m_sorted = false;
 }
 
-alp::SavedNodeState node::get_state()
+alp::SavedNodeState node::get_state(const node_ptr& selection)
 {
     alp::SavedNodeState state;
     state.name = m_value;
     state.expanded = m_expanded;
+    state.selected = selection.get() == this;
 
-    state.children = m_children | std::ranges::views::filter([](auto& child) { return child->is_expanded(); })
-        | std::ranges::views::transform([](auto& child) { return child->get_state(); }) | ranges::to_vector;
+    state.children = m_children
+        | std::ranges::views::filter([&selection](auto& child) { return child->is_expanded() || selection == child; })
+        | std::ranges::views::transform([&selection](auto& child) { return child->get_state(selection); })
+        | ranges::to_vector;
 
     return state;
 }

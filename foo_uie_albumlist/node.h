@@ -40,7 +40,7 @@ public:
     bool is_expanded() const { return m_expanded; }
     void set_expanded(bool expanded) { m_expanded = expanded; }
 
-    alp::SavedNodeState get_state();
+    alp::SavedNodeState get_state(const node_ptr& selection);
 
     std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> find_child(
         std::string_view name) const;

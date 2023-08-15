@@ -5,6 +5,7 @@ namespace alp {
 struct SavedNodeState {
     pfc::string name;
     bool expanded{};
+    bool selected{};
     std::vector<SavedNodeState> children;
 };
 
