@@ -257,7 +257,7 @@ public:
     uint32_t get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
     bool get_themes_supported() const override { return true; }
 
-    void on_colour_changed(uint32_t mask) const override { album_list_window::s_update_all_tree_colours(); };
+    void on_colour_changed(uint32_t mask) const override { album_list_window::s_update_all_tree_colours(); }
     void on_bool_changed(uint32_t mask) const override
     {
         if (mask & cui::colours::bool_flag_dark_mode_enabled)

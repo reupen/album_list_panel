@@ -52,9 +52,14 @@ public:
     }
 
 private:
-    enum { stream_version = 0 };
+    enum {
+        stream_version = 0
+    };
 
-    enum { view_name, view_script };
+    enum {
+        view_name,
+        view_script
+    };
 
     static void read_item(fbh::fcl::Reader& fcl_reader)
     {
@@ -123,7 +128,9 @@ public:
     }
 
 private:
-    enum { stream_version = 0 };
+    enum {
+        stream_version = 0
+    };
 
     enum {
         id_sub_item_counts,
