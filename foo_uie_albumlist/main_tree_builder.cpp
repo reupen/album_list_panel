@@ -88,7 +88,9 @@ struct process_bydir_entry {
         return metadb::path_compare(p_item1.m_path, p_item2.m_path);
     }
 
-    enum { is_bydir = true };
+    enum {
+        is_bydir = true
+    };
 };
 
 template <typename String = std::string>
@@ -134,7 +136,9 @@ struct process_byformat_entry {
         return stricmp_utf8(c_str(p_item1.m_path), c_str(p_item2.m_path));
     }
 
-    enum { is_bydir = false };
+    enum {
+        is_bydir = false
+    };
 };
 
 template <typename t_entry>

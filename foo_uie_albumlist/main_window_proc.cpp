@@ -125,7 +125,16 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 {
-    enum { ID_SEND = 1, ID_ADD, ID_NEW, ID_AUTOSEND, ID_REFRESH, ID_FILT, ID_CONF, ID_VIEW_BASE };
+    enum {
+        ID_SEND = 1,
+        ID_ADD,
+        ID_NEW,
+        ID_AUTOSEND,
+        ID_REFRESH,
+        ID_FILT,
+        ID_CONF,
+        ID_VIEW_BASE
+    };
 
     const HMENU menu{CreatePopupMenu()};
     service_ptr_t<contextmenu_manager> p_menu_manager;
