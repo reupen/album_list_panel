@@ -139,6 +139,7 @@ private:
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
 
+    double m_initialisation_time{};
     library_manager_v4::ptr m_library_v4;
     library_manager_v3::ptr m_library_v3;
 };
