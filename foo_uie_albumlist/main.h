@@ -119,6 +119,7 @@ private:
     static inline wil::unique_hbrush s_filter_background_brush;
 
     bool do_click_action(ClickAction click_action);
+    void collapse_other_nodes(const node_ptr& node) const;
 
     HWND m_wnd_tv{nullptr};
     HWND m_wnd_edit{nullptr};
