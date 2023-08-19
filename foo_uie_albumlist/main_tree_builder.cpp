@@ -474,18 +474,20 @@ void album_list_window::remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggres
 
 void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
 {
-    const auto timer = pfc::hires_timer::create_and_start();
+    if (m_library_v4.is_valid() && !m_library_v4->is_initialized())
+        return;
 
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add = p_const_data;
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove;
 
     update_tree(to_add, to_remove, true);
-
-    m_initialisation_time += timer.query();
 }
 
 void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr>& p_data_const)
 {
+    if (m_library_v4.is_valid() && !m_library_v4->is_initialized())
+        return;
+
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add;
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove = p_data_const;
 
@@ -501,21 +503,16 @@ void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_ha
 
 void album_list_window::on_items_modified_v2(metadb_handle_list_cref items, metadb_io_callback_v2_data& data)
 {
+    if (m_library_v4->is_initialized())
+        return;
+
     on_items_modified(items);
 }
 
 void album_list_window::on_library_initialized()
 {
-    const auto timer = pfc::hires_timer::create_and_start();
-
-    m_node_state.reset();
-    if (m_wnd_tv && m_populated) {
-        enable_tree_view();
-        restore_scroll_position();
-
-        m_initialisation_time += timer.query();
-        console::print("Album list panel: initialised in ", pfc::format_float(m_initialisation_time, 0, 3), " s");
-    }
+    if (cfg_populate_on_init)
+        refresh_tree();
 }
 
 void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
@@ -565,9 +562,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
 
     m_populated = true;
 
-    if (m_library_v4.is_valid() && m_library_v4->is_initialized()) {
-        enable_tree_view();
-    }
+    m_node_state.reset();
 
     redraw_on_reset.reset();
 
@@ -581,6 +576,9 @@ void album_list_window::refresh_tree()
     if (!m_wnd_tv)
         return;
 
+    if (m_library_v4.is_valid() && !m_library_v4->is_initialized())
+        return;
+
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add;
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove;
     to_add.prealloc(1024);
@@ -591,6 +589,5 @@ void album_list_window::refresh_tree()
 
     update_tree(to_add, to_remove, false);
 
-    if (!m_library_v4.is_valid() || m_library_v4->is_initialized())
-        console::print("Album list panel: initialised in ", pfc::format_float(timer.query(), 0, 3), " s");
+    console::print("Album list panel: initialised in ", pfc::format_float(timer.query(), 0, 3), " s");
 }

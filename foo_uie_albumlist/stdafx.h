@@ -4,6 +4,7 @@
 
 #include <gsl/gsl>
 #include <fmt/format.h>
+#include <fmt/xchar.h>
 
 #include <algorithm>
 #include <optional>

@@ -4,11 +4,11 @@ void node::sort_children()
 {
     const auto count = m_children.size();
     mmh::Permutation permutation(count);
-    pfc::array_staticsize_t<pfc::stringcvt::string_wide_from_utf8_fast> sortdata(count);
 
-    for (size_t n = 0; n < count; n++)
-        sortdata[n].convert(m_children[n]->m_value);
-    mmh::sort_get_permutation(sortdata, permutation, StrCmpLogicalW, false, false, true);
+    mmh::sort_get_permutation(
+        m_children, permutation,
+        [](auto& left, auto& right) { return StrCmpLogicalW(left->get_name_utf16(), right->get_name_utf16()); }, false,
+        false, true);
 
     mmh::destructive_reorder(m_children, permutation);
     concurrency::parallel_for(size_t{0}, count, [this](size_t n) { m_children[n]->sort_children(); });
@@ -34,10 +34,7 @@ void node::sort_entries() // for contextmenu
 void node::create_new_playlist()
 {
     static_api_ptr_t<playlist_manager> api;
-    pfc::string8 name = m_value.get_ptr();
-    if (name.is_empty())
-        name = "All music";
-    const size_t index = api->create_playlist(name, pfc_infinite, pfc_infinite);
+    const size_t index = api->create_playlist(get_name(), pfc_infinite, pfc_infinite);
     if (index != pfc_infinite) {
         api->set_active_playlist(index);
         send_to_playlist(true);
@@ -68,12 +65,13 @@ void node::send_to_playlist(bool replace)
     }
 }
 
-node::node(const char* p_value, size_t p_value_len, album_list_window* window, uint16_t level)
+node::node(const char* name, size_t name_length, album_list_window* window, uint16_t level, std::weak_ptr<node> parent)
     : m_level(level)
+    , m_parent(std::move(parent))
     , m_window(window)
 {
-    if (p_value && p_value_len > 0) {
-        m_value.set_string(p_value, p_value_len);
+    if (name && name_length > 0) {
+        m_name.set_string(name, name_length);
     }
     m_sorted = false;
 }
@@ -94,7 +92,7 @@ void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, boo
 alp::SavedNodeState node::get_state(const node_ptr& selection)
 {
     alp::SavedNodeState state;
-    state.name = m_value;
+    state.name = m_name;
     state.expanded = m_expanded;
     state.selected = selection.get() == this;
 
@@ -115,7 +113,7 @@ std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_i
     return std::ranges::equal_range(
         m_children, value_utf16.get_ptr(),
         [](const wchar_t* left, const wchar_t* right) { return StrCmpLogicalW(left, right) < 0; },
-        [](auto& node) { return pfc::stringcvt::string_wide_from_utf8(node->m_value); });
+        [](auto& node) { return node->get_name_utf16(); });
 }
 
 node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new)
@@ -132,7 +130,8 @@ node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b
 
     b_new = true;
 
-    return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1));
+    return *m_children.insert(
+        start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this()));
 }
 
 node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
@@ -141,7 +140,7 @@ node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
         p_value = "?";
         p_value_len = 1;
     }
-    node_ptr temp = std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1);
+    node_ptr temp = std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this());
     m_children.emplace_back(temp);
     return temp;
 }

@@ -100,7 +100,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         if (m_root) {
             m_node_state = m_root->get_state(m_selection);
         }
-        destroy_tree();
+        destroy_tree(true);
         destroy_filter();
         m_selection_holder.release();
         m_root.reset();
@@ -227,8 +227,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         } else if (cmd >= ID_VIEW_BASE) {
             const unsigned view_index = cmd - ID_VIEW_BASE;
             if (view_index < view_names.size()) {
-                m_view = view_names[view_index].c_str();
-                refresh_tree();
+                set_view(view_names[view_index].c_str());
             }
         } else if (cmd < ID_VIEW_BASE) {
             switch (cmd) {
@@ -266,6 +265,13 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
 {
     switch (hdr->code) {
+    case TVN_GETDISPINFO: {
+        auto param = reinterpret_cast<LPNMTVDISPINFO>(hdr);
+        node_ptr p_node = reinterpret_cast<node*>(param->item.lParam)->shared_from_this();
+        auto text = m_node_formatter.format(p_node);
+        wcscpy_s(param->item.pszText, param->item.cchTextMax, text);
+        break;
+    }
     case TVN_ITEMEXPANDING: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
         node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();

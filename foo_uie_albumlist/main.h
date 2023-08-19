@@ -1,5 +1,7 @@
 #pragma once
 
+#include "node_formatter.h"
+
 #define IDC_TREE 1000
 #define IDC_FILTER 1001
 #define EDIT_TIMER_ID 2001
@@ -57,7 +59,9 @@ public:
     void create_filter();
     void destroy_filter();
     void create_tree();
-    void destroy_tree();
+    void destroy_tree(bool should_save_scroll_position);
+    void recreate_tree(bool save_state);
+
     void save_scroll_position() const;
     void restore_scroll_position();
     void on_size(unsigned cx, unsigned cy);
@@ -108,8 +112,6 @@ private:
 
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    void enable_tree_view();
-
     static inline pfc::ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;
     static const char* s_class_name;
@@ -124,7 +126,6 @@ private:
     WNDPROC m_treeproc{nullptr};
     bool m_initialised{false};
     bool m_populated{false};
-    bool m_enabled{};
     bool m_dragging{false};
     bool m_clicked{false};
     bool m_filter{false};
@@ -138,8 +139,7 @@ private:
     std::optional<alp::SavedNodeState> m_node_state;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
-
-    double m_initialisation_time{};
+    NodeFormatter m_node_formatter;
     library_manager_v4::ptr m_library_v4;
     library_manager_v3::ptr m_library_v3;
 };
