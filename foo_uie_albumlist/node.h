@@ -11,7 +11,7 @@ public:
     bool m_children_inserted{};
     uint16_t m_level;
 
-    node(const char* p_value, size_t p_value_len, class album_list_window* window, uint16_t level);
+    node(const char* name, size_t name_length, class album_list_window* window, uint16_t level);
 
     void sort_children();
     void sort_entries(); // for contextmenu
@@ -29,7 +29,17 @@ public:
         m_children.clear();
     }
 
-    const char* get_val() { return m_value.is_empty() ? "All music" : m_value.get_ptr(); }
+    const char* get_name() const { return m_name.is_empty() ? "All music" : m_name.get_ptr(); }
+    const wchar_t* get_name_utf16()
+    {
+        if (m_name.is_empty())
+            return L"All music";
+
+        if (m_name_utf16.is_empty())
+            m_name_utf16.convert(m_name.get_ptr(), m_name.get_length());
+
+        return m_name_utf16.get_ptr();
+    }
 
     void add_entry(const metadb_handle_ptr& p_entry) { m_tracks.add_item(p_entry); }
 
@@ -70,7 +80,8 @@ public:
     size_t get_num_entries() const { return m_tracks.get_count(); }
 
 private:
-    pfc::string_simple m_value;
+    pfc::string_simple m_name;
+    pfc::stringcvt::string_wide_from_utf8 m_name_utf16;
     std::vector<node_ptr> m_children;
     metadb_handle_list m_tracks;
     bool m_sorted : 1 {};

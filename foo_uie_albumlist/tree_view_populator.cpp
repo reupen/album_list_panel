@@ -29,19 +29,18 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional
     if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root_node)) {
         auto text = m_node_formatter.format(ptr, idx, max_idx);
 
-        m_utf16_converter.convert(text.data(), text.size());
         if (ptr->m_ti) {
-            TVITEM tvi{};
+            TVITEMEX tvi{};
             tvi.hItem = ptr->m_ti;
             tvi.mask = TVIF_TEXT;
-            tvi.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
+            tvi.pszText = const_cast<WCHAR*>(text);
             TreeView_SetItem(m_wnd_tv, &tvi);
         } else {
             TVINSERTSTRUCT is{};
             is.hParent = parent;
             is.hInsertAfter = ti_after;
             is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
-            is.item.pszText = const_cast<WCHAR*>(m_utf16_converter.get_ptr());
+            is.item.pszText = const_cast<WCHAR*>(text);
             is.item.lParam = reinterpret_cast<LPARAM>(ptr.get());
             is.item.state = expanded ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
@@ -83,7 +82,7 @@ void TreeViewPopulator::setup_children(node_ptr ptr, std::optional<alp::SavedNod
             auto& child = children[i];
 
             std::optional<alp::SavedNodeState> child_state
-                = node_state ? find_node_state(node_state->children, child->get_val()) : std::nullopt;
+                = node_state ? find_node_state(node_state->children, child->get_name()) : std::nullopt;
 
             setup_tree(ptr->m_ti, child, std::move(child_state), i, children_count, ti_aft);
         }
@@ -94,7 +93,7 @@ void TreeViewPopulator::setup_children(node_ptr ptr, std::optional<alp::SavedNod
             auto& child = children[index];
 
             std::optional<alp::SavedNodeState> child_state
-                = node_state ? find_node_state(node_state->children, child->get_val()) : std::nullopt;
+                = node_state ? find_node_state(node_state->children, child->get_name()) : std::nullopt;
 
             setup_tree(ptr->m_ti, child, std::move(child_state), index, children_count, TVI_FIRST);
         }
