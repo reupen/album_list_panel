@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.h"
 #include "node_state.h"
 
 typedef std::shared_ptr<class node> node_ptr;
@@ -11,7 +12,8 @@ public:
     bool m_children_inserted{};
     uint16_t m_level;
 
-    node(const char* name, size_t name_length, class album_list_window* window, uint16_t level);
+    node(const char* name, size_t name_length, class album_list_window* window, uint16_t level,
+        std::weak_ptr<node> parent = {});
 
     void sort_children();
     void sort_entries(); // for contextmenu
@@ -79,7 +81,15 @@ public:
 
     size_t get_num_entries() const { return m_tracks.get_count(); }
 
+    std::weak_ptr<node>& get_parent() { return m_parent; }
+
+    void set_display_index(std::optional<size_t> display_index) { m_display_index = display_index; }
+
+    std::optional<size_t> get_display_index() const { return m_display_index; }
+
 private:
+    std::weak_ptr<node> m_parent;
+    std::optional<size_t> m_display_index;
     pfc::string_simple m_name;
     pfc::stringcvt::string_wide_from_utf8 m_name_utf16;
     std::vector<node_ptr> m_children;

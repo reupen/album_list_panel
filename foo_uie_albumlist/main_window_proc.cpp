@@ -266,6 +266,13 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
 {
     switch (hdr->code) {
+    case TVN_GETDISPINFO: {
+        auto param = reinterpret_cast<LPNMTVDISPINFO>(hdr);
+        node_ptr p_node = reinterpret_cast<node*>(param->item.lParam)->shared_from_this();
+        auto text = m_node_formatter.format(p_node);
+        wcscpy_s(param->item.pszText, param->item.cchTextMax, text);
+        break;
+    }
     case TVN_ITEMEXPANDING: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
         node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();

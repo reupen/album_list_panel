@@ -27,20 +27,14 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional
     ptr->purge_empty_children(m_wnd_tv);
 
     if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root_node)) {
-        auto text = m_node_formatter.format(ptr, idx, max_idx);
+        ptr->set_display_index(idx);
 
-        if (ptr->m_ti) {
-            TVITEMEX tvi{};
-            tvi.hItem = ptr->m_ti;
-            tvi.mask = TVIF_TEXT;
-            tvi.pszText = const_cast<WCHAR*>(text);
-            TreeView_SetItem(m_wnd_tv, &tvi);
-        } else {
+        if (!ptr->m_ti) {
             TVINSERTSTRUCT is{};
             is.hParent = parent;
             is.hInsertAfter = ti_after;
             is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
-            is.item.pszText = const_cast<WCHAR*>(text);
+            is.item.pszText = LPSTR_TEXTCALLBACK;
             is.item.lParam = reinterpret_cast<LPARAM>(ptr.get());
             is.item.state = expanded ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;

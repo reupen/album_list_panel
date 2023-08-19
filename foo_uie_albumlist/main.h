@@ -1,5 +1,7 @@
 #pragma once
 
+#include "node_formatter.h"
+
 #define IDC_TREE 1000
 #define IDC_FILTER 1001
 #define EDIT_TIMER_ID 2001
@@ -138,7 +140,7 @@ private:
     std::optional<alp::SavedNodeState> m_node_state;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
-
+    NodeFormatter m_node_formatter;
     double m_initialisation_time{};
     library_manager_v4::ptr m_library_v4;
     library_manager_v3::ptr m_library_v3;

@@ -65,8 +65,9 @@ void node::send_to_playlist(bool replace)
     }
 }
 
-node::node(const char* name, size_t name_length, album_list_window* window, uint16_t level)
+node::node(const char* name, size_t name_length, album_list_window* window, uint16_t level, std::weak_ptr<node> parent)
     : m_level(level)
+    , m_parent(std::move(parent))
     , m_window(window)
 {
     if (name && name_length > 0) {
@@ -129,7 +130,8 @@ node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b
 
     b_new = true;
 
-    return *m_children.insert(start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1));
+    return *m_children.insert(
+        start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this()));
 }
 
 node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
@@ -138,7 +140,7 @@ node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
         p_value = "?";
         p_value_len = 1;
     }
-    node_ptr temp = std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1);
+    node_ptr temp = std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this());
     m_children.emplace_back(temp);
     return temp;
 }
