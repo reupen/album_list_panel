@@ -72,26 +72,36 @@ void TreeViewPopulator::setup_children(node_ptr ptr, std::optional<alp::SavedNod
     const auto& children = ptr->get_children();
     const auto children_count = children.size();
 
+    // Insert items in reverse. This is particularly faster for an empty tree.
+
     if (ptr->m_children_inserted) {
-        for (size_t i{0}; i < children_count; ++i) {
-            HTREEITEM ti_aft = i ? children[i - 1]->m_ti : nullptr;
+        auto chunk_end = children.rbegin();
+        auto chunk_start = chunk_end;
 
-            if (ti_aft == nullptr)
-                ti_aft = TVI_FIRST;
+        while (chunk_start != children.rend()) {
+            while (chunk_start != children.rend() && !(*chunk_start)->m_ti) {
+                ++chunk_start;
+            }
 
-            auto& child = children[i];
+            const auto insert_after = chunk_start != children.rend() ? (*chunk_start)->m_ti : TVI_FIRST;
 
-            std::optional<alp::SavedNodeState> child_state
-                = node_state ? find_node_state(node_state->children, child->get_name()) : std::nullopt;
+            if (chunk_start != children.rend())
+                ++chunk_start;
 
-            setup_tree(ptr->m_ti, child, std::move(child_state), i, children_count, ti_aft);
+            for (auto current = chunk_end; current != chunk_start; ++current) {
+                auto& node = *current;
+                const auto index = std::distance(current, children.rend()) - 1;
+
+                std::optional<alp::SavedNodeState> child_state
+                    = node_state ? find_node_state(node_state->children, node->get_name()) : std::nullopt;
+
+                setup_tree(ptr->m_ti, node, std::move(child_state), index, children_count, insert_after);
+            }
+
+            chunk_end = chunk_start;
         }
     } else {
-        // If there are no existing items, use a more optimised path that inserts items in reverse
-        for (auto i{children_count}; i > 0; --i) {
-            const auto index = i - 1;
-            auto& child = children[index];
-
+        for (auto&& [index, child] : children | ranges::views::enumerate | ranges::views::reverse) {
             std::optional<alp::SavedNodeState> child_state
                 = node_state ? find_node_state(node_state->children, child->get_name()) : std::nullopt;
 
