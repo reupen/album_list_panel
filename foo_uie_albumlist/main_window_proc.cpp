@@ -282,6 +282,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
 
         if (cfg_collapse_other_nodes_on_expansion && param->action == TVE_EXPAND) {
             collapse_other_nodes(p_node);
+            TreeView_EnsureVisible(m_wnd_tv, param->itemNew.hItem);
         }
         break;
     }
