@@ -110,8 +110,6 @@ private:
 
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    void enable_tree_view();
-
     static inline pfc::ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;
     static const char* s_class_name;
@@ -126,7 +124,6 @@ private:
     WNDPROC m_treeproc{nullptr};
     bool m_initialised{false};
     bool m_populated{false};
-    bool m_enabled{};
     bool m_dragging{false};
     bool m_clicked{false};
     bool m_filter{false};
@@ -141,7 +138,6 @@ private:
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
     NodeFormatter m_node_formatter;
-    double m_initialisation_time{};
     library_manager_v4::ptr m_library_v4;
     library_manager_v3::ptr m_library_v3;
 };

@@ -379,11 +379,6 @@ void album_list_window::create_tree()
     if (!cfg_show_horizontal_scroll_bar)
         styles |= TVS_NOHSCROLL;
 
-    m_enabled = !m_library_v4.is_valid() || m_library_v4->is_initialized();
-
-    if (!m_enabled)
-        styles |= WS_DISABLED;
-
     m_wnd_tv = CreateWindowEx(ex_styles, WC_TREEVIEW, L"Album list", styles, 0, 0, 0, 0, wnd,
         reinterpret_cast<HMENU>(IDC_TREE), core_api::get_my_instance(), nullptr);
 
@@ -479,14 +474,6 @@ void album_list_window::restore_scroll_position()
     if (is_initialised) {
         m_saved_scroll_position.reset();
     }
-}
-
-void album_list_window::enable_tree_view()
-{
-    if (!m_enabled)
-        EnableWindow(m_wnd_tv, TRUE);
-
-    m_enabled = true;
 }
 
 void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_abort) const
