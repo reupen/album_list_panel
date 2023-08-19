@@ -59,7 +59,9 @@ public:
     void create_filter();
     void destroy_filter();
     void create_tree();
-    void destroy_tree();
+    void destroy_tree(bool should_save_scroll_position);
+    void recreate_tree(bool save_state);
+
     void save_scroll_position() const;
     void restore_scroll_position();
     void on_size(unsigned cx, unsigned cy);

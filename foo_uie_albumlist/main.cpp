@@ -132,9 +132,7 @@ void album_list_window::s_update_all_showhscroll()
         const auto wnd = s_instances[i]->m_wnd_tv;
         if (wnd) {
             uih::DisableRedrawScope disable_redrawing(s_instances[i]->get_wnd());
-            s_instances[i]->destroy_tree();
-            s_instances[i]->create_tree();
-            s_instances[i]->on_size();
+            s_instances[i]->recreate_tree(true);
         }
     }
 }
@@ -201,8 +199,7 @@ void album_list_window::on_view_script_change(const char* p_view_before, const c
 {
     if (get_wnd()) {
         if (!stricmp_utf8(p_view_before, m_view)) {
-            m_view = p_view;
-            refresh_tree();
+            set_view(p_view);
         }
     }
 }
@@ -409,13 +406,33 @@ void album_list_window::create_tree()
     }
 }
 
-void album_list_window::destroy_tree()
+void album_list_window::destroy_tree(bool should_save_scroll_position)
 {
     if (m_wnd_tv) {
-        save_scroll_position();
+        if (should_save_scroll_position)
+            save_scroll_position();
+
         DestroyWindow(m_wnd_tv);
         m_wnd_tv = nullptr;
     }
+}
+
+void album_list_window::recreate_tree(bool save_state)
+{
+    if (!m_wnd_tv)
+        return;
+
+    if (m_root && save_state)
+        m_node_state = m_root->get_state(m_selection);
+
+    SetWindowRedraw(get_wnd(), FALSE);
+
+    destroy_tree(save_state);
+    create_tree();
+    on_size();
+
+    SetWindowRedraw(get_wnd(), TRUE);
+    RedrawWindow(get_wnd(), nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 
 void album_list_window::save_scroll_position() const
@@ -537,7 +554,7 @@ const char* album_list_window::get_view() const
 void album_list_window::set_view(const char* view)
 {
     m_view = view;
-    refresh_tree();
+    recreate_tree(false);
 }
 
 void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)

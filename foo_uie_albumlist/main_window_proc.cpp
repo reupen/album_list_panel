@@ -100,7 +100,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         if (m_root) {
             m_node_state = m_root->get_state(m_selection);
         }
-        destroy_tree();
+        destroy_tree(true);
         destroy_filter();
         m_selection_holder.release();
         m_root.reset();
@@ -227,8 +227,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         } else if (cmd >= ID_VIEW_BASE) {
             const unsigned view_index = cmd - ID_VIEW_BASE;
             if (view_index < view_names.size()) {
-                m_view = view_names[view_index].c_str();
-                refresh_tree();
+                set_view(view_names[view_index].c_str());
             }
         } else if (cmd < ID_VIEW_BASE) {
             switch (cmd) {
