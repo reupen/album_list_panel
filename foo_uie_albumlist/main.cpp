@@ -592,6 +592,25 @@ bool album_list_window::do_click_action(ClickAction click_action)
     return true;
 }
 
+void album_list_window::collapse_other_nodes(const node_ptr& node) const
+{
+    auto current = node;
+    auto parent = current->get_parent().lock();
+
+    while (parent) {
+        auto expanded_siblings = parent->get_children()
+            | ranges::views::filter([&current](auto& sibling) { return sibling->is_expanded() && sibling != current; });
+
+        for (const auto& sibling : expanded_siblings) {
+            TreeView_Expand(m_wnd_tv, sibling->m_ti, TVE_COLLAPSE);
+            sibling->set_expanded(false);
+        }
+
+        current = parent;
+        parent = current->get_parent().lock();
+    }
+}
+
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
 const GUID album_list_window::s_extension_guid
     = {0x606e9cdd, 0x45ee, 0x4c3b, {0x9f, 0xd5, 0x49, 0x38, 0x1c, 0xeb, 0xe8, 0xae}};

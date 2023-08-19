@@ -281,7 +281,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         }
 
         if (cfg_collapse_other_nodes_on_expansion && param->action == TVE_EXPAND) {
-            uih::tree_view_collapse_other_nodes(param->hdr.hwndFrom, param->itemNew.hItem);
+            collapse_other_nodes(p_node);
         }
         break;
     }

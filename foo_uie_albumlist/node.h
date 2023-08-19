@@ -1,6 +1,5 @@
 #pragma once
 
-#include "config.h"
 #include "node_state.h"
 
 typedef std::shared_ptr<class node> node_ptr;
