@@ -461,12 +461,9 @@ void album_list_window::restore_scroll_position()
     if (!m_wnd_tv || !m_saved_scroll_position)
         return;
 
-    const auto is_initialised = !m_library_v4.is_valid() || m_library_v4->is_initialized();
-
     // Ensure scroll bar state has been updated; apparently the tree
     // view does this when rendering
-    if (is_initialised)
-        UpdateWindow(m_wnd_tv);
+    UpdateWindow(m_wnd_tv);
 
     SCROLLINFO si_vert_current{};
     si_vert_current.cbSize = sizeof(SCROLLINFO);
@@ -479,18 +476,16 @@ void album_list_window::restore_scroll_position()
     si.cbSize = sizeof(SCROLLINFO);
     si.fMask = SIF_POS;
     si.nPos = m_saved_scroll_position->horizontal_position;
-    const auto new_horizontal_position = SetScrollInfo(m_wnd_tv, SB_HORZ, &si, is_initialised);
+    const auto new_horizontal_position = SetScrollInfo(m_wnd_tv, SB_HORZ, &si, true);
 
     si.nPos = MulDiv(
         si_vert_current.nMax, m_saved_scroll_position->vertical_position, m_saved_scroll_position->vertical_max);
-    const auto new_vertical_position = SetScrollInfo(m_wnd_tv, SB_VERT, &si, is_initialised);
+    const auto new_vertical_position = SetScrollInfo(m_wnd_tv, SB_VERT, &si, true);
 
     SendMessage(m_wnd_tv, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, new_horizontal_position), 0);
     SendMessage(m_wnd_tv, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, new_vertical_position), 0);
 
-    if (is_initialised) {
-        m_saved_scroll_position.reset();
-    }
+    m_saved_scroll_position.reset();
 }
 
 void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_abort) const
