@@ -15,12 +15,13 @@ public:
         std::weak_ptr<node> parent = {});
 
     void sort_children();
-    void sort_entries(); // for contextmenu
 
-    const metadb_handle_list& get_entries() const { return m_tracks; }
-
-    void create_new_playlist();
-    void send_to_playlist(bool replace);
+    const metadb_handle_list& get_tracks() const { return m_tracks; }
+    const metadb_handle_list& get_sorted_tracks()
+    {
+        sort_tracks();
+        return m_tracks;
+    }
 
     void set_bydir(bool p) { m_bydir = p; }
 
@@ -44,14 +45,14 @@ public:
 
     void add_entry(const metadb_handle_ptr& p_entry) { m_tracks.add_item(p_entry); }
 
-    void remove_entries(pfc::bit_array& mask);
+    void remove_tracks(pfc::bit_array& mask);
 
     void set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing);
 
     bool is_expanded() const { return m_expanded; }
     void set_expanded(bool expanded) { m_expanded = expanded; }
 
-    alp::SavedNodeState get_state(const node_ptr& selection);
+    alp::SavedNodeState get_state(const std::unordered_set<node_ptr>& selection);
 
     std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> find_child(
         std::string_view name) const;
@@ -61,14 +62,8 @@ public:
 
     node_ptr add_child_v2(const char* p_value) { return add_child_v2(p_value, strlen(p_value)); }
 
-    void reset()
-    {
-        m_children.clear();
-        m_tracks.remove_all();
-        m_sorted = false;
-    }
-
     void mark_all_labels_dirty();
+    void mark_tracks_unsorted();
 
     void purge_empty_children(HWND wnd);
 
@@ -78,15 +73,28 @@ public:
 
     size_t get_num_children() const { return m_children.size(); }
 
-    size_t get_num_entries() const { return m_tracks.get_count(); }
+    size_t get_num_tracks() const { return m_tracks.get_count(); }
 
-    std::weak_ptr<node>& get_parent() { return m_parent; }
+    node_ptr get_parent() const { return m_parent.lock(); }
+
+    std::vector<node_ptr> get_parents() const;
+
+    std::vector<node_ptr> get_hierarchy();
 
     void set_display_index(std::optional<size_t> display_index) { m_display_index = display_index; }
 
     std::optional<size_t> get_display_index() const { return m_display_index; }
 
 private:
+    void sort_tracks();
+    void apply_function(std::function<void(node&)> func)
+    {
+        func(*this);
+
+        for (auto& child : m_children)
+            child->apply_function(func);
+    }
+
     std::weak_ptr<node> m_parent;
     std::optional<size_t> m_display_index;
     pfc::string_simple m_name;

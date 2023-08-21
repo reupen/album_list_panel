@@ -1,5 +1,6 @@
 #include "stdafx.h"
-#include "actions.h"
+#include "playlist_utils.h"
+#include "node_utils.h"
 #include "tree_view_populator.h"
 
 LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -64,11 +65,11 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             return TRUE;
         case IDOK:
             if (GetKeyState(VK_SHIFT) & KF_UP)
-                do_playlist(m_selection, false);
+                alp::send_nodes_to_playlist(get_cleaned_selection(), false, false);
             else if (GetKeyState(VK_CONTROL) & KF_UP)
-                do_playlist(m_selection, true, true);
+                alp::send_nodes_to_playlist(get_cleaned_selection(), true, true);
             else
-                do_playlist(m_selection, true);
+                alp::send_nodes_to_playlist(get_cleaned_selection(), true, false);
             return 0;
         }
         break;
@@ -104,7 +105,8 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         destroy_filter();
         m_selection_holder.release();
         m_root.reset();
-        m_selection.reset();
+        m_selection.clear();
+        m_cleaned_selection.reset();
         if (m_dd_theme) {
             CloseThemeData(m_dd_theme);
             m_dd_theme = nullptr;
@@ -194,9 +196,17 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     tvi.hItem = treeitem;
     tvi.mask = TVIF_HANDLE | TVIF_PARAM;
     TreeView_GetItem(m_wnd_tv, &tvi);
-    auto p_node = treeitem && tvi.lParam ? reinterpret_cast<node*>(tvi.lParam)->shared_from_this() : nullptr;
+    auto click_node = treeitem && tvi.lParam ? reinterpret_cast<node*>(tvi.lParam)->shared_from_this() : nullptr;
 
-    if (treeitem && p_node) {
+    std::vector<node_ptr> nodes;
+    if (click_node && m_selection.contains(click_node))
+        nodes = get_cleaned_selection();
+    else if (click_node)
+        nodes = {click_node};
+
+    const auto tracks_holder = alp::get_node_tracks(nodes);
+
+    if (treeitem && click_node) {
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
         uAppendMenu(menu, MF_STRING, ID_SEND, (show_shortcuts ? "&Send to playlist\tEnter" : "&Send to playlist"));
         uAppendMenu(menu, MF_STRING, ID_ADD, show_shortcuts ? "&Add to playlist\tShift+Enter" : "&Add to playlist");
@@ -206,10 +216,9 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
 
         contextmenu_manager::g_create(p_menu_manager);
-        p_node->sort_entries();
 
         if (p_menu_manager.is_valid()) {
-            p_menu_manager->init_context(p_node->get_entries(), 0);
+            p_menu_manager->init_context(tracks_holder.tracks(), 0);
             p_menu_manager->win32_build_menu(menu, IDM_MANAGER_BASE, -1);
             menu_helpers::win32_auto_mnemonics(menu);
         }
@@ -232,16 +241,16 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
         } else if (cmd < ID_VIEW_BASE) {
             switch (cmd) {
             case ID_NEW:
-                do_playlist(p_node, true, true);
+                alp::send_nodes_to_playlist(nodes, true, true);
                 break;
             case ID_SEND:
-                do_playlist(p_node, true);
+                alp::send_nodes_to_playlist(nodes, true, false);
                 break;
             case ID_ADD:
-                do_playlist(p_node, false);
+                alp::send_nodes_to_playlist(nodes, false, false);
                 break;
             case ID_AUTOSEND:
-                do_autosend_playlist(p_node, m_view, true);
+                alp::send_nodes_to_autosend_playlist(nodes, m_view, true);
                 break;
             case ID_CONF:
                 static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id);
@@ -294,16 +303,18 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
     }
     case TVN_SELCHANGED: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        m_selection
-            = param->itemNew.hItem ? reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this() : nullptr;
+        m_selection.clear();
+        m_cleaned_selection.reset();
 
-        if (param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD) {
-            if (cfg_autosend)
-                do_autosend_playlist(m_selection, m_view);
+        if (param->itemNew.hItem) {
+            auto selected_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
+            m_selection.emplace(selected_node);
         }
-        if (m_selection_holder.is_valid()) {
-            m_selection_holder->set_selection(m_selection ? m_selection->get_entries() : metadb_handle_list());
-        }
+
+        if (param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD)
+            autosend();
+
+        update_selection_holder();
         break;
     }
     case NM_CUSTOMDRAW: {

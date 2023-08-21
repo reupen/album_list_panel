@@ -6,7 +6,7 @@ public:
     {
         m_buffer.clear();
 
-        const auto parent = node->get_parent().lock();
+        const auto parent = node->get_parent();
         auto item_count = parent ? parent->get_num_children() : 0;
 
         const auto item_index = node->get_display_index();
