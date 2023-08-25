@@ -12,8 +12,8 @@ public:
     }
 
     static void s_setup_children(HWND wnd_tv, node_ptr ptr);
-    static void s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr, std::optional<alp::SavedNodeState> node_state,
-        t_size idx, t_size max_idx);
+    static std::unordered_set<node_ptr> s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr,
+        std::optional<alp::SavedNodeState> node_state, t_size idx, t_size max_idx);
 
 private:
     void setup_tree(HTREEITEM parent, node_ptr ptr, std::optional<alp::SavedNodeState> node_state, t_size idx,
@@ -22,6 +22,7 @@ private:
 
     HWND m_wnd_tv;
     bool m_has_selection{};
+    std::unordered_set<node_ptr> m_new_selection;
     uint16_t m_initial_level;
 
     NodeFormatter m_node_formatter;

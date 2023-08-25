@@ -3,12 +3,13 @@
 
 #include "node_formatter.h"
 
-void TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr,
+std::unordered_set<node_ptr> TreeViewPopulator::s_setup_tree(HWND wnd_tv, HTREEITEM parent, node_ptr ptr,
     std::optional<alp::SavedNodeState> node_state, t_size idx, t_size max_idx)
 {
     TRACK_CALL_TEXT("album_list_panel::TreeViewPopulator::s_setup_tree");
     TreeViewPopulator populater{wnd_tv, ptr->m_level};
     populater.setup_tree(parent, ptr, node_state, idx, max_idx, TVI_FIRST);
+    return std::move(populater.m_new_selection);
 }
 
 void TreeViewPopulator::s_setup_children(HWND wnd_tv, node_ptr ptr)
@@ -39,6 +40,11 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional
             is.item.state = expanded ? TVIS_EXPANDED : 0;
             is.item.stateMask = TVIS_EXPANDED;
 
+            if (m_has_selection && selected) {
+                is.item.state |= TVIS_SELECTED;
+                is.item.stateMask |= TVIS_SELECTED;
+            }
+
             const auto children_count = ptr->get_children().size();
             if (!populate_children && children_count > 0) {
                 is.item.mask |= TVIF_CHILDREN;
@@ -51,6 +57,9 @@ void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional
                 TreeView_SelectItem(m_wnd_tv, ptr->m_ti);
                 m_has_selection = true;
             }
+
+            if (selected)
+                m_new_selection.emplace(ptr);
 
             ptr->set_expanded(expanded);
         }

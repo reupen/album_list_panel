@@ -439,7 +439,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     if (!ptr)
         return;
 
-    size_t count{ptr->get_entries().get_count()};
+    size_t count{ptr->get_tracks().get_count()};
 
     if (!count)
         return;
@@ -448,7 +448,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     bit_array_bittable mask(count);
     bool b_found{false};
 
-    const metadb_handle_ptr* p_entries = ptr->get_entries().get_ptr();
+    const metadb_handle_ptr* p_entries = ptr->get_tracks().get_ptr();
     const node_ptr* p_nodes = ptr->get_children().data();
 
     for (size_t i{0}; i < count; i++) {
@@ -459,7 +459,7 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     }
 
     if (b_found)
-        ptr->remove_entries(mask);
+        ptr->remove_tracks(mask);
 
     count = ptr->get_children().size();
     for (size_t i{0}; i < count; i++) {
@@ -524,11 +524,8 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     SetWindowRedraw(m_wnd_tv, FALSE);
     std::optional redraw_on_reset = gsl::finally([wnd_tv = m_wnd_tv] { SetWindowRedraw(wnd_tv, TRUE); });
 
-    if (!preserve_existing && m_populated) {
-        TreeView_DeleteAllItems(m_wnd_tv);
-        m_selection.reset();
-        m_root.reset();
-    }
+    if (!preserve_existing && m_populated)
+        delete_all_nodes();
 
     if (preserve_existing && to_remove.get_count()) {
         mmh::in_place_sort(to_remove, pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, false);
@@ -543,18 +540,16 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
         popup_message::g_show(
             formatter << "Album list panel: An error occurred while generating the tree (" << e << ").", "Error",
             popup_message::icon_error);
-        TreeView_DeleteAllItems(m_wnd_tv);
-        m_selection.reset();
-        m_root.reset();
+        delete_all_nodes();
         return;
     }
 
-    if (!m_root || !m_root->get_entries().get_count()) {
-        TreeView_DeleteAllItems(m_wnd_tv);
-        m_selection.reset();
-        m_root.reset();
+    if (!m_root || !m_root->get_tracks().get_count()) {
+        delete_all_nodes();
     } else if (m_root) {
-        TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, m_node_state, 0, 0);
+        auto new_selection = TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, m_node_state, 0, 0);
+        ranges::insert(m_selection, new_selection);
+        m_cleaned_selection.reset();
     }
 
     if (m_node_state && (!m_library_v4.is_valid() || m_library_v4->is_initialized()))

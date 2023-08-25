@@ -1,6 +1,8 @@
 #pragma once
 
 #include "node_formatter.h"
+#include "node_utils.h"
+#include "playlist_utils.h"
 
 #define IDC_TREE 1000
 #define IDC_FILTER 1001
@@ -41,6 +43,7 @@ public:
     static void s_update_all_item_heights();
     static void s_update_all_indents();
     static void s_update_all_labels();
+    static void s_mark_tracks_unsorted();
     static void s_update_all_showhscroll();
     static void s_update_all_fonts();
     static void s_refresh_all();
@@ -73,7 +76,8 @@ public:
     void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
     void remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks);
 
-    void update_all_labels();
+    void update_all_labels() const;
+    void mark_tracks_unsorted() const;
     void update_tree_theme(
         const cui::colours::helper& colours = cui::colours::helper(album_list_items_colours_client_id)) const;
     void update_tree_colours();
@@ -120,6 +124,14 @@ private:
 
     bool do_click_action(ClickAction click_action);
     void collapse_other_nodes(const node_ptr& node) const;
+    void deselect_selected_nodes(const node_ptr& skip = {}) const;
+    void delete_all_nodes();
+    bool manually_select_tree_item(HTREEITEM item, bool selected) const;
+    void autosend();
+
+    void update_selection_holder();
+
+    const std::vector<node_ptr>& get_cleaned_selection();
 
     HWND m_wnd_tv{nullptr};
     HWND m_wnd_edit{nullptr};
@@ -136,7 +148,8 @@ private:
     mutable std::optional<alp::SavedScrollPosition> m_saved_scroll_position{};
     pfc::string8 m_view{"by artist/album"};
     node_ptr m_root;
-    node_ptr m_selection;
+    std::optional<std::vector<node_ptr>> m_cleaned_selection;
+    std::unordered_set<node_ptr> m_selection;
     std::optional<alp::SavedNodeState> m_node_state;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;

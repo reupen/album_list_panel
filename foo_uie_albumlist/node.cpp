@@ -14,9 +14,36 @@ void node::sort_children()
     concurrency::parallel_for(size_t{0}, count, [this](size_t n) { m_children[n]->sort_children(); });
 }
 
-void node::sort_entries() // for contextmenu
+std::vector<node_ptr> node::get_parents() const
 {
-    if (!m_sorted) {
+    std::vector<node_ptr> parents;
+    node_ptr parent = get_parent();
+
+    while (parent) {
+        parents.emplace_back(parent);
+        parent = parent->get_parent();
+    }
+
+    return parents;
+}
+
+std::vector<node_ptr> node::get_hierarchy()
+{
+    auto nodes = get_parents() | ranges::actions::reverse;
+    nodes.emplace_back(shared_from_this());
+    return nodes;
+}
+
+void node::sort_tracks()
+{
+    if (m_sorted)
+        return;
+
+    service_ptr_t<titleformat_object> script;
+
+    if (cfg_add_items_use_core_sort) {
+        script = playlist_incoming_item_filter_v4::get()->get_incoming_item_sorter();
+    } else {
         pfc::string8 tf_string;
         if (m_bydir)
             tf_string = "%path_sort%";
@@ -24,45 +51,13 @@ void node::sort_entries() // for contextmenu
             tf_string = m_window->get_hierarchy();
             tf_string += "|%path_sort%";
         }
-        service_ptr_t<titleformat_object> script;
-        if (static_api_ptr_t<titleformat_compiler>()->compile(script, tf_string))
-            fbh::sort_metadb_handle_list_by_format(m_tracks, script, nullptr);
-        m_sorted = true;
-    }
-}
-
-void node::create_new_playlist()
-{
-    static_api_ptr_t<playlist_manager> api;
-    const size_t index = api->create_playlist(get_name(), pfc_infinite, pfc_infinite);
-    if (index != pfc_infinite) {
-        api->set_active_playlist(index);
-        send_to_playlist(true);
-    }
-}
-
-void node::send_to_playlist(bool replace)
-{
-    static_api_ptr_t<playlist_manager> api;
-    const bool select = !!cfg_add_items_select;
-    api->activeplaylist_undo_backup();
-    if (replace)
-        api->activeplaylist_clear();
-    else if (select)
-        api->activeplaylist_clear_selection();
-    if (cfg_add_items_use_core_sort)
-        api->activeplaylist_add_items_filter(m_tracks, select);
-    else {
-        sort_entries();
-        api->activeplaylist_add_items(m_tracks, bit_array_val(select));
+        titleformat_compiler::get()->compile(script, tf_string);
     }
 
-    if (select && !replace) {
-        const size_t num = api->activeplaylist_get_item_count();
-        if (num > 0) {
-            api->activeplaylist_set_focus_item(num - 1);
-        }
-    }
+    if (script.is_valid())
+        fbh::sort_metadb_handle_list_by_format(m_tracks, script, nullptr);
+
+    m_sorted = true;
 }
 
 node::node(const char* name, size_t name_length, album_list_window* window, uint16_t level, std::weak_ptr<node> parent)
@@ -76,7 +71,7 @@ node::node(const char* name, size_t name_length, album_list_window* window, uint
     m_sorted = false;
 }
 
-void node::remove_entries(pfc::bit_array& mask)
+void node::remove_tracks(pfc::bit_array& mask)
 {
     m_tracks.remove_mask(mask);
 }
@@ -89,16 +84,16 @@ void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, boo
     m_sorted = false;
 }
 
-alp::SavedNodeState node::get_state(const node_ptr& selection)
+alp::SavedNodeState node::get_state(const std::unordered_set<node_ptr>& selection)
 {
     alp::SavedNodeState state;
     state.name = m_name;
     state.expanded = m_expanded;
-    state.selected = selection.get() == this;
+    state.selected = selection.contains(this->shared_from_this());
 
-    state.children = m_children
-        | std::ranges::views::filter([&selection](auto& child) { return child->is_expanded() || selection == child; })
-        | std::ranges::views::transform([&selection](auto& child) { return child->get_state(selection); })
+    state.children = m_children | std::ranges::views::filter([&selection](auto& child) {
+        return child->is_expanded() || selection.contains(child);
+    }) | std::ranges::views::transform([&selection](auto& child) { return child->get_state(selection); })
         | ranges::to_vector;
 
     return state;
@@ -147,11 +142,12 @@ node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
 
 void node::mark_all_labels_dirty()
 {
-    m_label_dirty = true;
-    t_size i = m_children.size();
-    for (; i; i--) {
-        m_children[i - 1]->mark_all_labels_dirty();
-    }
+    apply_function([](auto& node) { node.m_label_dirty = true; });
+}
+
+void node::mark_tracks_unsorted()
+{
+    apply_function([](auto& node) { node.m_sorted = false; });
 }
 
 void node::purge_empty_children(HWND wnd)
@@ -166,13 +162,15 @@ void node::purge_empty_children(HWND wnd)
             child->m_label_dirty = true;
         }
 
-        if (child->get_entries().get_count()) {
+        if (child->get_tracks().get_count()) {
             ++iter;
             continue;
         }
 
-        if (m_window && m_window->m_selection == child)
-            m_window->m_selection = nullptr;
+        if (m_window && m_window->m_selection.contains(child)) {
+            m_window->m_selection.erase(child);
+            m_window->m_cleaned_selection.reset();
+        }
 
         if (child->m_ti)
             TreeView_DeleteItem(wnd, child->m_ti);

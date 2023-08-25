@@ -1,5 +1,8 @@
 #include "stdafx.h"
 
+#include "node.h"
+#include "node_utils.h"
+
 LRESULT WINAPI album_list_window::s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     auto p_this = reinterpret_cast<album_list_window*>(GetWindowLongPtr(wnd, GWLP_USERDATA));
@@ -20,16 +23,29 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         uie::window_ptr p_this{this};
-        bool processed = false;
 
         if (get_host()->get_keyboard_shortcuts_enabled() && wp != VK_LEFT && wp != VK_RIGHT
-            && cfg_process_keyboard_shortcuts)
-            processed = g_process_keydown_keyboard_shortcuts(wp);
+            && cfg_process_keyboard_shortcuts && g_process_keydown_keyboard_shortcuts(wp)) {
+            m_process_char = false;
+            return 0;
+        }
 
-        m_process_char = !processed;
+        m_process_char = true;
 
-        if (!processed && msg == WM_KEYDOWN && wp == VK_TAB) {
-            g_on_tab(wnd);
+        switch (wp) {
+        case VK_TAB:
+            if (msg == WM_KEYDOWN)
+                g_on_tab(wnd);
+            break;
+        case VK_HOME:
+        case VK_DOWN:
+        case VK_END:
+        case VK_PRIOR:
+        case VK_NEXT:
+        case VK_UP: {
+            deselect_selected_nodes();
+            break;
+        }
         }
         break;
     }
@@ -41,12 +57,13 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
         break;
     case WM_SETFOCUS: {
         m_selection_holder = static_api_ptr_t<ui_selection_manager>()->acquire();
-        if (m_selection)
-            m_selection_holder->set_selection(m_selection->get_entries());
+        update_selection_holder();
+        RedrawWindow(wnd, nullptr, nullptr, RDW_INVALIDATE);
         break;
     }
     case WM_KILLFOCUS: {
         m_selection_holder.release();
+        RedrawWindow(wnd, nullptr, nullptr, RDW_INVALIDATE);
         break;
     }
     case WM_GETDLGCODE: {
@@ -65,10 +82,48 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
     case WM_LBUTTONUP:
         m_clicked = false;
         break;
-    case WM_LBUTTONDOWN:
+    case WM_LBUTTONDOWN: {
         m_clicked = true;
         m_clickpoint = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+
+        TVHITTESTINFO tvhti{};
+        tvhti.pt = m_clickpoint;
+        TreeView_HitTest(wnd, &tvhti);
+
+        if (!(tvhti.flags & TVHT_ONITEM))
+            break;
+
+        TVITEMEX tvi{};
+        tvi.hItem = tvhti.hItem;
+        tvi.mask = TVIF_PARAM;
+        if (!TreeView_GetItem(wnd, &tvi))
+            break;
+
+        auto click_node = reinterpret_cast<node*>(tvi.lParam)->shared_from_this();
+
+        if (wp & MK_CONTROL) {
+            auto currently_selected = m_selection.contains(click_node);
+
+            if (!manually_select_tree_item(tvhti.hItem, !currently_selected))
+                return 0;
+
+            m_cleaned_selection.reset();
+
+            if (currently_selected) {
+                m_selection.erase(click_node);
+            } else {
+                m_selection.emplace(click_node);
+            }
+
+            autosend();
+            update_selection_holder();
+
+            return 0;
+        }
+
+        deselect_selected_nodes(click_node);
         break;
+    }
     case WM_MOUSEMOVE: {
         const POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
 
@@ -85,27 +140,21 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
 
             TreeView_SelectItem(wnd, ti.hItem);
 
-            if (!m_selection)
+            if (m_selection.empty())
                 break;
 
             static_api_ptr_t<playlist_incoming_item_filter> incoming_api;
-            metadb_handle_list_t<pfc::alloc_fast_aggressive> items;
-
-            if (cfg_add_items_use_core_sort) {
-                incoming_api->filter_items(m_selection->get_entries(), items);
-            } else {
-                m_selection->sort_entries();
-                items = m_selection->get_entries();
-            }
+            auto tracks_holder = alp::get_node_tracks(get_cleaned_selection());
 
             m_dragging = true;
-            auto data_object = static_api_ptr_t<playlist_incoming_item_filter>()->create_dataobject_ex(items);
+            auto data_object
+                = static_api_ptr_t<playlist_incoming_item_filter>()->create_dataobject_ex(tracks_holder.tracks());
             if (data_object.is_valid()) {
                 DWORD effect;
                 auto colours = cui::colours::helper(album_list_items_colours_client_id);
                 const auto colour_selection_background = colours.get_colour(cui::colours::colour_selection_background);
                 const auto colour_selection_text = colours.get_colour(cui::colours::colour_selection_text);
-                const auto selection_count = items.get_count();
+                const auto selection_count = tracks_holder.tracks().get_count();
                 pfc::string8 text;
                 text << mmh::IntegerFormatter(selection_count) << (selection_count != 1 ? " tracks" : " track");
                 SHDRAGIMAGE sdi = {0};
@@ -137,23 +186,20 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
         }
         break;
     }
-    case WM_LBUTTONDBLCLK:
-        if (m_selection && m_selection->get_num_entries() > 0) {
-            TVHITTESTINFO ti{};
-            ti.pt.x = GET_X_LPARAM(lp);
-            ti.pt.y = GET_Y_LPARAM(lp);
+    case WM_LBUTTONDBLCLK: {
+        TVHITTESTINFO ti{};
+        ti.pt.x = GET_X_LPARAM(lp);
+        ti.pt.y = GET_Y_LPARAM(lp);
 
-            TreeView_HitTest(wnd, &ti);
+        TreeView_HitTest(wnd, &ti);
 
-            if (ti.flags & TVHT_ONITEM) {
-                const auto click_processed
-                    = do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
+        if (ti.flags & TVHT_ONITEM) {
+            const auto click_processed = do_click_action(static_cast<ClickAction>(cfg_double_click_action.get_value()));
 
-                if (click_processed)
-                    return 0;
-            }
+            if (click_processed)
+                return 0;
         }
-        break;
+    } break;
     }
     return CallWindowProc(m_treeproc, wnd, msg, wp, lp);
 }

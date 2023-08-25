@@ -352,6 +352,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_ADD_ITEMS_USE_CORE_SORT:
             cfg_add_items_use_core_sort = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
+            album_list_window::s_mark_tracks_unsorted();
             break;
         case IDC_ADD_ITEMS_SELECT:
             cfg_add_items_select = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;

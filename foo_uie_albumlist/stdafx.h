@@ -10,6 +10,8 @@
 #include <optional>
 #include <ranges>
 #include <string_view>
+#include <unordered_set>
+#include <vector>
 
 #include <ppl.h>
 #include <concurrent_vector.h>
@@ -24,10 +26,11 @@
 #include <commctrl.h>
 #include <windowsx.h>
 
+using namespace std::literals;
+using namespace mmh::literals::pcc;
+
 #include "node.h"
 #include "config.h"
 #include "main.h"
 #include "tfhook.h"
 #include "prefs.h"
-
-using namespace std::literals;

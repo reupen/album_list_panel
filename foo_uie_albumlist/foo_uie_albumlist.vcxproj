@@ -287,7 +287,8 @@
     <ResourceCompile Include=".\albumlist.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include=".\actions.cpp" />
+    <ClCompile Include="node_utils.cpp" />
+    <ClCompile Include="playlist_utils.cpp" />
     <ClCompile Include=".\config.cpp" />
     <ClCompile Include=".\fcl.cpp" />
     <ClCompile Include=".\main.cpp" />
@@ -308,10 +309,11 @@
     <ClInclude Include=".\resource.h" />
     <ClInclude Include=".\stdafx.h" />
     <ClInclude Include=".\tfhook.h" />
-    <ClInclude Include="actions.h" />
+    <ClInclude Include="playlist_utils.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="node_formatter.h" />
     <ClInclude Include="node_state.h" />
+    <ClInclude Include="node_utils.h" />
     <ClInclude Include="tree_view_populator.h" />
   </ItemGroup>
   <ItemGroup>

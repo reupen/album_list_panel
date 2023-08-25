@@ -3,7 +3,8 @@
 #include "menu.h"
 #include "node.h"
 #include "tree_view_populator.h"
-#include "actions.h"
+#include "playlist_utils.h"
+#include "node_utils.h"
 #include "version.h"
 
 // TODO: node name as field
@@ -125,6 +126,12 @@ void album_list_window::s_update_all_labels()
     }
 }
 
+void album_list_window::s_mark_tracks_unsorted()
+{
+    for (const auto& instance : s_instances)
+        instance->mark_tracks_unsorted();
+}
+
 void album_list_window::s_update_all_showhscroll()
 {
     const auto count = s_instances.get_count();
@@ -204,7 +211,7 @@ void album_list_window::on_view_script_change(const char* p_view_before, const c
     }
 }
 
-void album_list_window::update_all_labels()
+void album_list_window::update_all_labels() const
 {
     if (m_root) {
         m_root->mark_all_labels_dirty();
@@ -212,6 +219,12 @@ void album_list_window::update_all_labels()
         TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, std::nullopt, 0, 0);
         SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);
     }
+}
+
+void album_list_window::mark_tracks_unsorted() const
+{
+    if (m_root)
+        m_root->mark_tracks_unsorted();
 }
 
 void album_list_window::update_tree_theme(const cui::colours::helper& colours) const
@@ -568,18 +581,20 @@ void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)
 
 bool album_list_window::do_click_action(ClickAction click_action)
 {
+    auto cleaned_selection = get_cleaned_selection();
+
     switch (click_action) {
     case ClickAction::send_to_playlist:
-        do_playlist(m_selection, true);
+        alp::send_nodes_to_playlist(cleaned_selection, true, false);
         break;
     case ClickAction::add_to_playlist:
-        do_playlist(m_selection, false);
+        alp::send_nodes_to_playlist(cleaned_selection, false, false);
         break;
     case ClickAction::send_to_new_playlist:
-        do_playlist(m_selection, true, true);
+        alp::send_nodes_to_playlist(cleaned_selection, true, true);
         break;
     case ClickAction::send_to_autosend_playlist:
-        do_autosend_playlist(m_selection, m_view, true);
+        alp::send_nodes_to_autosend_playlist(cleaned_selection, m_view, true);
         break;
     default:
         return false;
@@ -590,7 +605,7 @@ bool album_list_window::do_click_action(ClickAction click_action)
 void album_list_window::collapse_other_nodes(const node_ptr& node) const
 {
     auto current = node;
-    auto parent = current->get_parent().lock();
+    auto parent = current->get_parent();
 
     while (parent) {
         auto expanded_siblings = parent->get_children()
@@ -602,8 +617,56 @@ void album_list_window::collapse_other_nodes(const node_ptr& node) const
         }
 
         current = parent;
-        parent = current->get_parent().lock();
+        parent = current->get_parent();
     }
+}
+
+void album_list_window::deselect_selected_nodes(const node_ptr& skip) const
+{
+    for (auto& node_ : m_selection) {
+        if (skip && node_ == skip)
+            continue;
+
+        manually_select_tree_item(node_->m_ti, false);
+    }
+}
+
+void album_list_window::delete_all_nodes()
+{
+    TreeView_DeleteAllItems(m_wnd_tv);
+    m_selection.clear();
+    m_cleaned_selection.reset();
+    m_root.reset();
+}
+
+bool album_list_window::manually_select_tree_item(HTREEITEM item, bool selected) const
+{
+    TVITEMEX tvi{};
+    tvi.hItem = item;
+    tvi.mask = TVIF_STATE;
+    tvi.stateMask = TVIS_SELECTED;
+    tvi.state = selected ? TVIS_SELECTED : 0;
+    return TreeView_SetItem(m_wnd_tv, &tvi) != 0;
+}
+
+void album_list_window::autosend()
+{
+    if (cfg_autosend)
+        alp::send_nodes_to_autosend_playlist(get_cleaned_selection(), m_view, false);
+}
+
+void album_list_window::update_selection_holder()
+{
+    if (m_selection_holder.is_valid())
+        m_selection_holder->set_selection(alp::get_node_tracks(get_cleaned_selection()).tracks());
+}
+
+const std::vector<node_ptr>& album_list_window::get_cleaned_selection()
+{
+    if (!m_cleaned_selection)
+        m_cleaned_selection = alp::clean_selection(m_selection);
+
+    return *m_cleaned_selection;
 }
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
