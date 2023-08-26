@@ -115,6 +115,7 @@ private:
     static LRESULT WINAPI s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    std::optional<LRESULT> on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     static inline pfc::ptr_list_t<album_list_window> s_instances;
     static const GUID s_extension_guid;
@@ -126,6 +127,7 @@ private:
     void collapse_other_nodes(const node_ptr& node) const;
     void deselect_selected_nodes(const node_ptr& skip = {}) const;
     void delete_all_nodes();
+    node_ptr get_node_for_tree_item(HTREEITEM item) const;
     bool manually_select_tree_item(HTREEITEM item, bool selected) const;
     void autosend();
 
@@ -148,6 +150,7 @@ private:
     mutable std::optional<alp::SavedScrollPosition> m_saved_scroll_position{};
     pfc::string8 m_view{"by artist/album"};
     node_ptr m_root;
+    std::weak_ptr<node> m_shift_start;
     std::optional<std::vector<node_ptr>> m_cleaned_selection;
     std::unordered_set<node_ptr> m_selection;
     std::optional<alp::SavedNodeState> m_node_state;

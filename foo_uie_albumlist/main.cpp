@@ -639,6 +639,17 @@ void album_list_window::delete_all_nodes()
     m_root.reset();
 }
 
+node_ptr album_list_window::get_node_for_tree_item(HTREEITEM item) const
+{
+    TVITEMEX tvi{};
+    tvi.hItem = item;
+    tvi.mask = TVIF_PARAM;
+    if (!TreeView_GetItem(m_wnd_tv, &tvi))
+        return {};
+
+    return reinterpret_cast<node*>(tvi.lParam)->shared_from_this();
+}
+
 bool album_list_window::manually_select_tree_item(HTREEITEM item, bool selected) const
 {
     TVITEMEX tvi{};

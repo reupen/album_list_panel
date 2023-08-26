@@ -37,6 +37,13 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
             if (msg == WM_KEYDOWN)
                 g_on_tab(wnd);
             break;
+        case VK_SHIFT:
+            if (!(HIWORD(lp) & KF_REPEAT)) {
+                const auto caret = TreeView_GetSelection(wnd);
+                const auto shift_start_item = caret ? caret : TreeView_GetRoot(wnd);
+                m_shift_start = get_node_for_tree_item(shift_start_item);
+            }
+            break;
         case VK_HOME:
         case VK_DOWN:
         case VK_END:
@@ -82,48 +89,10 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
     case WM_LBUTTONUP:
         m_clicked = false;
         break;
-    case WM_LBUTTONDOWN: {
-        m_clicked = true;
-        m_clickpoint = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
-
-        TVHITTESTINFO tvhti{};
-        tvhti.pt = m_clickpoint;
-        TreeView_HitTest(wnd, &tvhti);
-
-        if (!(tvhti.flags & TVHT_ONITEM))
-            break;
-
-        TVITEMEX tvi{};
-        tvi.hItem = tvhti.hItem;
-        tvi.mask = TVIF_PARAM;
-        if (!TreeView_GetItem(wnd, &tvi))
-            break;
-
-        auto click_node = reinterpret_cast<node*>(tvi.lParam)->shared_from_this();
-
-        if (wp & MK_CONTROL) {
-            auto currently_selected = m_selection.contains(click_node);
-
-            if (!manually_select_tree_item(tvhti.hItem, !currently_selected))
-                return 0;
-
-            m_cleaned_selection.reset();
-
-            if (currently_selected) {
-                m_selection.erase(click_node);
-            } else {
-                m_selection.emplace(click_node);
-            }
-
-            autosend();
-            update_selection_holder();
-
-            return 0;
-        }
-
-        deselect_selected_nodes(click_node);
+    case WM_LBUTTONDOWN:
+        if (const auto result = on_tree_lbuttondown(wnd, msg, wp, lp))
+            return *result;
         break;
-    }
     case WM_MOUSEMOVE: {
         const POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
 
@@ -202,4 +171,98 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
     } break;
     }
     return CallWindowProc(m_treeproc, wnd, msg, wp, lp);
+}
+
+std::optional<LRESULT> album_list_window::on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    m_clicked = true;
+    m_clickpoint = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+
+    TVHITTESTINFO tvhti{};
+    tvhti.pt = m_clickpoint;
+    TreeView_HitTest(wnd, &tvhti);
+
+    if (!(tvhti.flags & TVHT_ONITEM))
+        return {};
+
+    auto click_node = get_node_for_tree_item(tvhti.hItem);
+
+    if (!click_node)
+        return {};
+
+    if (wp & MK_SHIFT) {
+        const auto shift_node = m_shift_start.lock();
+
+        if (!shift_node)
+            return 0;
+
+        m_cleaned_selection.reset();
+
+        const auto shift_hierarchy = shift_node->get_hierarchy();
+        const auto click_hierarchy = click_node->get_hierarchy();
+        const auto compare_level = std::min(shift_hierarchy.size(), click_hierarchy.size()) - 1;
+        const auto is_click_before_shift_item = [&] {
+            if (shift_hierarchy[compare_level] == click_hierarchy[compare_level])
+                return click_hierarchy.size() < shift_hierarchy.size();
+
+            const auto click_index = click_hierarchy[compare_level]->get_display_index().value_or(0);
+            const auto shift_index = shift_hierarchy[compare_level]->get_display_index().value_or(0);
+            return click_index < shift_index;
+        }();
+        const auto next_item_arg = is_click_before_shift_item ? TVGN_PREVIOUSVISIBLE : TVGN_NEXTVISIBLE;
+
+        std::unordered_set new_selection{click_node, shift_node};
+
+        HTREEITEM item = shift_node->m_ti;
+        while ((item = TreeView_GetNextItem(wnd, item, next_item_arg)) != tvhti.hItem && item) {
+            if (auto node_ = get_node_for_tree_item(item)) {
+                manually_select_tree_item(item, true);
+                new_selection.emplace(node_);
+            }
+        }
+
+        manually_select_tree_item(tvhti.hItem, true);
+
+        if (wp & MK_CONTROL) {
+            ranges::insert(m_selection, new_selection);
+        } else {
+            std::vector<node_ptr> to_deselect{};
+            ranges::copy_if(m_selection, std::back_inserter(to_deselect),
+                [&new_selection](auto& node_) { return !new_selection.contains(node_); });
+
+            for (auto& node_ : to_deselect) {
+                manually_select_tree_item(node_->m_ti, false);
+            }
+
+            m_selection = new_selection;
+        }
+
+        autosend();
+        update_selection_holder();
+
+        return 0;
+    }
+
+    if (wp & MK_CONTROL) {
+        const auto currently_selected = m_selection.contains(click_node);
+
+        if (!manually_select_tree_item(tvhti.hItem, !currently_selected))
+            return 0;
+
+        m_cleaned_selection.reset();
+
+        if (currently_selected) {
+            m_selection.erase(click_node);
+        } else {
+            m_selection.emplace(click_node);
+        }
+
+        autosend();
+        update_selection_holder();
+
+        return 0;
+    }
+
+    deselect_selected_nodes(click_node);
+    return {};
 }
