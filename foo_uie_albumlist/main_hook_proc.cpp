@@ -50,8 +50,63 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
         case VK_PRIOR:
         case VK_NEXT:
         case VK_UP: {
-            deselect_selected_nodes();
-            break;
+            const auto is_shift_down = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+            const auto is_ctrl_down = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+            auto shift_node = m_shift_start.lock();
+            const auto old_caret_item = TreeView_GetSelection(wnd);
+            const auto old_caret_node = get_node_for_tree_item(old_caret_item);
+
+            if (!is_shift_down || !shift_node) {
+                if (!is_ctrl_down) {
+                    const auto is_up = wp == VK_HOME || wp == VK_PRIOR || wp == VK_UP;
+
+                    if ((is_up && TreeView_GetFirstVisible(wnd) == old_caret_item)
+                        || (!is_up && TreeView_GetLastVisible(wnd) == old_caret_item)
+                            && m_selection != std::unordered_set{old_caret_node}) {
+                        deselect_selected_nodes(old_caret_node);
+
+                        if (!m_selection.contains(old_caret_node))
+                            manually_select_tree_item(old_caret_item, true);
+
+                        autosend();
+                        update_selection_holder();
+                        return 0;
+                    }
+                }
+                break;
+            }
+
+            {
+                pfc::vartoggle_t _(m_processing_multiselect, true);
+
+                // Hack: By default, the tree view will scroll when Ctrl is down
+                std::array<BYTE, 256> old_key_state;
+                bool should_restore_key_state{};
+                if (is_ctrl_down && GetKeyboardState(old_key_state.data())) {
+                    std::array temp_key_state{old_key_state};
+                    temp_key_state[VK_CONTROL] = 0;
+                    SetKeyboardState(temp_key_state.data());
+                    should_restore_key_state = true;
+                }
+
+                CallWindowProc(m_treeproc, wnd, msg, wp, lp);
+
+                if (should_restore_key_state) {
+                    SetKeyboardState(old_key_state.data());
+                }
+            }
+
+            const auto caret_item = TreeView_GetSelection(wnd);
+
+            if (old_caret_item == caret_item)
+                return 0;
+
+            const auto caret_node = get_node_for_tree_item(caret_item);
+
+            select_range(shift_node, caret_node, is_ctrl_down);
+            autosend();
+            update_selection_holder();
+            return 0;
         }
         }
         break;
@@ -168,7 +223,8 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
             if (click_processed)
                 return 0;
         }
-    } break;
+        break;
+    }
     }
     return CallWindowProc(m_treeproc, wnd, msg, wp, lp);
 }
@@ -178,6 +234,9 @@ std::optional<LRESULT> album_list_window::on_tree_lbuttondown(HWND wnd, UINT msg
     m_clicked = true;
     m_clickpoint = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
 
+    const auto is_shift_down = (wp & MK_SHIFT) != 0;
+    const auto is_ctrl_down = (wp & MK_CONTROL) != 0;
+
     TVHITTESTINFO tvhti{};
     tvhti.pt = m_clickpoint;
     TreeView_HitTest(wnd, &tvhti);
@@ -185,84 +244,64 @@ std::optional<LRESULT> album_list_window::on_tree_lbuttondown(HWND wnd, UINT msg
     if (!(tvhti.flags & TVHT_ONITEM))
         return {};
 
-    auto click_node = get_node_for_tree_item(tvhti.hItem);
+    const auto click_item = tvhti.hItem;
+    const auto click_node = get_node_for_tree_item(tvhti.hItem);
 
     if (!click_node)
         return {};
 
-    if (wp & MK_SHIFT) {
+    if (is_shift_down) {
         const auto shift_node = m_shift_start.lock();
+        const auto old_selection = m_selection;
 
         if (!shift_node)
             return 0;
 
-        m_cleaned_selection.reset();
+        select_range(shift_node, click_node, is_ctrl_down);
 
-        const auto shift_hierarchy = shift_node->get_hierarchy();
-        const auto click_hierarchy = click_node->get_hierarchy();
-        const auto compare_level = std::min(shift_hierarchy.size(), click_hierarchy.size()) - 1;
-        const auto is_click_before_shift_item = [&] {
-            if (shift_hierarchy[compare_level] == click_hierarchy[compare_level])
-                return click_hierarchy.size() < shift_hierarchy.size();
+        const auto caret = TreeView_GetSelection(wnd);
 
-            const auto click_index = click_hierarchy[compare_level]->get_display_index().value_or(0);
-            const auto shift_index = shift_hierarchy[compare_level]->get_display_index().value_or(0);
-            return click_index < shift_index;
-        }();
-        const auto next_item_arg = is_click_before_shift_item ? TVGN_PREVIOUSVISIBLE : TVGN_NEXTVISIBLE;
-
-        std::unordered_set new_selection{click_node, shift_node};
-
-        HTREEITEM item = shift_node->m_ti;
-        while ((item = TreeView_GetNextItem(wnd, item, next_item_arg)) != tvhti.hItem && item) {
-            if (auto node_ = get_node_for_tree_item(item)) {
-                manually_select_tree_item(item, true);
-                new_selection.emplace(node_);
-            }
-        }
-
-        manually_select_tree_item(tvhti.hItem, true);
-
-        if (wp & MK_CONTROL) {
-            ranges::insert(m_selection, new_selection);
+        if (caret != click_item) {
+            pfc::vartoggle_t _(m_processing_multiselect, true);
+            CallWindowProc(m_treeproc, wnd, msg, wp, lp);
         } else {
-            std::vector<node_ptr> to_deselect{};
-            ranges::copy_if(m_selection, std::back_inserter(to_deselect),
-                [&new_selection](auto& node_) { return !new_selection.contains(node_); });
-
-            for (auto& node_ : to_deselect) {
-                manually_select_tree_item(node_->m_ti, false);
-            }
-
-            m_selection = new_selection;
+            manually_select_tree_item(click_item, true);
         }
 
-        autosend();
-        update_selection_holder();
+        if (old_selection != m_selection) {
+            autosend();
+            update_selection_holder();
+        }
 
         return 0;
     }
 
-    if (wp & MK_CONTROL) {
+    if (is_ctrl_down) {
         const auto currently_selected = m_selection.contains(click_node);
+        const auto caret = TreeView_GetSelection(wnd);
 
-        if (!manually_select_tree_item(tvhti.hItem, !currently_selected))
+        if (caret != click_item) {
+            pfc::vartoggle_t _(m_processing_multiselect, true);
+            CallWindowProc(m_treeproc, wnd, msg, wp, lp);
+        }
+
+        if (currently_selected && !manually_select_tree_item(tvhti.hItem, !currently_selected))
             return 0;
 
-        m_cleaned_selection.reset();
-
-        if (currently_selected) {
-            m_selection.erase(click_node);
-        } else {
-            m_selection.emplace(click_node);
-        }
-
         autosend();
         update_selection_holder();
-
         return 0;
     }
 
-    deselect_selected_nodes(click_node);
+    if (click_item == TreeView_GetSelection(wnd) && m_selection != std::unordered_set{click_node}) {
+        deselect_selected_nodes(click_node);
+
+        if (!m_selection.contains(click_node))
+            manually_select_tree_item(click_item, true);
+
+        autosend();
+        update_selection_holder();
+    }
+
     return {};
 }

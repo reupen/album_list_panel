@@ -623,7 +623,8 @@ void album_list_window::collapse_other_nodes(const node_ptr& node) const
 
 void album_list_window::deselect_selected_nodes(const node_ptr& skip) const
 {
-    for (auto& node_ : m_selection) {
+    const auto selection = m_selection;
+    for (auto& node_ : selection) {
         if (skip && node_ == skip)
             continue;
 
@@ -658,6 +659,50 @@ bool album_list_window::manually_select_tree_item(HTREEITEM item, bool selected)
     tvi.stateMask = TVIS_SELECTED;
     tvi.state = selected ? TVIS_SELECTED : 0;
     return TreeView_SetItem(m_wnd_tv, &tvi) != 0;
+}
+
+void album_list_window::select_range(const node_ptr& from, const node_ptr& to, bool expand) const
+{
+    std::unordered_set new_selection{to, from};
+    const auto old_selection = m_selection;
+
+    if (from != to) {
+        if (!m_selection.contains(from))
+            manually_select_tree_item(from->m_ti, true);
+
+        const auto shift_hierarchy = from->get_hierarchy();
+        const auto click_hierarchy = to->get_hierarchy();
+        const auto compare_level = std::min(shift_hierarchy.size(), click_hierarchy.size()) - 1;
+        const auto is_click_before_shift_item = [&] {
+            if (shift_hierarchy[compare_level] == click_hierarchy[compare_level])
+                return click_hierarchy.size() < shift_hierarchy.size();
+
+            const auto click_index = click_hierarchy[compare_level]->get_display_index().value_or(0);
+            const auto shift_index = shift_hierarchy[compare_level]->get_display_index().value_or(0);
+            return click_index < shift_index;
+        }();
+        const auto next_item_arg = is_click_before_shift_item ? TVGN_PREVIOUSVISIBLE : TVGN_NEXTVISIBLE;
+
+        HTREEITEM item = from->m_ti;
+        while ((item = TreeView_GetNextItem(m_wnd_tv, item, next_item_arg)) != to->m_ti && item) {
+            if (auto node_ = get_node_for_tree_item(item)) {
+                if (!m_selection.contains(node_))
+                    manually_select_tree_item(item, true);
+
+                new_selection.emplace(node_);
+            }
+        }
+    }
+
+    if (!expand) {
+        std::vector<node_ptr> to_deselect{};
+        ranges::copy_if(old_selection, std::back_inserter(to_deselect),
+            [&new_selection](auto& node_) { return !new_selection.contains(node_); });
+
+        for (const auto& node_ : to_deselect) {
+            manually_select_tree_item(node_->m_ti, false);
+        }
+    }
 }
 
 void album_list_window::autosend()

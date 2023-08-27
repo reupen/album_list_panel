@@ -274,6 +274,32 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
 std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
 {
     switch (hdr->code) {
+    case TVN_ITEMCHANGING: {
+        auto nmtvic = reinterpret_cast<NMTVITEMCHANGE*>(hdr);
+        if (m_processing_multiselect && (nmtvic->uStateOld & TVIS_SELECTED) && !(nmtvic->uStateNew & TVIS_SELECTED)) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+    case TVN_ITEMCHANGED: {
+        const auto nmtvic = reinterpret_cast<NMTVITEMCHANGE*>(hdr);
+        const auto was_selected = (nmtvic->uStateOld & TVIS_SELECTED) != 0;
+        const auto is_selected = (nmtvic->uStateNew & TVIS_SELECTED) != 0;
+
+        if (was_selected == is_selected)
+            break;
+
+        auto node_ = reinterpret_cast<node*>(nmtvic->lParam)->shared_from_this();
+
+        m_cleaned_selection.reset();
+
+        if (is_selected)
+            m_selection.emplace(node_);
+        else
+            m_selection.erase(node_);
+
+        break;
+    }
     case TVN_GETDISPINFO: {
         auto param = reinterpret_cast<LPNMTVDISPINFO>(hdr);
         node_ptr p_node = reinterpret_cast<node*>(param->item.lParam)->shared_from_this();
@@ -301,15 +327,20 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         p_node->set_expanded((param->action & TVE_EXPAND) != 0);
         break;
     }
-    case TVN_SELCHANGED: {
-        auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        m_selection.clear();
-        m_cleaned_selection.reset();
+    case TVN_SELCHANGING: {
+        if (m_processing_multiselect)
+            break;
 
-        if (param->itemNew.hItem) {
-            auto selected_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
-            m_selection.emplace(selected_node);
-        }
+        const auto nmtv = reinterpret_cast<LPNMTREEVIEW>(hdr);
+        node_ptr node_ = reinterpret_cast<node*>(nmtv->itemNew.lParam)->shared_from_this();
+        deselect_selected_nodes(node_);
+        break;
+    }
+    case TVN_SELCHANGED: {
+        if (m_processing_multiselect)
+            break;
+
+        const auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
 
         if (param->action == TVC_BYMOUSE || param->action == TVC_BYKEYBOARD)
             autosend();
