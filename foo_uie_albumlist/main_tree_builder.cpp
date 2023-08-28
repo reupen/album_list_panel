@@ -142,9 +142,9 @@ struct process_byformat_entry {
 };
 
 template <typename t_entry>
-class process_entry_list_wrapper_t : public pfc::list_base_const_t<metadb_handle_ptr> {
+class ProcessEntryListWrapper : public pfc::list_base_const_t<metadb_handle_ptr> {
 public:
-    process_entry_list_wrapper_t(const t_entry* p_data, size_t p_count) : m_data(p_data), m_count(p_count) {}
+    ProcessEntryListWrapper(const t_entry* p_data, size_t p_count) : m_data(p_data), m_count(p_count) {}
 
     size_t get_count() const override { return m_count; }
 
@@ -160,7 +160,7 @@ static void process_level_recur_t(
     const t_entry* p_items, size_t const p_items_count, node_ptr p_parent, bool b_add_only)
 {
     p_parent->set_bydir(t_entry::is_bydir);
-    p_parent->set_data(process_entry_list_wrapper_t<t_entry>(p_items, p_items_count), !b_add_only);
+    p_parent->set_data(ProcessEntryListWrapper<t_entry>(p_items, p_items_count), !b_add_only);
     p_parent->m_label_dirty = cfg_show_subitem_counts != 0;
     assert(p_items_count > 0);
     pfc::array_t<t_local_entry> items_local;
@@ -319,7 +319,7 @@ size_t process_byformat_add_branches(metadb_handle* handle, std::string text, Li
     return branch_count;
 }
 
-void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing)
+void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing)
 {
     m_filter_ptr.release();
 
@@ -331,7 +331,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
 
     if (m_wnd_edit && !pattern.is_empty()) {
         const auto callback
-            = [p_this = service_ptr_t<album_list_window>{this}](auto&& code) { p_this->on_task_completion(0, code); };
+            = [p_this = service_ptr_t<AlbumListWindow>{this}](auto&& code) { p_this->on_task_completion(0, code); };
         const auto completion_notify_ptr = fb2k::makeCompletionNotify(callback);
 
         try {
@@ -364,7 +364,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             mmh::single_reordering_sort(entries, process_bydir_entry::g_compare, false);
 
             if (!preserve_existing || !m_root)
-                m_root = std::make_shared<node>(nullptr, 0, this, 0);
+                m_root = std::make_shared<Node>(nullptr, 0, this, 0);
 
             process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
@@ -388,7 +388,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                         track &= tracks[index];
                         const playable_location& location = track->get_location();
 
-                        titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &rec.info->info());
+                        MetaBranchTitleformatHook tf_hook_file_info(location, &rec.info->info());
                         VerticalBarTitleformatTextFilter tf_hook_text_filter;
                         std::string formatted_title;
                         mmh::StringAdaptor interop_title(formatted_title);
@@ -403,7 +403,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
                         return;
 
                     const playable_location& location = tracks[n]->get_location();
-                    titleformat_hook_impl_file_info_branch tf_hook_file_info(location, &info_ptr->info());
+                    MetaBranchTitleformatHook tf_hook_file_info(location, &info_ptr->info());
                     VerticalBarTitleformatTextFilter tf_hook_text_filter;
                     std::string formatted_title;
                     mmh::StringAdaptor interop_title(formatted_title);
@@ -424,7 +424,7 @@ void album_list_window::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggress
             mmh::destructive_reorder(entries_sorted, perm);
 
             if (!preserve_existing || !m_root)
-                m_root = std::make_shared<node>(nullptr, 0, this, 0);
+                m_root = std::make_shared<Node>(nullptr, 0, this, 0);
             process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(
                 entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }
@@ -467,12 +467,12 @@ void g_node_remove_tracks_recur(const node_ptr& ptr, const metadb_handle_list_t<
     }
 }
 
-void album_list_window::remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
+void AlbumListWindow::remove_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& p_tracks)
 {
     g_node_remove_tracks_recur(m_root, p_tracks);
 }
 
-void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
+void AlbumListWindow::on_items_added(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
 {
     if (m_library_v4.is_valid() && !m_library_v4->is_initialized())
         return;
@@ -483,7 +483,7 @@ void album_list_window::on_items_added(const pfc::list_base_const_t<metadb_handl
     update_tree(to_add, to_remove, true);
 }
 
-void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr>& p_data_const)
+void AlbumListWindow::on_items_removed(const pfc::list_base_const_t<metadb_handle_ptr>& p_data_const)
 {
     if (m_library_v4.is_valid() && !m_library_v4->is_initialized())
         return;
@@ -494,14 +494,14 @@ void album_list_window::on_items_removed(const pfc::list_base_const_t<metadb_han
     update_tree(to_add, to_remove, true);
 }
 
-void album_list_window::on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
+void AlbumListWindow::on_items_modified(const pfc::list_base_const_t<metadb_handle_ptr>& p_const_data)
 {
     metadb_handle_list_t<pfc::alloc_fast_aggressive> modified = p_const_data;
 
     update_tree(modified, modified, true);
 }
 
-void album_list_window::on_items_modified_v2(metadb_handle_list_cref items, metadb_io_callback_v2_data& data)
+void AlbumListWindow::on_items_modified_v2(metadb_handle_list_cref items, metadb_io_callback_v2_data& data)
 {
     if (m_library_v4->is_initialized())
         return;
@@ -509,13 +509,13 @@ void album_list_window::on_items_modified_v2(metadb_handle_list_cref items, meta
     on_items_modified(items);
 }
 
-void album_list_window::on_library_initialized()
+void AlbumListWindow::on_library_initialized()
 {
     if (cfg_populate_on_init)
         refresh_tree();
 }
 
-void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
+void AlbumListWindow::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
     metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_remove, bool preserve_existing)
 {
     if (preserve_existing && !m_populated)
@@ -564,7 +564,7 @@ void album_list_window::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggress
     restore_scroll_position();
 }
 
-void album_list_window::refresh_tree()
+void AlbumListWindow::refresh_tree()
 {
     TRACK_CALL_TEXT("album_list_panel_refresh_tree");
 

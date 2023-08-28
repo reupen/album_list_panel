@@ -22,7 +22,7 @@ DECLARE_COMPONENT_VERSION("Album list panel",
 
 const char* directory_structure_view_name = "by directory structure";
 
-void album_list_window::s_update_all_fonts()
+void AlbumListWindow::s_update_all_fonts()
 {
     if (s_font) {
         const auto count = s_instances.get_count();
@@ -55,7 +55,7 @@ void album_list_window::s_update_all_fonts()
     }
 }
 
-album_list_window::~album_list_window()
+AlbumListWindow::~AlbumListWindow()
 {
     if (m_initialised) {
         s_instances.remove_item(this);
@@ -63,7 +63,7 @@ album_list_window::~album_list_window()
     }
 }
 
-void album_list_window::s_update_all_window_frames()
+void AlbumListWindow::s_update_all_window_frames()
 {
     long flags = 0;
     if (cfg_frame_style == 1)
@@ -82,7 +82,7 @@ void album_list_window::s_update_all_window_frames()
     }
 }
 
-void album_list_window::s_update_all_tree_colours()
+void AlbumListWindow::s_update_all_tree_colours()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -93,7 +93,7 @@ void album_list_window::s_update_all_tree_colours()
     }
 }
 
-void album_list_window::s_update_all_tree_themes()
+void AlbumListWindow::s_update_all_tree_themes()
 {
     for (auto&& window : s_instances) {
         window->update_tree_theme();
@@ -101,13 +101,13 @@ void album_list_window::s_update_all_tree_themes()
     }
 }
 
-void album_list_window::s_update_all_edit_themes()
+void AlbumListWindow::s_update_all_edit_themes()
 {
     for (auto&& window : s_instances)
         window->update_edit_theme();
 }
 
-void album_list_window::s_update_all_edit_colours()
+void AlbumListWindow::s_update_all_edit_colours()
 {
     s_filter_background_brush.reset();
 
@@ -115,7 +115,7 @@ void album_list_window::s_update_all_edit_colours()
         window->update_edit_colours();
 }
 
-void album_list_window::s_update_all_labels()
+void AlbumListWindow::s_update_all_labels()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -126,13 +126,13 @@ void album_list_window::s_update_all_labels()
     }
 }
 
-void album_list_window::s_mark_tracks_unsorted()
+void AlbumListWindow::s_mark_tracks_unsorted()
 {
     for (const auto& instance : s_instances)
         instance->mark_tracks_unsorted();
 }
 
-void album_list_window::s_update_all_showhscroll()
+void AlbumListWindow::s_update_all_showhscroll()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -144,7 +144,7 @@ void album_list_window::s_update_all_showhscroll()
     }
 }
 
-void album_list_window::s_on_view_script_change(const char* p_view_before, const char* p_view)
+void AlbumListWindow::s_on_view_script_change(const char* p_view_before, const char* p_view)
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -155,7 +155,7 @@ void album_list_window::s_on_view_script_change(const char* p_view_before, const
     }
 }
 
-void album_list_window::s_refresh_all()
+void AlbumListWindow::s_refresh_all()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -166,7 +166,7 @@ void album_list_window::s_refresh_all()
     }
 }
 
-void album_list_window::s_update_all_item_heights()
+void AlbumListWindow::s_update_all_item_heights()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -177,7 +177,7 @@ void album_list_window::s_update_all_item_heights()
     }
 }
 
-void album_list_window::s_update_all_indents()
+void AlbumListWindow::s_update_all_indents()
 {
     const auto count = s_instances.get_count();
     for (size_t i{0}; i < count; i++) {
@@ -189,12 +189,12 @@ void album_list_window::s_update_all_indents()
     }
 }
 
-bool album_list_window::is_bydir() const
+bool AlbumListWindow::is_bydir() const
 {
     return !stricmp_utf8(m_view, directory_structure_view_name);
 }
 
-const char* album_list_window::get_hierarchy() const
+const char* AlbumListWindow::get_hierarchy() const
 {
     const auto index = cfg_views.find_item(m_view);
     if (index != pfc_infinite)
@@ -202,7 +202,7 @@ const char* album_list_window::get_hierarchy() const
     return "N/A";
 }
 
-void album_list_window::on_view_script_change(const char* p_view_before, const char* p_view)
+void AlbumListWindow::on_view_script_change(const char* p_view_before, const char* p_view)
 {
     if (get_wnd()) {
         if (!stricmp_utf8(p_view_before, m_view)) {
@@ -211,7 +211,7 @@ void album_list_window::on_view_script_change(const char* p_view_before, const c
     }
 }
 
-void album_list_window::update_all_labels() const
+void AlbumListWindow::update_all_labels() const
 {
     if (m_root) {
         m_root->mark_all_labels_dirty();
@@ -221,13 +221,13 @@ void album_list_window::update_all_labels() const
     }
 }
 
-void album_list_window::mark_tracks_unsorted() const
+void AlbumListWindow::mark_tracks_unsorted() const
 {
     if (m_root)
         m_root->mark_tracks_unsorted();
 }
 
-void album_list_window::update_tree_theme(const cui::colours::helper& colours) const
+void AlbumListWindow::update_tree_theme(const cui::colours::helper& colours) const
 {
     if (!m_wnd_tv)
         return;
@@ -254,7 +254,7 @@ void album_list_window::update_tree_theme(const cui::colours::helper& colours) c
     SetWindowLongPtr(m_wnd_tv, GWL_STYLE, styles);
 }
 
-void album_list_window::update_tree_colours()
+void AlbumListWindow::update_tree_colours()
 {
     SetWindowRedraw(m_wnd_tv, FALSE);
     cui::colours::helper p_colours(album_list_items_colours_client_id);
@@ -267,7 +267,7 @@ void album_list_window::update_tree_colours()
     SetWindowRedraw(m_wnd_tv, TRUE);
 }
 
-void album_list_window::update_tooltip_theme() const
+void AlbumListWindow::update_tooltip_theme() const
 {
     if (!m_wnd_tv)
         return;
@@ -281,7 +281,7 @@ void album_list_window::update_tooltip_theme() const
     SetWindowTheme(tooltip_wnd, is_dark ? L"DarkMode_Explorer" : nullptr, nullptr);
 }
 
-void album_list_window::update_edit_theme() const
+void AlbumListWindow::update_edit_theme() const
 {
     if (!m_wnd_edit)
         return;
@@ -289,7 +289,7 @@ void album_list_window::update_edit_theme() const
     SetWindowTheme(m_wnd_edit, cui::colours::is_dark_mode_active() ? L"DarkMode_CFD" : nullptr, nullptr);
 }
 
-void album_list_window::update_edit_colours() const
+void AlbumListWindow::update_edit_colours() const
 {
     if (!m_wnd_edit)
         return;
@@ -297,7 +297,7 @@ void album_list_window::update_edit_colours() const
     RedrawWindow(m_wnd_edit, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE);
 }
 
-void album_list_window::update_item_height()
+void AlbumListWindow::update_item_height()
 {
     const auto font = uih::get_window_font(m_wnd_tv);
     int font_height = -1;
@@ -309,13 +309,13 @@ void album_list_window::update_item_height()
     TreeView_SetItemHeight(m_wnd_tv, font_height);
 }
 
-void album_list_window::on_task_completion(t_uint32 task, t_uint32 code)
+void AlbumListWindow::on_task_completion(t_uint32 task, t_uint32 code)
 {
     if (task == 0)
         refresh_tree();
 }
 
-void album_list_window::create_or_destroy_filter()
+void AlbumListWindow::create_or_destroy_filter()
 {
     if (m_filter)
         create_filter();
@@ -324,7 +324,7 @@ void album_list_window::create_or_destroy_filter()
     on_size();
 }
 
-void album_list_window::create_filter()
+void AlbumListWindow::create_filter()
 {
     if (m_filter && !m_wnd_edit) {
         const auto flags = WS_EX_CLIENTEDGE;
@@ -337,7 +337,7 @@ void album_list_window::create_filter()
     }
 }
 
-void album_list_window::destroy_filter()
+void AlbumListWindow::destroy_filter()
 {
     if (m_wnd_edit) {
         const auto was_focused = GetFocus() == m_wnd_edit;
@@ -354,7 +354,7 @@ void album_list_window::destroy_filter()
     m_filter_ptr.release();
 }
 
-void album_list_window::on_size(unsigned cx, unsigned cy)
+void AlbumListWindow::on_size(unsigned cx, unsigned cy)
 {
     HDWP dwp = BeginDeferWindowPos(2);
     const unsigned edit_height = m_wnd_edit ? uGetFontHeight(s_font.get()) + 4 : 0;
@@ -366,14 +366,14 @@ void album_list_window::on_size(unsigned cx, unsigned cy)
     EndDeferWindowPos(dwp);
 }
 
-void album_list_window::on_size()
+void AlbumListWindow::on_size()
 {
     RECT rc;
     GetClientRect(get_wnd(), &rc);
     on_size(rc.right, rc.bottom);
 }
 
-void album_list_window::create_tree()
+void AlbumListWindow::create_tree()
 {
     const auto wnd = get_wnd();
 
@@ -419,7 +419,7 @@ void album_list_window::create_tree()
     }
 }
 
-void album_list_window::destroy_tree(bool should_save_scroll_position)
+void AlbumListWindow::destroy_tree(bool should_save_scroll_position)
 {
     if (m_wnd_tv) {
         if (should_save_scroll_position)
@@ -430,7 +430,7 @@ void album_list_window::destroy_tree(bool should_save_scroll_position)
     }
 }
 
-void album_list_window::recreate_tree(bool save_state)
+void AlbumListWindow::recreate_tree(bool save_state)
 {
     if (!m_wnd_tv)
         return;
@@ -448,7 +448,7 @@ void album_list_window::recreate_tree(bool save_state)
     RedrawWindow(get_wnd(), nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 
-void album_list_window::save_scroll_position() const
+void AlbumListWindow::save_scroll_position() const
 {
     if (!m_wnd_tv)
         return;
@@ -469,7 +469,7 @@ void album_list_window::save_scroll_position() const
     m_saved_scroll_position = {si_horz.nPos, si_vert.nPos, si_vert.nMax};
 }
 
-void album_list_window::restore_scroll_position()
+void AlbumListWindow::restore_scroll_position()
 {
     if (!m_wnd_tv || !m_saved_scroll_position)
         return;
@@ -501,7 +501,7 @@ void album_list_window::restore_scroll_position()
     m_saved_scroll_position.reset();
 }
 
-void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_abort) const
+void AlbumListWindow::get_config(stream_writer* p_writer, abort_callback& p_abort) const
 {
     save_scroll_position();
 
@@ -519,17 +519,17 @@ void album_list_window::get_config(stream_writer* p_writer, abort_callback& p_ab
     }
 }
 
-void album_list_window::get_name(pfc::string_base& out) const
+void AlbumListWindow::get_name(pfc::string_base& out) const
 {
     out.set_string("Album list");
 }
 
-void album_list_window::get_category(pfc::string_base& out) const
+void AlbumListWindow::get_category(pfc::string_base& out) const
 {
     out.set_string("Panels");
 }
 
-void album_list_window::set_config(stream_reader* p_reader, t_size psize, abort_callback& p_abort)
+void AlbumListWindow::set_config(stream_reader* p_reader, t_size psize, abort_callback& p_abort)
 {
     if (psize) {
         p_reader->read_string(m_view, p_abort);
@@ -548,38 +548,38 @@ void album_list_window::set_config(stream_reader* p_reader, t_size psize, abort_
     }
 }
 
-void album_list_window::toggle_show_filter()
+void AlbumListWindow::toggle_show_filter()
 {
     m_filter = !m_filter;
     create_or_destroy_filter();
 }
 
-const char* album_list_window::get_view() const
+const char* AlbumListWindow::get_view() const
 {
     return m_view;
 }
 
-void album_list_window::set_view(const char* view)
+void AlbumListWindow::set_view(const char* view)
 {
     m_view = view;
     recreate_tree(false);
 }
 
-void album_list_window::get_menu_items(ui_extension::menu_hook_t& p_hook)
+void AlbumListWindow::get_menu_items(ui_extension::menu_hook_t& p_hook)
 {
     const auto node_settings
         = uie::menu_node_ptr{new uie::simple_command_menu_node{"Settings", "Shows Album List panel settings", 0,
             [] { static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id); }}};
     const auto node_filter = uie::menu_node_ptr{new uie::simple_command_menu_node{"Filter", "Shows the filter bar",
         m_filter ? uie::menu_node_t::state_checked : 0,
-        [instance = service_ptr_t<album_list_window>{this}] { instance->toggle_show_filter(); }}};
+        [instance = service_ptr_t<AlbumListWindow>{this}] { instance->toggle_show_filter(); }}};
 
-    p_hook.add_node(ui_extension::menu_node_ptr(new menu_node_select_view(this)));
+    p_hook.add_node(ui_extension::menu_node_ptr(new MenuNodeSelectView(this)));
     p_hook.add_node(node_filter);
     p_hook.add_node(node_settings);
 }
 
-bool album_list_window::do_click_action(ClickAction click_action)
+bool AlbumListWindow::do_click_action(ClickAction click_action)
 {
     auto cleaned_selection = get_cleaned_selection();
 
@@ -602,7 +602,7 @@ bool album_list_window::do_click_action(ClickAction click_action)
     return true;
 }
 
-void album_list_window::collapse_other_nodes(const node_ptr& node) const
+void AlbumListWindow::collapse_other_nodes(const node_ptr& node) const
 {
     auto current = node;
     auto parent = current->get_parent();
@@ -621,18 +621,18 @@ void album_list_window::collapse_other_nodes(const node_ptr& node) const
     }
 }
 
-void album_list_window::deselect_selected_nodes(const node_ptr& skip) const
+void AlbumListWindow::deselect_selected_nodes(const node_ptr& skip) const
 {
     const auto selection = m_selection;
-    for (auto& node_ : selection) {
-        if (skip && node_ == skip)
+    for (auto& node : selection) {
+        if (skip && node == skip)
             continue;
 
-        manually_select_tree_item(node_->m_ti, false);
+        manually_select_tree_item(node->m_ti, false);
     }
 }
 
-void album_list_window::delete_all_nodes()
+void AlbumListWindow::delete_all_nodes()
 {
     TreeView_DeleteAllItems(m_wnd_tv);
     m_selection.clear();
@@ -640,7 +640,7 @@ void album_list_window::delete_all_nodes()
     m_root.reset();
 }
 
-node_ptr album_list_window::get_node_for_tree_item(HTREEITEM item) const
+node_ptr AlbumListWindow::get_node_for_tree_item(HTREEITEM item) const
 {
     TVITEMEX tvi{};
     tvi.hItem = item;
@@ -648,10 +648,10 @@ node_ptr album_list_window::get_node_for_tree_item(HTREEITEM item) const
     if (!TreeView_GetItem(m_wnd_tv, &tvi))
         return {};
 
-    return reinterpret_cast<node*>(tvi.lParam)->shared_from_this();
+    return reinterpret_cast<Node*>(tvi.lParam)->shared_from_this();
 }
 
-bool album_list_window::manually_select_tree_item(HTREEITEM item, bool selected) const
+bool AlbumListWindow::manually_select_tree_item(HTREEITEM item, bool selected) const
 {
     TVITEMEX tvi{};
     tvi.hItem = item;
@@ -661,7 +661,7 @@ bool album_list_window::manually_select_tree_item(HTREEITEM item, bool selected)
     return TreeView_SetItem(m_wnd_tv, &tvi) != 0;
 }
 
-void album_list_window::select_range(const node_ptr& from, const node_ptr& to, bool expand) const
+void AlbumListWindow::select_range(const node_ptr& from, const node_ptr& to, bool expand) const
 {
     std::unordered_set new_selection{to, from};
     const auto old_selection = m_selection;
@@ -685,11 +685,11 @@ void album_list_window::select_range(const node_ptr& from, const node_ptr& to, b
 
         HTREEITEM item = from->m_ti;
         while ((item = TreeView_GetNextItem(m_wnd_tv, item, next_item_arg)) != to->m_ti && item) {
-            if (auto node_ = get_node_for_tree_item(item)) {
-                if (!m_selection.contains(node_))
+            if (auto node = get_node_for_tree_item(item)) {
+                if (!m_selection.contains(node))
                     manually_select_tree_item(item, true);
 
-                new_selection.emplace(node_);
+                new_selection.emplace(node);
             }
         }
     }
@@ -697,27 +697,27 @@ void album_list_window::select_range(const node_ptr& from, const node_ptr& to, b
     if (!expand) {
         std::vector<node_ptr> to_deselect{};
         ranges::copy_if(old_selection, std::back_inserter(to_deselect),
-            [&new_selection](auto& node_) { return !new_selection.contains(node_); });
+            [&new_selection](auto& node) { return !new_selection.contains(node); });
 
-        for (const auto& node_ : to_deselect) {
-            manually_select_tree_item(node_->m_ti, false);
+        for (const auto& node : to_deselect) {
+            manually_select_tree_item(node->m_ti, false);
         }
     }
 }
 
-void album_list_window::autosend()
+void AlbumListWindow::autosend()
 {
     if (cfg_autosend)
         alp::send_nodes_to_autosend_playlist(get_cleaned_selection(), m_view, false);
 }
 
-void album_list_window::update_selection_holder()
+void AlbumListWindow::update_selection_holder()
 {
     if (m_selection_holder.is_valid())
         m_selection_holder->set_selection(alp::get_node_tracks(get_cleaned_selection()).tracks());
 }
 
-const std::vector<node_ptr>& album_list_window::get_cleaned_selection()
+const std::vector<node_ptr>& AlbumListWindow::get_cleaned_selection()
 {
     if (!m_cleaned_selection)
         m_cleaned_selection = alp::clean_selection(m_selection);
@@ -726,7 +726,7 @@ const std::vector<node_ptr>& album_list_window::get_cleaned_selection()
 }
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
-const GUID album_list_window::s_extension_guid
+const GUID AlbumListWindow::s_extension_guid
     = {0x606e9cdd, 0x45ee, 0x4c3b, {0x9f, 0xd5, 0x49, 0x38, 0x1c, 0xeb, 0xe8, 0xae}};
 
-ui_extension::window_factory<album_list_window> blah;
+ui_extension::window_factory<AlbumListWindow> blah;

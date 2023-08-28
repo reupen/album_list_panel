@@ -1,12 +1,12 @@
 #pragma once
 
-class preferences_tab {
+class PreferencesTab {
 public:
     virtual HWND create(HWND wnd) = 0;
     virtual const char* get_name() = 0;
 };
 
-class tab_general : public preferences_tab {
+class TabGeneral : public PreferencesTab {
 public:
     bool is_active() { return m_wnd != nullptr; }
     void refresh_views();
@@ -26,7 +26,7 @@ private:
     HWND m_wnd{nullptr};
 };
 
-class tab_advanced : public preferences_tab {
+class TabAdvanced : public PreferencesTab {
 public:
     HWND create(HWND parent_window) override
     {
@@ -42,9 +42,9 @@ private:
     bool m_initialised{};
 };
 
-class albumlist_prefs_instance : public preferences_page_instance {
+class PreferencesPageInstance : public preferences_page_instance {
 public:
-    explicit albumlist_prefs_instance(HWND parent)
+    explicit PreferencesPageInstance(HWND parent)
     {
         const auto [_, has_dark_mode] = fbh::auto_dark_modeless_dialog_box(
             IDD_HOST, parent, [this](auto&&... args) { return on_message(std::forward<decltype(args)>(args)...); });
@@ -66,7 +66,7 @@ private:
     bool m_has_dark_mode{};
 };
 
-class albumlist_prefs : public preferences_page_v3 {
+class PreferencesPage : public preferences_page_v3 {
 public:
     const char* get_name() override { return "Album List Panel"; }
 
@@ -75,8 +75,8 @@ public:
     GUID get_parent_guid() override { return guid_media_library; }
     preferences_page_instance::ptr instantiate(fb2k::hwnd_t parent, preferences_page_callback::ptr callback) override
     {
-        return fb2k::service_new<albumlist_prefs_instance>(parent);
+        return fb2k::service_new<PreferencesPageInstance>(parent);
     }
 };
 
-extern tab_general g_config_general;
+extern TabGeneral g_config_general;

@@ -11,7 +11,7 @@ struct {
         "[%album artist% - ]['['%date%']' ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%"},
 };
 
-cfg_view_list_t cfg_views(GUID{0xc584d488, 0x53dd, 0x4d21, 0xa8, 0x5b, 0x8e, 0xc7, 0xcc, 0xb3, 0x82, 0x16});
+CfgViewList cfg_views(GUID{0xc584d488, 0x53dd, 0x4d21, 0xa8, 0x5b, 0x8e, 0xc7, 0xcc, 0xb3, 0x82, 0x16});
 
 cfg_string cfg_autosend_playlist_name(
     GUID{0x4beb593f, 0xa010, 0x8b3a, 0x7b, 0x2a, 0x63, 0xad, 0xf3, 0x9f, 0xc6, 0xb4}, "Library view");
@@ -42,7 +42,7 @@ cfg_int cfg_add_items_select(GUID{0x3918ae65, 0xfdfb, 0xe23e, 0xfc, 0x3b, 0xee, 
 cfg_int cfg_collapse_other_nodes_on_expansion(
     GUID{0x2a9d24a2, 0x2705, 0xb35e, 0xdb, 0x20, 0x86, 0xc6, 0x90, 0xc6, 0xe9, 0x4c}, 0);
 
-void cfg_view_list_t::get_data_raw(stream_writer* out, abort_callback& p_abort)
+void CfgViewList::get_data_raw(stream_writer* out, abort_callback& p_abort)
 {
     const auto item_count = m_data.get_count();
     out->write_lendian_t(item_count, p_abort);
@@ -52,7 +52,7 @@ void cfg_view_list_t::get_data_raw(stream_writer* out, abort_callback& p_abort)
     }
 }
 
-void cfg_view_list_t::set_data_raw(stream_reader* r, size_t psize, abort_callback& p_abort)
+void CfgViewList::set_data_raw(stream_reader* r, size_t psize, abort_callback& p_abort)
 {
     m_data.remove_all();
     size_t item_count{0};
@@ -65,7 +65,7 @@ void cfg_view_list_t::set_data_raw(stream_reader* r, size_t psize, abort_callbac
     }
 }
 
-void cfg_view_list_t::reset()
+void CfgViewList::reset()
 {
     m_data.remove_all();
     for (size_t i{0}; i < tabsize(cfg_view_list_defaults); ++i) {

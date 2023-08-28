@@ -2,17 +2,17 @@
 
 #include "node_state.h"
 
-typedef std::shared_ptr<class node> node_ptr;
+typedef std::shared_ptr<class Node> node_ptr;
 
-class node : public std::enable_shared_from_this<node> {
+class Node : public std::enable_shared_from_this<Node> {
 public:
     HTREEITEM m_ti{};
     bool m_label_dirty{};
     bool m_children_inserted{};
     uint16_t m_level;
 
-    node(const char* name, size_t name_length, class album_list_window* window, uint16_t level,
-        std::weak_ptr<node> parent = {});
+    Node(const char* name, size_t name_length, class AlbumListWindow* window, uint16_t level,
+        std::weak_ptr<Node> parent = {});
 
     void sort_children();
 
@@ -25,7 +25,7 @@ public:
 
     void set_bydir(bool p) { m_bydir = p; }
 
-    ~node()
+    ~Node()
     {
         m_tracks.remove_all();
         m_children.clear();
@@ -87,7 +87,7 @@ public:
 
 private:
     void sort_tracks();
-    void apply_function(std::function<void(node&)> func)
+    void apply_function(std::function<void(Node&)> func)
     {
         func(*this);
 
@@ -95,7 +95,7 @@ private:
             child->apply_function(func);
     }
 
-    std::weak_ptr<node> m_parent;
+    std::weak_ptr<Node> m_parent;
     std::optional<size_t> m_display_index;
     pfc::string_simple m_name;
     pfc::stringcvt::string_wide_from_utf8 m_name_utf16;
@@ -104,5 +104,5 @@ private:
     bool m_sorted : 1 {};
     bool m_bydir : 1 {};
     bool m_expanded : 1 {};
-    class album_list_window* m_window{};
+    class AlbumListWindow* m_window{};
 };

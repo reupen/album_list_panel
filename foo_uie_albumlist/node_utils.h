@@ -9,8 +9,8 @@ public:
         if (nodes.size() == 1) {
             m_tracks_ref = nodes[0]->get_sorted_tracks();
         } else {
-            for (auto& node_ : nodes) {
-                m_tracks.add_items(node_->get_sorted_tracks());
+            for (auto& node : nodes) {
+                m_tracks.add_items(node->get_sorted_tracks());
             }
         }
     }

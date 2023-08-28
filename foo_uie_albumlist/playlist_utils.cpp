@@ -5,7 +5,7 @@ namespace alp {
 
 namespace {
 
-class titleformat_hook_view : public titleformat_hook {
+class TitleformatHookView : public titleformat_hook {
 public:
     bool process_field(
         titleformat_text_out* p_out, const char* p_name, size_t p_name_length, bool& p_found_flag) override
@@ -28,7 +28,7 @@ public:
         return false;
     }
 
-    explicit titleformat_hook_view(const char* p_view) : m_view{p_view} {}
+    explicit TitleformatHookView(const char* p_view) : m_view{p_view} {}
 
 private:
     const char* m_view;
@@ -66,7 +66,7 @@ void send_nodes_to_playlist(const std::vector<node_ptr>& nodes, bool replace_con
 
     if (create_new) {
         auto node_names
-            = nodes | ranges::views::transform([](auto& node_) { return node_->get_name(); }) | ranges::views::take(3);
+            = nodes | ranges::views::transform([](auto& node) { return node->get_name(); }) | ranges::views::take(3);
         auto playlist_name = mmh::join<decltype(node_names)&, std::string_view, std::string>(node_names, ", ");
 
         if (nodes.size() > 3)
@@ -97,7 +97,7 @@ void send_nodes_to_autosend_playlist(const std::vector<node_ptr>& nodes, const c
     const auto api = playlist_manager::get();
     pfc::string8 playlist_name;
 
-    titleformat_hook_view tf_hook{view};
+    TitleformatHookView tf_hook{view};
     titleformat_compiler::get()->run(&tf_hook, playlist_name, cfg_autosend_playlist_name);
     const auto index = api->find_or_create_playlist(playlist_name, pfc_infinite);
 

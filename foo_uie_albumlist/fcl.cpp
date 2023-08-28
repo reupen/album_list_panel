@@ -12,7 +12,7 @@ const GUID g_guid_fcl_dataset_album_list_views{
 const GUID g_guid_fcl_dataset_album_list_appearance{
     0xe93df451, 0x6196, 0x48fd, {0xa6, 0x7b, 0xf9, 0x5, 0x67, 0x5, 0x33, 0x6a}};
 
-class album_list_fcl_views : public cui::fcl::dataset {
+class AlbumListViewsDataSet : public cui::fcl::dataset {
 public:
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List Views"; }
     const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_views; }
@@ -48,7 +48,7 @@ public:
         }
         if (g_config_general.is_active())
             g_config_general.refresh_views();
-        album_list_window::s_refresh_all();
+        AlbumListWindow::s_refresh_all();
     }
 
 private:
@@ -89,7 +89,7 @@ private:
     }
 };
 
-class album_list_fcl_appearance : public cui::fcl::dataset {
+class AlbumListAppearanceDataSet : public cui::fcl::dataset {
 public:
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List appearance settings"; }
     const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_appearance; }
@@ -121,9 +121,9 @@ public:
         const auto version = fcl_reader.read_raw_item<uint32_t>();
         if (version <= stream_version) {
             read_items(fcl_reader);
-            album_list_window::s_update_all_item_heights();
-            album_list_window::s_update_all_indents();
-            album_list_window::s_update_all_window_frames();
+            AlbumListWindow::s_update_all_item_heights();
+            AlbumListWindow::s_update_all_indents();
+            AlbumListWindow::s_update_all_window_frames();
         }
     }
 
@@ -211,5 +211,5 @@ private:
 cui::fcl::group_impl_factory g_fclgroup{g_guid_fcl_group_album_list_views, "Album List Views",
     "Album List view title format scripts", cui::fcl::groups::title_scripts};
 
-cui::fcl::dataset_factory<album_list_fcl_views> g_album_list_fcl_views;
-cui::fcl::dataset_factory<album_list_fcl_appearance> g_album_list_fcl_appearance;
+cui::fcl::dataset_factory<AlbumListViewsDataSet> g_album_list_fcl_views;
+cui::fcl::dataset_factory<AlbumListAppearanceDataSet> g_album_list_fcl_appearance;

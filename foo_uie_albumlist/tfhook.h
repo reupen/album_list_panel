@@ -1,9 +1,9 @@
 #pragma once
 
-class titleformat_hook_impl_file_info_branch : public titleformat_hook_impl_file_info {
+class MetaBranchTitleformatHook : public titleformat_hook_impl_file_info {
 public:
     typedef titleformat_hook_impl_file_info baseClass;
-    titleformat_hook_impl_file_info_branch(const playable_location& p_location, const file_info* p_info)
+    MetaBranchTitleformatHook(const playable_location& p_location, const file_info* p_info)
         : titleformat_hook_impl_file_info(p_location, p_info)
     {
     }
