@@ -129,6 +129,8 @@ private:
     void delete_all_nodes();
     node_ptr get_node_for_tree_item(HTREEITEM item) const;
     bool manually_select_tree_item(HTREEITEM item, bool selected) const;
+    // Note: Does not select `to` (this is handled specially by the calling code)
+    void select_range(const node_ptr& from, const node_ptr& to, bool expand) const;
     void autosend();
 
     void update_selection_holder();
@@ -146,6 +148,7 @@ private:
     bool m_filter{false};
     bool m_timer{false};
     bool m_process_char{true};
+    bool m_processing_multiselect{};
     POINT m_clickpoint{};
     mutable std::optional<alp::SavedScrollPosition> m_saved_scroll_position{};
     pfc::string8 m_view{"by artist/album"};
