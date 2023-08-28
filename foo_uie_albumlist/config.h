@@ -1,6 +1,6 @@
 #pragma once
 
-class cfg_view_list_t : public cfg_var {
+class CfgViewList : public cfg_var {
 public:
     void get_data_raw(stream_writer* out, abort_callback& p_abort) override;
     void set_data_raw(stream_reader* r, size_t psize, abort_callback& p_abort) override;
@@ -48,7 +48,7 @@ public:
 
     void swap(size_t index1, size_t index2) { m_data.swap_items(index1, index2); }
 
-    cfg_view_list_t(const GUID& p_guid) : cfg_var(p_guid) { reset(); }
+    CfgViewList(const GUID& p_guid) : cfg_var(p_guid) { reset(); }
 
     void format_display(size_t index, pfc::string_base& out) const
     {
@@ -74,7 +74,7 @@ constexpr GUID album_list_filter_colours_client_id{
 constexpr GUID album_list_panel_preferences_page_id{
     0x53c89e50, 0x685d, 0x8ed1, 0x43, 0x25, 0x6b, 0xe8, 0x0f, 0x1b, 0xe7, 0x1f};
 
-extern cfg_view_list_t cfg_views;
+extern CfgViewList cfg_views;
 extern cfg_bool cfg_themed;
 extern cfg_int cfg_populate_on_init;
 extern cfg_int cfg_autosend;

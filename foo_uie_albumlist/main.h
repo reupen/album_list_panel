@@ -28,12 +28,12 @@ enum class ClickAction {
     send_to_autosend_playlist
 };
 
-class album_list_window
+class AlbumListWindow
     : public uie::container_uie_window_v3
     , public library_callback_dynamic
     , public library_callback_v2_dynamic {
     friend class font_notify;
-    friend class node;
+    friend class Node;
 
 public:
     static void s_update_all_tree_colours();
@@ -50,7 +50,7 @@ public:
     static void s_on_view_script_change(const char* p_view_before, const char* p_view);
     static void s_update_all_window_frames();
 
-    ~album_list_window();
+    ~AlbumListWindow();
 
     bool is_bydir() const;
     const char* get_hierarchy() const;
@@ -117,7 +117,7 @@ private:
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     std::optional<LRESULT> on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-    static inline pfc::ptr_list_t<album_list_window> s_instances;
+    static inline pfc::ptr_list_t<AlbumListWindow> s_instances;
     static const GUID s_extension_guid;
     static const char* s_class_name;
     static inline wil::unique_hfont s_font;
@@ -153,7 +153,7 @@ private:
     mutable std::optional<alp::SavedScrollPosition> m_saved_scroll_position{};
     pfc::string8 m_view{"by artist/album"};
     node_ptr m_root;
-    std::weak_ptr<node> m_shift_start;
+    std::weak_ptr<Node> m_shift_start;
     std::optional<std::vector<node_ptr>> m_cleaned_selection;
     std::unordered_set<node_ptr> m_selection;
     std::optional<alp::SavedNodeState> m_node_state;

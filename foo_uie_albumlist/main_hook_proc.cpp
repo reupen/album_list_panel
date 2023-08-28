@@ -3,9 +3,9 @@
 #include "node.h"
 #include "node_utils.h"
 
-LRESULT WINAPI album_list_window::s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT WINAPI AlbumListWindow::s_tree_hook_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    auto p_this = reinterpret_cast<album_list_window*>(GetWindowLongPtr(wnd, GWLP_USERDATA));
+    auto p_this = reinterpret_cast<AlbumListWindow*>(GetWindowLongPtr(wnd, GWLP_USERDATA));
 
     return p_this ? p_this->on_tree_hooked_message(wnd, msg, wp, lp) : DefWindowProc(wnd, msg, wp, lp);
 }
@@ -17,7 +17,7 @@ static bool test_point_distance(POINT pt1, POINT pt2, int test)
     return dx * dx + dy * dy > test * test;
 }
 
-LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_KEYDOWN:
@@ -229,7 +229,7 @@ LRESULT WINAPI album_list_window::on_tree_hooked_message(HWND wnd, UINT msg, WPA
     return CallWindowProc(m_treeproc, wnd, msg, wp, lp);
 }
 
-std::optional<LRESULT> album_list_window::on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+std::optional<LRESULT> AlbumListWindow::on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     m_clicked = true;
     m_clickpoint = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};

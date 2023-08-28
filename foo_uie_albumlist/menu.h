@@ -1,8 +1,8 @@
 #pragma once
 
-class menu_node_select_view : public ui_extension::menu_node_popup_t {
+class MenuNodeSelectView : public ui_extension::menu_node_popup_t {
     pfc::list_t<ui_extension::menu_node_ptr> m_items;
-    service_ptr_t<album_list_window> m_window;
+    service_ptr_t<AlbumListWindow> m_window;
 
 public:
     bool get_display_data(pfc::string_base& p_out, unsigned& p_displayflags) const override
@@ -16,7 +16,7 @@ public:
 
     void get_child(size_t p_index, uie::menu_node_ptr& p_out) const override { p_out = m_items[p_index].get_ptr(); }
 
-    menu_node_select_view(album_list_window* p_wnd) : m_window{p_wnd}
+    MenuNodeSelectView(AlbumListWindow* p_wnd) : m_window{p_wnd}
     {
         const auto view_count = cfg_views.get_count();
         add_item(directory_structure_view_name);

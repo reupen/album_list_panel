@@ -3,7 +3,7 @@
 #include "node_utils.h"
 #include "tree_view_populator.h"
 
-LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_CREATE: {
@@ -125,7 +125,7 @@ LRESULT album_list_window::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     return DefWindowProc(wnd, msg, wp, lp);
 }
 
-LRESULT album_list_window::on_wm_contextmenu(POINT pt)
+LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
 {
     enum {
         ID_SEND = 1,
@@ -196,7 +196,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     tvi.hItem = treeitem;
     tvi.mask = TVIF_HANDLE | TVIF_PARAM;
     TreeView_GetItem(m_wnd_tv, &tvi);
-    auto click_node = treeitem && tvi.lParam ? reinterpret_cast<node*>(tvi.lParam)->shared_from_this() : nullptr;
+    auto click_node = treeitem && tvi.lParam ? reinterpret_cast<Node*>(tvi.lParam)->shared_from_this() : nullptr;
 
     std::vector<node_ptr> nodes;
     if (click_node && m_selection.contains(click_node))
@@ -271,7 +271,7 @@ LRESULT album_list_window::on_wm_contextmenu(POINT pt)
     return 0;
 }
 
-std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
+std::optional<LRESULT> AlbumListWindow::on_tree_view_wm_notify(LPNMHDR hdr)
 {
     switch (hdr->code) {
     case TVN_ITEMCHANGING: {
@@ -289,27 +289,27 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
         if (was_selected == is_selected)
             break;
 
-        auto node_ = reinterpret_cast<node*>(nmtvic->lParam)->shared_from_this();
+        auto node = reinterpret_cast<Node*>(nmtvic->lParam)->shared_from_this();
 
         m_cleaned_selection.reset();
 
         if (is_selected)
-            m_selection.emplace(node_);
+            m_selection.emplace(node);
         else
-            m_selection.erase(node_);
+            m_selection.erase(node);
 
         break;
     }
     case TVN_GETDISPINFO: {
         auto param = reinterpret_cast<LPNMTVDISPINFO>(hdr);
-        node_ptr p_node = reinterpret_cast<node*>(param->item.lParam)->shared_from_this();
+        node_ptr p_node = reinterpret_cast<Node*>(param->item.lParam)->shared_from_this();
         auto text = m_node_formatter.format(p_node);
         wcscpy_s(param->item.pszText, param->item.cchTextMax, text);
         break;
     }
     case TVN_ITEMEXPANDING: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
+        node_ptr p_node = reinterpret_cast<Node*>(param->itemNew.lParam)->shared_from_this();
 
         if (!p_node->m_children_inserted) {
             TreeViewPopulator::s_setup_children(m_wnd_tv, p_node);
@@ -323,7 +323,7 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
     }
     case TVN_ITEMEXPANDED: {
         auto param = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        node_ptr p_node = reinterpret_cast<node*>(param->itemNew.lParam)->shared_from_this();
+        node_ptr p_node = reinterpret_cast<Node*>(param->itemNew.lParam)->shared_from_this();
         p_node->set_expanded((param->action & TVE_EXPAND) != 0);
         break;
     }
@@ -332,8 +332,8 @@ std::optional<LRESULT> album_list_window::on_tree_view_wm_notify(LPNMHDR hdr)
             break;
 
         const auto nmtv = reinterpret_cast<LPNMTREEVIEW>(hdr);
-        node_ptr node_ = reinterpret_cast<node*>(nmtv->itemNew.lParam)->shared_from_this();
-        deselect_selected_nodes(node_);
+        const node_ptr node = reinterpret_cast<Node*>(nmtv->itemNew.lParam)->shared_from_this();
+        deselect_selected_nodes(node);
         break;
     }
     case TVN_SELCHANGED: {

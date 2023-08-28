@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-void node::sort_children()
+void Node::sort_children()
 {
     const auto count = m_children.size();
     mmh::Permutation permutation(count);
@@ -14,7 +14,7 @@ void node::sort_children()
     concurrency::parallel_for(size_t{0}, count, [this](size_t n) { m_children[n]->sort_children(); });
 }
 
-std::vector<node_ptr> node::get_parents() const
+std::vector<node_ptr> Node::get_parents() const
 {
     std::vector<node_ptr> parents;
     node_ptr parent = get_parent();
@@ -27,14 +27,14 @@ std::vector<node_ptr> node::get_parents() const
     return parents;
 }
 
-std::vector<node_ptr> node::get_hierarchy()
+std::vector<node_ptr> Node::get_hierarchy()
 {
     auto nodes = get_parents() | ranges::actions::reverse;
     nodes.emplace_back(shared_from_this());
     return nodes;
 }
 
-void node::sort_tracks()
+void Node::sort_tracks()
 {
     if (m_sorted)
         return;
@@ -60,7 +60,7 @@ void node::sort_tracks()
     m_sorted = true;
 }
 
-node::node(const char* name, size_t name_length, album_list_window* window, uint16_t level, std::weak_ptr<node> parent)
+Node::Node(const char* name, size_t name_length, AlbumListWindow* window, uint16_t level, std::weak_ptr<Node> parent)
     : m_level(level)
     , m_parent(std::move(parent))
     , m_window(window)
@@ -71,12 +71,12 @@ node::node(const char* name, size_t name_length, album_list_window* window, uint
     m_sorted = false;
 }
 
-void node::remove_tracks(pfc::bit_array& mask)
+void Node::remove_tracks(pfc::bit_array& mask)
 {
     m_tracks.remove_mask(mask);
 }
 
-void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing)
+void Node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, bool b_keep_existing)
 {
     if (!b_keep_existing)
         m_tracks.remove_all();
@@ -84,7 +84,7 @@ void node::set_data(const pfc::list_base_const_t<metadb_handle_ptr>& p_data, boo
     m_sorted = false;
 }
 
-alp::SavedNodeState node::get_state(const std::unordered_set<node_ptr>& selection)
+alp::SavedNodeState Node::get_state(const std::unordered_set<node_ptr>& selection)
 {
     alp::SavedNodeState state;
     state.name = m_name;
@@ -99,7 +99,7 @@ alp::SavedNodeState node::get_state(const std::unordered_set<node_ptr>& selectio
     return state;
 }
 
-std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> node::find_child(
+std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> Node::find_child(
     std::string_view name) const
 {
     auto normalised_name = name.empty() ? "?"sv : name;
@@ -111,7 +111,7 @@ std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_i
         [](auto& node) { return node->get_name_utf16(); });
 }
 
-node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new)
+node_ptr Node::find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new)
 {
     if (!b_find)
         return add_child_v2(p_value, p_value_len);
@@ -126,31 +126,31 @@ node_ptr node::find_or_add_child(const char* p_value, size_t p_value_len, bool b
     b_new = true;
 
     return *m_children.insert(
-        start, std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this()));
+        start, std::make_shared<Node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this()));
 }
 
-node_ptr node::add_child_v2(const char* p_value, size_t p_value_len)
+node_ptr Node::add_child_v2(const char* p_value, size_t p_value_len)
 {
     if (p_value_len == 0 || *p_value == 0) {
         p_value = "?";
         p_value_len = 1;
     }
-    node_ptr temp = std::make_shared<node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this());
+    node_ptr temp = std::make_shared<Node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this());
     m_children.emplace_back(temp);
     return temp;
 }
 
-void node::mark_all_labels_dirty()
+void Node::mark_all_labels_dirty()
 {
     apply_function([](auto& node) { node.m_label_dirty = true; });
 }
 
-void node::mark_tracks_unsorted()
+void Node::mark_tracks_unsorted()
 {
     apply_function([](auto& node) { node.m_sorted = false; });
 }
 
-void node::purge_empty_children(HWND wnd)
+void Node::purge_empty_children(HWND wnd)
 {
     size_t index_first_removed = pfc_infinite;
 

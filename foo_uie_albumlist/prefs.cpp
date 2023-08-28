@@ -54,18 +54,18 @@ static bool run_edit_view(edit_view_param& param, HWND parent)
 
 cfg_int cfg_child(GUID{0x637c25b6, 0x9166, 0xd8df, 0xae, 0x7a, 0x39, 0x75, 0x78, 0x08, 0xfa, 0xf0}, 0);
 
-tab_general g_config_general;
+TabGeneral g_config_general;
 
-tab_advanced g_config_advanced;
+TabAdvanced g_config_advanced;
 
-static preferences_tab* g_tabs[] = {
+static PreferencesTab* g_tabs[] = {
     &g_config_general,
     &g_config_advanced,
 };
 
-static preferences_page_factory_t<albumlist_prefs> foo3;
+static preferences_page_factory_t<PreferencesPage> foo3;
 
-void tab_general::refresh_views()
+void TabGeneral::refresh_views()
 {
     {
         HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
@@ -79,7 +79,7 @@ void tab_general::refresh_views()
     }
 }
 
-INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
@@ -151,7 +151,7 @@ INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                         SendMessage(list, LB_DELETESTRING, idx, 0);
                         uSendMessageText(list, LB_INSERTSTRING, idx, temp);
                         uSendMessageText(list, LB_SETCURSEL, idx, nullptr);
-                        album_list_window::s_on_view_script_change(pbefore.name, p.name);
+                        AlbumListWindow::s_on_view_script_change(pbefore.name, p.name);
                     }
                 }
             }
@@ -226,7 +226,7 @@ INT_PTR tab_general::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
 namespace {
 
-class font_client_album_list : public cui::fonts::client {
+class FontClient : public cui::fonts::client {
 public:
     const GUID& get_client_guid() const override { return album_list_font_client_id; }
 
@@ -234,12 +234,12 @@ public:
 
     cui::fonts::font_type_t get_default_font_type() const override { return cui::fonts::font_type_items; }
 
-    void on_font_changed() const override { album_list_window::s_update_all_fonts(); }
+    void on_font_changed() const override { AlbumListWindow::s_update_all_fonts(); }
 };
 
-font_client_album_list::factory<font_client_album_list> g_font_client_album_list;
+FontClient::factory<FontClient> g_font_client_album_list;
 
-class items_colours_client : public cui::colours::client {
+class ItemsColoursClient : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return album_list_items_colours_client_id; }
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Items"; }
@@ -257,17 +257,17 @@ public:
     uint32_t get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
     bool get_themes_supported() const override { return true; }
 
-    void on_colour_changed(uint32_t mask) const override { album_list_window::s_update_all_tree_colours(); }
+    void on_colour_changed(uint32_t mask) const override { AlbumListWindow::s_update_all_tree_colours(); }
     void on_bool_changed(uint32_t mask) const override
     {
         if (mask & cui::colours::bool_flag_dark_mode_enabled)
-            album_list_window::s_update_all_tree_themes();
+            AlbumListWindow::s_update_all_tree_themes();
     }
 };
 
-cui::colours::client::factory<items_colours_client> g_items_colours_client;
+cui::colours::client::factory<ItemsColoursClient> g_items_colours_client;
 
-class filter_colours_client : public cui::colours::client {
+class FilterColoursClient : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return album_list_filter_colours_client_id; }
     void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Filter"; }
@@ -278,19 +278,19 @@ public:
     uint32_t get_supported_bools() const override { return cui::colours::bool_flag_dark_mode_enabled; }
     bool get_themes_supported() const override { return false; }
 
-    void on_colour_changed(uint32_t mask) const override { album_list_window::s_update_all_edit_colours(); }
+    void on_colour_changed(uint32_t mask) const override { AlbumListWindow::s_update_all_edit_colours(); }
     void on_bool_changed(uint32_t mask) const override
     {
         if (mask & cui::colours::bool_flag_dark_mode_enabled)
-            album_list_window::s_update_all_edit_themes();
+            AlbumListWindow::s_update_all_edit_themes();
     }
 };
 
-cui::colours::client::factory<filter_colours_client> g_filter_colours_client;
+cui::colours::client::factory<FilterColoursClient> g_filter_colours_client;
 
 }; // namespace
 
-INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR TabAdvanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
@@ -352,7 +352,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_ADD_ITEMS_USE_CORE_SORT:
             cfg_add_items_use_core_sort = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
-            album_list_window::s_mark_tracks_unsorted();
+            AlbumListWindow::s_mark_tracks_unsorted();
             break;
         case IDC_ADD_ITEMS_SELECT:
             cfg_add_items_select = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
@@ -362,18 +362,18 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_SHOW_NUMBERS:
             cfg_show_subitem_counts = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
-            album_list_window::s_update_all_labels();
+            AlbumListWindow::s_update_all_labels();
             break;
         case IDC_AUTO_SEND:
             cfg_autosend = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
             break;
         case IDC_HSCROLL:
             cfg_show_horizontal_scroll_bar = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
-            album_list_window::s_update_all_showhscroll();
+            AlbumListWindow::s_update_all_showhscroll();
             break;
         case IDC_SHOW_ROOT:
             cfg_show_root_node = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
-            album_list_window::s_refresh_all();
+            AlbumListWindow::s_refresh_all();
             break;
         case IDC_AUTOPLAY:
             cfg_play_on_send = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
@@ -383,11 +383,11 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_SHOW_NUMBERS2:
             cfg_show_item_indices = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
-            album_list_window::s_update_all_labels();
+            AlbumListWindow::s_update_all_labels();
             break;
         case (CBN_SELCHANGE << 16) | IDC_FRAME: {
             cfg_frame_style = ComboBox_GetCurSel(reinterpret_cast<HWND>(lp));
-            album_list_window::s_update_all_window_frames();
+            AlbumListWindow::s_update_all_window_frames();
         } break;
         case (EN_CHANGE << 16) | IDC_ITEM_HEIGHT: {
             if (m_initialised && cfg_use_custom_vertical_item_padding) {
@@ -399,7 +399,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     if (new_height < -99)
                         new_height = -99;
                     cfg_custom_vertical_padding_amount = new_height;
-                    album_list_window::s_update_all_item_heights();
+                    AlbumListWindow::s_update_all_item_heights();
                 }
             }
         } break;
@@ -415,7 +415,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             else
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
-            album_list_window::s_update_all_item_heights();
+            AlbumListWindow::s_update_all_item_heights();
         } break;
         case IDC_USE_INDENT: {
             cfg_use_custom_indentation = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
@@ -428,7 +428,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             else
                 uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
 
-            album_list_window::s_update_all_indents();
+            AlbumListWindow::s_update_all_indents();
         } break;
         case (EN_CHANGE << 16) | IDC_INDENT: {
             if (m_initialised && cfg_use_custom_indentation) {
@@ -438,7 +438,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
                     if (new_height > 999)
                         new_height = 999;
                     cfg_custom_indentation_amount = new_height;
-                    album_list_window::s_update_all_indents();
+                    AlbumListWindow::s_update_all_indents();
                 }
             }
         } break;
@@ -448,7 +448,7 @@ INT_PTR tab_advanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     return 0;
 }
 
-void albumlist_prefs_instance::make_child(HWND wnd)
+void PreferencesPageInstance::make_child(HWND wnd)
 {
     if (m_child) {
         ShowWindow(m_child, SW_HIDE);
@@ -483,7 +483,7 @@ void albumlist_prefs_instance::make_child(HWND wnd)
     ShowWindow(m_child, SW_SHOWNORMAL);
 }
 
-INT_PTR albumlist_prefs_instance::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR PreferencesPageInstance::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {

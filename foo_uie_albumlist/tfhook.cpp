@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-bool titleformat_hook_impl_file_info_branch::process_field(
+bool MetaBranchTitleformatHook::process_field(
     titleformat_text_out* p_out, const char* p_name, t_size p_name_length, bool& p_found_flag)
 {
     if (p_name_length > 2 && p_name[0] == '<') {
@@ -19,8 +19,8 @@ bool titleformat_hook_impl_file_info_branch::process_field(
     return baseClass::process_field(p_out, p_name, p_name_length, p_found_flag);
 }
 
-bool titleformat_hook_impl_file_info_branch::process_function(titleformat_text_out* p_out, const char* p_name,
-    t_size p_name_length, titleformat_hook_function_params* p_params, bool& p_found_flag)
+bool MetaBranchTitleformatHook::process_function(titleformat_text_out* p_out, const char* p_name, t_size p_name_length,
+    titleformat_hook_function_params* p_params, bool& p_found_flag)
 {
     bool strip = false, remapswap = false, remapstrip = false;
     if (!stricmp_utf8_ex(p_name, p_name_length, "meta_branch", pfc_infinite)) {
@@ -122,7 +122,7 @@ bool titleformat_hook_impl_file_info_branch::process_function(titleformat_text_o
     return baseClass::process_function(p_out, p_name, p_name_length, p_params, p_found_flag);
 }
 
-bool titleformat_hook_impl_file_info_branch::process_meta_branch(titleformat_text_out* p_out, t_size p_index)
+bool MetaBranchTitleformatHook::process_meta_branch(titleformat_text_out* p_out, t_size p_index)
 {
     if (p_index == pfc_infinite)
         return false;
