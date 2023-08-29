@@ -312,7 +312,7 @@ void AlbumListWindow::update_item_height()
 void AlbumListWindow::on_task_completion(t_uint32 task, t_uint32 code)
 {
     if (task == 0)
-        refresh_tree();
+        refresh_tree(true);
 }
 
 void AlbumListWindow::create_or_destroy_filter()
@@ -328,8 +328,9 @@ void AlbumListWindow::create_filter()
 {
     if (m_filter && !m_wnd_edit) {
         const auto flags = WS_EX_CLIENTEDGE;
-        m_wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0,
-            0, 0, get_wnd(), HMENU(IDC_FILTER), core_api::get_my_instance(), nullptr);
+        m_wnd_edit = CreateWindowEx(flags, WC_EDIT, pfc::stringcvt::string_wide_from_utf8(m_saved_filter_query),
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0, get_wnd(), HMENU(IDC_FILTER),
+            core_api::get_my_instance(), nullptr);
         update_edit_theme();
         uih::set_window_font(m_wnd_edit, s_font.get(), false);
         SetFocus(m_wnd_edit);
@@ -340,6 +341,8 @@ void AlbumListWindow::create_filter()
 void AlbumListWindow::destroy_filter()
 {
     if (m_wnd_edit) {
+        uGetWindowText(m_wnd_edit, m_saved_filter_query);
+
         const auto was_focused = GetFocus() == m_wnd_edit;
         DestroyWindow(m_wnd_edit);
         m_wnd_edit = nullptr;
@@ -517,6 +520,16 @@ void AlbumListWindow::get_config(stream_writer* p_writer, abort_callback& p_abor
     } else if (m_node_state) {
         write_node_state(p_writer, *m_node_state, p_abort);
     }
+
+    pfc::string filter_query;
+
+    if (get_wnd() && m_wnd_edit) {
+        filter_query = uGetWindowText(m_wnd_edit);
+    } else {
+        filter_query = m_saved_filter_query;
+    }
+
+    p_writer->write_string(filter_query.get_ptr(), filter_query.get_length(), p_abort);
 }
 
 void AlbumListWindow::get_name(pfc::string_base& out) const
@@ -543,6 +556,8 @@ void AlbumListWindow::set_config(stream_reader* p_reader, t_size psize, abort_ca
             // Only set scroll positions if expansion state was read
             m_saved_scroll_position
                 = alp::SavedScrollPosition{horizontal_scroll_position, vertical_scroll_position, vertical_scroll_max};
+
+            p_reader->read_string(m_saved_filter_query, p_abort);
         } catch (exception_io_data_truncation&) {
         }
     }

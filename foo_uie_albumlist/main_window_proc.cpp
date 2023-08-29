@@ -51,7 +51,7 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
     case WM_TIMER:
         if (wp == EDIT_TIMER_ID) {
-            refresh_tree();
+            refresh_tree(true);
             KillTimer(wnd, wp);
             m_timer = false;
         }
@@ -98,15 +98,17 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         m_library_v3.reset();
 
         modeless_dialog_manager::g_remove(wnd);
-        if (m_root) {
+
+        if (m_root)
             m_node_state = m_root->get_state(m_selection);
-        }
+
         destroy_tree(true);
         destroy_filter();
         m_selection_holder.release();
         m_root.reset();
         m_selection.clear();
         m_cleaned_selection.reset();
+
         if (m_dd_theme) {
             CloseThemeData(m_dd_theme);
             m_dd_theme = nullptr;
