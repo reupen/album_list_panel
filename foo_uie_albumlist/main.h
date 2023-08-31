@@ -70,7 +70,7 @@ public:
     void on_size(unsigned cx, unsigned cy);
     void on_size();
 
-    void refresh_tree();
+    void refresh_tree(bool preserve_state = false);
     void update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_add,
         metadb_handle_list_t<pfc::alloc_fast_aggressive>& to_remove, bool preserve_existing);
     void build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing = false);
@@ -157,6 +157,7 @@ private:
     std::optional<std::vector<node_ptr>> m_cleaned_selection;
     std::unordered_set<node_ptr> m_selection;
     std::optional<alp::SavedNodeState> m_node_state;
+    pfc::string m_saved_filter_query;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;
     NodeFormatter m_node_formatter;

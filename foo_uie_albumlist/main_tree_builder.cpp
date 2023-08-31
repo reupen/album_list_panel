@@ -564,7 +564,7 @@ void AlbumListWindow::update_tree(metadb_handle_list_t<pfc::alloc_fast_aggressiv
     restore_scroll_position();
 }
 
-void AlbumListWindow::refresh_tree()
+void AlbumListWindow::refresh_tree(bool preserve_state)
 {
     TRACK_CALL_TEXT("album_list_panel_refresh_tree");
 
@@ -574,13 +574,16 @@ void AlbumListWindow::refresh_tree()
     if (m_library_v4.is_valid() && !m_library_v4->is_initialized())
         return;
 
+    pfc::hires_timer timer;
+    timer.start();
+
+    if (preserve_state && m_root)
+        m_node_state = m_root->get_state(m_selection);
+
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_add;
     metadb_handle_list_t<pfc::alloc_fast_aggressive> to_remove;
     to_add.prealloc(1024);
     library_manager::get()->get_all_items(to_add);
-
-    pfc::hires_timer timer;
-    timer.start();
 
     update_tree(to_add, to_remove, false);
 
