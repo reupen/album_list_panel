@@ -232,6 +232,8 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
         = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(), nullptr);
     DestroyMenu(menu);
 
+    update_shift_start_node();
+
     if (cmd > 0) {
         if (p_menu_manager.is_valid() && cmd >= IDM_MANAGER_BASE) {
             p_menu_manager->execute_by_id(cmd - IDM_MANAGER_BASE);
