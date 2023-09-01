@@ -165,8 +165,6 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
         }
     }
 
-    TreeView_Select(m_wnd_tv, treeitem, TVGN_DROPHILITE);
-
     HMENU menu_view = CreatePopupMenu();
     const size_t view_count = cfg_views.get_count();
 
@@ -192,23 +190,27 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
     uAppendMenu(menu, MF_STRING | (m_filter ? MF_CHECKED : 0), ID_FILT, "Filter");
     uAppendMenu(menu, MF_STRING, ID_CONF, "Settings");
 
-    bool show_shortcuts = standard_config_objects::query_show_keyboard_shortcuts_in_menus();
+    const bool show_shortcuts = standard_config_objects::query_show_keyboard_shortcuts_in_menus();
 
     TVITEMEX tvi{};
     tvi.hItem = treeitem;
     tvi.mask = TVIF_HANDLE | TVIF_PARAM;
     TreeView_GetItem(m_wnd_tv, &tvi);
-    auto click_node = treeitem && tvi.lParam ? reinterpret_cast<Node*>(tvi.lParam)->shared_from_this() : nullptr;
+    const auto click_node = treeitem && tvi.lParam ? reinterpret_cast<Node*>(tvi.lParam)->shared_from_this() : nullptr;
 
-    std::vector<node_ptr> nodes;
-    if (click_node && m_selection.contains(click_node))
-        nodes = get_cleaned_selection();
-    else if (click_node)
-        nodes = {click_node};
+    if (click_node && !m_selection.contains(click_node)) {
+        TreeView_SelectItem(m_wnd_tv, treeitem);
+
+        if (!(GetKeyState(VK_SHIFT) & 0x8000))
+            autosend();
+    }
+
+    const auto nodes
+        = click_node && m_selection.contains(click_node) ? get_cleaned_selection() : std::vector<node_ptr>{};
 
     const auto tracks_holder = alp::get_node_tracks(nodes);
 
-    if (treeitem && click_node) {
+    if (treeitem && !nodes.empty()) {
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
         uAppendMenu(menu, MF_STRING, ID_SEND, (show_shortcuts ? "&Send to playlist\tEnter" : "&Send to playlist"));
         uAppendMenu(menu, MF_STRING, ID_ADD, show_shortcuts ? "&Add to playlist\tShift+Enter" : "&Add to playlist");
@@ -229,8 +231,6 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
     const int cmd
         = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(), nullptr);
     DestroyMenu(menu);
-
-    TreeView_Select(m_wnd_tv, NULL, TVGN_DROPHILITE);
 
     if (cmd > 0) {
         if (p_menu_manager.is_valid() && cmd >= IDM_MANAGER_BASE) {
