@@ -726,6 +726,18 @@ void AlbumListWindow::autosend()
         alp::send_nodes_to_autosend_playlist(get_cleaned_selection(), m_view, false);
 }
 
+void AlbumListWindow::update_shift_start_node()
+{
+    if ((GetKeyState(VK_SHIFT) & 0x8000) == 0) {
+        m_shift_start.reset();
+        return;
+    }
+
+    const auto caret = TreeView_GetSelection(m_wnd_tv);
+    const auto shift_start_item = caret ? caret : TreeView_GetRoot(m_wnd_tv);
+    m_shift_start = get_node_for_tree_item(shift_start_item);
+}
+
 void AlbumListWindow::update_selection_holder()
 {
     if (m_selection_holder.is_valid())

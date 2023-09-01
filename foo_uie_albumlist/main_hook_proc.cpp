@@ -38,11 +38,8 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
                 g_on_tab(wnd);
             break;
         case VK_SHIFT:
-            if (!(HIWORD(lp) & KF_REPEAT)) {
-                const auto caret = TreeView_GetSelection(wnd);
-                const auto shift_start_item = caret ? caret : TreeView_GetRoot(wnd);
-                m_shift_start = get_node_for_tree_item(shift_start_item);
-            }
+            if (!(HIWORD(lp) & KF_REPEAT))
+                update_shift_start_node();
             break;
         case VK_HOME:
         case VK_DOWN:
@@ -111,6 +108,11 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
         }
         break;
     }
+    case WM_SYSKEYUP:
+    case WM_KEYUP:
+        if (wp == VK_SHIFT)
+            update_shift_start_node();
+        break;
     case WM_CHAR:
         if (cfg_process_keyboard_shortcuts && !m_process_char) {
             m_process_char = true;
@@ -118,6 +120,8 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
         }
         break;
     case WM_SETFOCUS: {
+        update_shift_start_node();
+
         m_selection_holder = static_api_ptr_t<ui_selection_manager>()->acquire();
         update_selection_holder();
         RedrawWindow(wnd, nullptr, nullptr, RDW_INVALIDATE);
@@ -249,6 +253,9 @@ std::optional<LRESULT> AlbumListWindow::on_tree_lbuttondown(HWND wnd, UINT msg, 
 
     if (!click_node)
         return {};
+
+    if (is_shift_down || is_ctrl_down)
+        SetFocus(wnd);
 
     if (is_shift_down) {
         const auto shift_node = m_shift_start.lock();

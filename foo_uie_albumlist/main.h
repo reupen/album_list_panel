@@ -133,6 +133,7 @@ private:
     void select_range(const node_ptr& from, const node_ptr& to, bool expand) const;
     void autosend();
 
+    void update_shift_start_node();
     void update_selection_holder();
 
     const std::vector<node_ptr>& get_cleaned_selection();
