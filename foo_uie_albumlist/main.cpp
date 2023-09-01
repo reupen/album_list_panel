@@ -532,6 +532,25 @@ void AlbumListWindow::get_config(stream_writer* p_writer, abort_callback& p_abor
     p_writer->write_string(filter_query.get_ptr(), filter_query.get_length(), p_abort);
 }
 
+void AlbumListWindow::export_config(stream_writer* p_writer, abort_callback& p_abort) const
+{
+    p_writer->write_string(m_view, p_abort);
+    p_writer->write_lendian_t(m_filter, p_abort);
+}
+
+void AlbumListWindow::import_config(stream_reader* p_reader, t_size p_size, abort_callback& p_abort)
+{
+    if (p_size == 0)
+        return;
+
+    p_reader->read_string(m_view, p_abort);
+
+    try {
+        p_reader->read_lendian_t(m_filter, p_abort);
+    } catch (const exception_io_data_truncation&) {
+    }
+}
+
 void AlbumListWindow::get_name(pfc::string_base& out) const
 {
     out.set_string("Album list");

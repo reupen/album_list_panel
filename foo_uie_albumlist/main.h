@@ -94,6 +94,8 @@ public:
 
     void set_config(stream_reader* p_reader, t_size size, abort_callback& p_abort) override;
     void get_config(stream_writer* p_writer, abort_callback& p_abort) const override;
+    void export_config(stream_writer* p_writer, abort_callback& p_abort) const override;
+    void import_config(stream_reader* p_reader, t_size p_size, abort_callback& p_abort) override;
 
     unsigned get_type() const override { return ui_extension::type_panel; }
 
