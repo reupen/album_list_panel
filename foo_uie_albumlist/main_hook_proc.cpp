@@ -292,7 +292,7 @@ std::optional<LRESULT> AlbumListWindow::on_tree_lbuttondown(HWND wnd, UINT msg, 
             CallWindowProc(m_treeproc, wnd, msg, wp, lp);
         }
 
-        if (currently_selected && !manually_select_tree_item(tvhti.hItem, !currently_selected))
+        if (!manually_select_tree_item(tvhti.hItem, !currently_selected))
             return 0;
 
         autosend();
