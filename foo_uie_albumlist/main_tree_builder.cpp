@@ -503,7 +503,7 @@ void AlbumListWindow::on_items_modified(const pfc::list_base_const_t<metadb_hand
 
 void AlbumListWindow::on_items_modified_v2(metadb_handle_list_cref items, metadb_io_callback_v2_data& data)
 {
-    if (m_library_v4->is_initialized())
+    if (!m_library_v4->is_initialized())
         return;
 
     on_items_modified(items);
