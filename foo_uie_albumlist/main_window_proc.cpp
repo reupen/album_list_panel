@@ -308,7 +308,7 @@ std::optional<LRESULT> AlbumListWindow::on_tree_view_wm_notify(LPNMHDR hdr)
         auto param = reinterpret_cast<LPNMTVDISPINFO>(hdr);
         node_ptr p_node = reinterpret_cast<Node*>(param->item.lParam)->shared_from_this();
         auto text = m_node_formatter.format(p_node);
-        wcscpy_s(param->item.pszText, param->item.cchTextMax, text);
+        wcsncpy_s(param->item.pszText, param->item.cchTextMax, text, _TRUNCATE);
         break;
     }
     case TVN_ITEMEXPANDING: {
