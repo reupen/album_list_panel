@@ -145,8 +145,12 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
         }
         break;
     }
+    case WM_CAPTURECHANGED:
+        m_delayed_click_node.reset();
+        break;
     case WM_LBUTTONUP:
-        m_clicked = false;
+        if (const auto result = on_tree_lbuttonup(wnd, msg, wp, lp))
+            return *result;
         break;
     case WM_LBUTTONDOWN:
         if (const auto result = on_tree_lbuttondown(wnd, msg, wp, lp))
@@ -166,7 +170,13 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
             if (!(ti.flags & TVHT_ONITEM) || !ti.hItem)
                 break;
 
-            TreeView_SelectItem(wnd, ti.hItem);
+            auto drag_node = get_node_for_tree_item(ti.hItem);
+
+            if (!drag_node)
+                break;
+
+            if (!m_selection.contains(drag_node))
+                TreeView_SelectItem(wnd, ti.hItem);
 
             if (m_selection.empty())
                 break;
@@ -300,14 +310,39 @@ std::optional<LRESULT> AlbumListWindow::on_tree_lbuttondown(HWND wnd, UINT msg, 
         return 0;
     }
 
+    // If the caret is on the clicked item, the tree view won't do anything itself.
     if (click_item == TreeView_GetSelection(wnd) && m_selection != std::unordered_set{click_node}) {
-        deselect_selected_nodes(click_node);
+        SetCapture(wnd);
+        m_delayed_click_node = click_node;
 
-        if (!m_selection.contains(click_node))
-            manually_select_tree_item(click_item, true);
+        if (!m_selection.contains(click_node)) {
+            deselect_selected_nodes(click_node);
+            manually_select_tree_item(click_node->m_ti, true);
+        }
+
+        // Tree view uses a modal loop to process clicks. Don't pass the message on
+        // so we receive mouse up.
+        return 0;
+    }
+
+    return {};
+}
+
+std::optional<LRESULT> AlbumListWindow::on_tree_lbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    m_clicked = false;
+
+    auto _ = gsl::finally([wnd] {
+        if (GetCapture() == wnd)
+            ReleaseCapture();
+    });
+
+    if (const auto click_node = m_delayed_click_node.lock()) {
+        deselect_selected_nodes(click_node);
 
         autosend();
         update_selection_holder();
+        return 0;
     }
 
     return {};

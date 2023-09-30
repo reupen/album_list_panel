@@ -108,6 +108,7 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         m_root.reset();
         m_selection.clear();
         m_cleaned_selection.reset();
+        m_delayed_click_node.reset();
 
         if (m_dd_theme) {
             CloseThemeData(m_dd_theme);

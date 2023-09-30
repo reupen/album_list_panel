@@ -118,6 +118,7 @@ private:
 
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     std::optional<LRESULT> on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    std::optional<LRESULT> on_tree_lbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     static inline pfc::ptr_list_t<AlbumListWindow> s_instances;
     static const GUID s_extension_guid;
@@ -148,6 +149,7 @@ private:
     bool m_populated{false};
     bool m_dragging{false};
     bool m_clicked{false};
+    std::weak_ptr<Node> m_delayed_click_node;
     bool m_filter{false};
     bool m_timer{false};
     bool m_process_char{true};
