@@ -215,13 +215,20 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
         ti.pt.y = GET_Y_LPARAM(lp);
         TreeView_HitTest(wnd, &ti);
 
-        if (ti.flags & TVHT_ONITEM && ti.hItem) {
-            if (cfg_middle_click_action) {
-                TreeView_SelectItem(wnd, ti.hItem);
+        if (!(ti.flags & TVHT_ONITEM && ti.hItem && cfg_middle_click_action))
+            break;
 
-                do_click_action(static_cast<ClickAction>(cfg_middle_click_action.get_value()));
-            }
+        if (TreeView_GetSelection(wnd) != ti.hItem) {
+            TreeView_SelectItem(wnd, ti.hItem);
+        } else {
+            const auto node = get_node_for_tree_item(ti.hItem);
+            deselect_selected_nodes(node);
+
+            if (!m_selection.contains(node))
+                manually_select_tree_item(ti.hItem, true);
         }
+
+        do_click_action(static_cast<ClickAction>(cfg_middle_click_action.get_value()));
         break;
     }
     case WM_LBUTTONDBLCLK: {
