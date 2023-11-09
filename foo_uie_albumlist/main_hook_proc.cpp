@@ -54,21 +54,25 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
             const auto old_caret_node = get_node_for_tree_item(old_caret_item);
 
             if (!is_shift_down || !shift_node) {
-                if (!is_ctrl_down) {
-                    const auto is_up = wp == VK_HOME || wp == VK_PRIOR || wp == VK_UP;
+                // If we're at the start or the end of the list, pressing Up or Down
+                // respectively won't move the caret, but any other selected items
+                // should still be deselected
+                if (!is_ctrl_down && m_selection != std::unordered_set{old_caret_node}) {
+                    CallWindowProc(m_treeproc, wnd, msg, wp, lp);
 
-                    if ((is_up && TreeView_GetFirstVisible(wnd) == old_caret_item)
-                        || (!is_up && TreeView_GetLastVisible(wnd) == old_caret_item)
-                            && m_selection != std::unordered_set{old_caret_node}) {
-                        deselect_selected_nodes(old_caret_node);
+                    const auto new_caret_item = TreeView_GetSelection(wnd);
 
-                        if (!m_selection.contains(old_caret_node))
-                            manually_select_tree_item(old_caret_item, true);
-
-                        autosend();
-                        update_selection_holder();
+                    if (old_caret_item != new_caret_item)
                         return 0;
-                    }
+
+                    deselect_selected_nodes(old_caret_node);
+
+                    if (!m_selection.contains(old_caret_node))
+                        manually_select_tree_item(old_caret_item, true);
+
+                    autosend();
+                    update_selection_holder();
+                    return 0;
                 }
                 break;
             }
