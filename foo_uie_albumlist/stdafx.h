@@ -1,6 +1,8 @@
 #pragma once
+
 #define OEMRESOURCE
 #define NOMINMAX
+#define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
 
 #include <gsl/gsl>
 #include <fmt/format.h>
