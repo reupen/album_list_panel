@@ -166,8 +166,10 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
         }
     }
 
+    const auto& views = get_views();
+
     HMENU menu_view = CreatePopupMenu();
-    const size_t view_count = cfg_views.get_count();
+    const size_t view_count = views.get_count();
 
     uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(directory_structure_view_name, m_view) ? MF_CHECKED : 0),
         ID_VIEW_BASE + 0, directory_structure_view_name);
@@ -176,7 +178,7 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
     view_names.emplace_back(directory_structure_view_name);
 
     for (size_t i = 0; i < view_count; i++) {
-        auto view_name = cfg_views.get_name(i);
+        auto view_name = views.get_name(i);
         view_names.emplace_back(view_name);
         uAppendMenu(menu_view, MF_STRING | (!stricmp_utf8(view_name, m_view) ? MF_CHECKED : 0), ID_VIEW_BASE + i + 1,
             view_name);

@@ -11,7 +11,8 @@ struct {
         "[%album artist% - ]['['%date%']' ]%album%|[[%discnumber%.]%tracknumber%. ][%track artist% - ]%title%"},
 };
 
-CfgViewList cfg_views(GUID{0xc584d488, 0x53dd, 0x4d21, 0xa8, 0x5b, 0x8e, 0xc7, 0xcc, 0xb3, 0x82, 0x16});
+CfgViewList cfg_views_v1(GUID{0xc584d488, 0x53dd, 0x4d21, 0xa8, 0x5b, 0x8e, 0xc7, 0xcc, 0xb3, 0x82, 0x16}, true);
+CfgViewList cfg_views_v2(GUID{0xa7398829, 0x046f, 0x43cb, {0xb6, 0x82, 0x25, 0x6a, 0x2f, 0xd6, 0x94, 0x1b}}, false);
 
 cfg_string cfg_autosend_playlist_name(
     GUID{0x4beb593f, 0xa010, 0x8b3a, 0x7b, 0x2a, 0x63, 0xad, 0xf3, 0x9f, 0xc6, 0xb4}, "Library view");
@@ -44,8 +45,17 @@ cfg_int cfg_collapse_other_nodes_on_expansion(
 
 void CfgViewList::get_data_raw(stream_writer* out, abort_callback& p_abort)
 {
+    if (m_read_and_write_legacy_size_value) {
+        if (cfg_views_v2.has_read_values())
+            *this = cfg_views_v2;
+    }
     const auto item_count = m_data.get_count();
-    out->write_lendian_t(item_count, p_abort);
+
+    if (m_read_and_write_legacy_size_value)
+        out->write_lendian_t(item_count, p_abort);
+    else
+        out->write_lendian_t(gsl::narrow<uint32_t>(item_count), p_abort);
+
     for (size_t i{0}; i < item_count; ++i) {
         out->write_string(m_data[i].name, p_abort);
         out->write_string(m_data[i].value, p_abort);
@@ -55,14 +65,18 @@ void CfgViewList::get_data_raw(stream_writer* out, abort_callback& p_abort)
 void CfgViewList::set_data_raw(stream_reader* r, size_t psize, abort_callback& p_abort)
 {
     m_data.remove_all();
-    size_t item_count{0};
-    r->read_lendian_t(item_count, p_abort);
+
+    const size_t item_count = m_read_and_write_legacy_size_value ? r->read_lendian_t<size_t>(p_abort)
+                                                                 : r->read_lendian_t<uint32_t>(p_abort);
+
     for (size_t i{0}; i < item_count; ++i) {
         entry item;
         r->read_string(item.name, p_abort);
         r->read_string(item.value, p_abort);
         m_data.add_item(item);
     }
+
+    m_has_set_values = true;
 }
 
 void CfgViewList::reset()
@@ -71,4 +85,13 @@ void CfgViewList::reset()
     for (size_t i{0}; i < tabsize(cfg_view_list_defaults); ++i) {
         m_data.add_item(entry{cfg_view_list_defaults[i].name, cfg_view_list_defaults[i].value});
     }
+}
+
+CfgViewList& get_views()
+{
+    if (cfg_views_v1.has_read_values() && !cfg_views_v2.has_read_values()) {
+        cfg_views_v2 = cfg_views_v1;
+    }
+
+    return cfg_views_v2;
 }

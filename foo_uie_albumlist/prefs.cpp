@@ -27,7 +27,7 @@ static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp, e
                     uMessageBox(wnd, "Please enter a valid name.", nullptr, 0);
                     break;
                 }
-                size_t idx_find = cfg_views.find_item(temp);
+                size_t idx_find = get_views().find_item(temp);
                 if (idx_find != -1 && (state.b_new || ((idx_find != state.idx) && (idx_find != -1)))) {
                     uMessageBox(wnd, "View of this name already exists. Please enter another one.", nullptr, 0);
                     break;
@@ -67,15 +67,15 @@ static preferences_page_factory_t<PreferencesPage> foo3;
 
 void TabGeneral::refresh_views()
 {
-    {
-        HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
-        SendMessage(list, LB_RESETCONTENT, 0, 0);
-        size_t n, m = cfg_views.get_count();
-        pfc::string8_fastalloc temp;
-        for (n = 0; n < m; n++) {
-            cfg_views.format_display(n, temp);
-            uSendMessageText(list, LB_ADDSTRING, 0, temp);
-        }
+    const auto& views = get_views();
+
+    HWND list = uGetDlgItem(m_wnd, IDC_VIEWS);
+    SendMessage(list, LB_RESETCONTENT, 0, 0);
+    size_t n, m = views.get_count();
+    pfc::string8_fastalloc temp;
+    for (n = 0; n < m; n++) {
+        views.format_display(n, temp);
+        uSendMessageText(list, LB_ADDSTRING, 0, temp);
     }
 }
 
@@ -136,18 +136,20 @@ INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             const auto list = reinterpret_cast<HWND>(lp);
             unsigned idx = ListBox_GetCurSel(list);
             if (idx != LB_ERR) {
+                auto& views = get_views();
+
                 edit_view_param p;
                 p.b_new = false;
                 p.idx = idx;
-                p.name = cfg_views.get_name(idx);
-                p.value = cfg_views.get_value(idx);
+                p.name = views.get_name(idx);
+                p.value = views.get_value(idx);
                 edit_view_param pbefore = p;
                 if (run_edit_view(p, wnd)) {
                     pfc::string8 temp;
-                    if (idx < cfg_views.get_count()) // modal message loop
+                    if (idx < views.get_count()) // modal message loop
                     {
-                        cfg_views.modify_item(idx, p.name, p.value);
-                        cfg_views.format_display(idx, temp);
+                        views.modify_item(idx, p.name, p.value);
+                        views.format_display(idx, temp);
                         SendMessage(list, LB_DELETESTRING, idx, 0);
                         uSendMessageText(list, LB_INSERTSTRING, idx, temp);
                         uSendMessageText(list, LB_SETCURSEL, idx, nullptr);
@@ -160,11 +162,13 @@ INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         case IDC_VIEW_UP: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             auto idx = ListBox_GetCurSel(list);
+
             if (idx != LB_ERR && idx > 0) {
+                auto& views = get_views();
                 SendMessage(list, LB_DELETESTRING, idx, 0);
-                cfg_views.swap(idx, idx - 1);
+                views.swap(idx, idx - 1);
                 pfc::string8 temp;
-                cfg_views.format_display(idx - 1, temp);
+                views.format_display(idx - 1, temp);
                 uSendMessageText(list, LB_INSERTSTRING, idx - 1, temp);
                 SendMessage(list, LB_SETCURSEL, idx - 1, 0);
             }
@@ -172,12 +176,14 @@ INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         case IDC_VIEW_DOWN: {
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
+            auto& views = get_views();
             auto idx = ListBox_GetCurSel(list);
-            if (idx != LB_ERR && gsl::narrow<size_t>(idx) + 1 < cfg_views.get_count()) {
+
+            if (idx != LB_ERR && gsl::narrow<size_t>(idx) + 1 < views.get_count()) {
                 SendMessage(list, LB_DELETESTRING, idx, 0);
-                cfg_views.swap(idx, idx + 1);
+                views.swap(idx, idx + 1);
                 pfc::string8 temp;
-                cfg_views.format_display(idx + 1, temp);
+                views.format_display(idx + 1, temp);
                 uSendMessageText(list, LB_INSERTSTRING, idx + 1, temp);
                 SendMessage(list, LB_SETCURSEL, idx + 1, 0);
             }
@@ -187,7 +193,7 @@ INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             auto idx = ListBox_GetCurSel(list);
             if (idx != LB_ERR) {
-                cfg_views.remove_item(idx);
+                get_views().remove_item(idx);
                 SendDlgItemMessage(wnd, IDC_VIEWS, LB_DELETESTRING, idx, 0);
             }
             break;
@@ -197,23 +203,25 @@ INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             p.b_new = true;
             p.idx = -1;
             if (run_edit_view(p, wnd)) {
+                auto& views = get_views();
                 HWND list = uGetDlgItem(wnd, IDC_VIEWS);
-                size_t n = cfg_views.add_item(p.name, p.value);
+                size_t n = views.add_item(p.name, p.value);
                 pfc::string8 temp;
-                cfg_views.format_display(n, temp);
+                views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);
                 SendMessage(list, LB_SETCURSEL, n, 0);
             }
             break;
         }
         case IDC_VIEW_RESET: {
-            cfg_views.reset();
+            auto& views = get_views();
+            views.reset();
             HWND list = uGetDlgItem(wnd, IDC_VIEWS);
             SendMessage(list, LB_RESETCONTENT, 0, 0);
-            size_t n, m = cfg_views.get_count();
+            size_t n, m = views.get_count();
             pfc::string8_fastalloc temp;
             for (n = 0; n < m; n++) {
-                cfg_views.format_display(n, temp);
+                views.format_display(n, temp);
                 uSendMessageText(list, LB_ADDSTRING, 0, temp);
             }
             break;
