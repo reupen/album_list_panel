@@ -69,7 +69,7 @@ public:
         out += get_value(index);
     }
 
-    bool has_read_values() const { return m_has_set_values; }
+    bool has_set_values() const { return m_has_set_values; }
 
 private:
     struct entry {
