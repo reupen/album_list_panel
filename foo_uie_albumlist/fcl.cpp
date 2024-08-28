@@ -21,15 +21,17 @@ public:
     void get_data(stream_writer* writer, t_uint32 type, cui::fcl::t_export_feedback& feedback,
         abort_callback& p_abort) const override
     {
+        const auto& views = get_views();
+
         fbh::fcl::Writer w(writer, p_abort);
         w.write_raw(static_cast<uint32_t>(stream_version));
-        const uint32_t count = pfc::downcast_guarded<uint32_t>(cfg_views.get_count());
+        const uint32_t count = pfc::downcast_guarded<uint32_t>(views.get_count());
         w.write_raw(count);
 
         for (uint32_t i{0}; i < count; i++) {
             w.write_raw(uint32_t{2});
-            w.write_item(view_name, cfg_views.get_name(i));
-            w.write_item(view_script, cfg_views.get_value(i));
+            w.write_item(view_name, views.get_name(i));
+            w.write_item(view_script, views.get_value(i));
         }
     }
 
@@ -40,7 +42,7 @@ public:
         const auto version = fcl_reader.read_raw_item<uint32_t>();
 
         if (version <= stream_version) {
-            cfg_views.remove_all();
+            get_views().remove_all();
             const auto count = fcl_reader.read_raw_item<uint32_t>();
 
             for (uint32_t i{0}; i < count; i++)
@@ -63,6 +65,8 @@ private:
 
     static void read_item(fbh::fcl::Reader& fcl_reader)
     {
+        auto& views = get_views();
+
         auto elems = fcl_reader.read_raw_item<uint32_t>();
 
         pfc::string8 name;
@@ -85,7 +89,7 @@ private:
             }
             --elems;
         }
-        cfg_views.add_item(name, script);
+        views.add_item(name, script);
     }
 };
 

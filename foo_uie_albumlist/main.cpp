@@ -196,9 +196,11 @@ bool AlbumListWindow::is_bydir() const
 
 const char* AlbumListWindow::get_hierarchy() const
 {
-    const auto index = cfg_views.find_item(m_view);
+    auto& views = get_views();
+
+    const auto index = views.find_item(m_view);
     if (index != pfc_infinite)
-        return cfg_views.get_value(index);
+        return views.get_value(index);
     return "N/A";
 }
 

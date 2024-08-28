@@ -18,11 +18,13 @@ public:
 
     MenuNodeSelectView(AlbumListWindow* p_wnd) : m_window{p_wnd}
     {
-        const auto view_count = cfg_views.get_count();
+        const auto& views = get_views();
+
+        const auto view_count = views.get_count();
         add_item(directory_structure_view_name);
 
         for (size_t i = 0; i < view_count; i++) {
-            add_item(cfg_views.get_name(i));
+            add_item(views.get_name(i));
         }
     }
 
