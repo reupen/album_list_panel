@@ -46,9 +46,14 @@ cfg_int cfg_collapse_other_nodes_on_expansion(
 void CfgViewList::get_data_raw(stream_writer* out, abort_callback& p_abort)
 {
     if (m_read_and_write_legacy_size_value) {
-        if (cfg_views_v2.has_read_values())
+        if (cfg_views_v2.has_set_values())
             *this = cfg_views_v2;
+    } else {
+        if (!m_has_set_values && cfg_views_v1.has_set_values()) {
+            *this = cfg_views_v1;
+        }
     }
+
     const auto item_count = m_data.get_count();
 
     if (m_read_and_write_legacy_size_value)
@@ -89,7 +94,7 @@ void CfgViewList::reset()
 
 CfgViewList& get_views()
 {
-    if (cfg_views_v1.has_read_values() && !cfg_views_v2.has_read_values()) {
+    if (cfg_views_v1.has_set_values() && !cfg_views_v2.has_set_values()) {
         cfg_views_v2 = cfg_views_v1;
     }
 
