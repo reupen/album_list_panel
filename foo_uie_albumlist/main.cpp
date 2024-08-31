@@ -708,7 +708,19 @@ void AlbumListWindow::select_range(const node_ptr& from, const node_ptr& to, boo
 
         const auto shift_hierarchy = from->get_hierarchy();
         const auto click_hierarchy = to->get_hierarchy();
-        const auto compare_level = std::min(shift_hierarchy.size(), click_hierarchy.size()) - 1;
+
+        const auto max_level = std::min(shift_hierarchy.size(), click_hierarchy.size()) - 1;
+        size_t compare_level{};
+
+        for (auto [left, right] : ranges::views::zip(shift_hierarchy, click_hierarchy)) {
+            if (left != right || compare_level == max_level)
+                break;
+
+            ++compare_level;
+        }
+
+        assert(compare_level < std::min(shift_hierarchy.size(), click_hierarchy.size()));
+
         const auto is_click_before_shift_item = [&] {
             if (shift_hierarchy[compare_level] == click_hierarchy[compare_level])
                 return click_hierarchy.size() < shift_hierarchy.size();
@@ -717,6 +729,7 @@ void AlbumListWindow::select_range(const node_ptr& from, const node_ptr& to, boo
             const auto shift_index = shift_hierarchy[compare_level]->get_display_index().value_or(0);
             return click_index < shift_index;
         }();
+
         const auto next_item_arg = is_click_before_shift_item ? TVGN_PREVIOUSVISIBLE : TVGN_NEXTVISIBLE;
 
         HTREEITEM item = from->m_ti;
