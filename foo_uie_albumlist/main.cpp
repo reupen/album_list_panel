@@ -216,7 +216,6 @@ void AlbumListWindow::on_view_script_change(const char* p_view_before, const cha
 void AlbumListWindow::update_all_labels() const
 {
     if (m_root) {
-        m_root->mark_all_labels_dirty();
         SendMessage(m_wnd_tv, WM_SETREDRAW, FALSE, 0);
         TreeViewPopulator::s_setup_tree(m_wnd_tv, TVI_ROOT, m_root, std::nullopt, 0, 0);
         SendMessage(m_wnd_tv, WM_SETREDRAW, TRUE, 0);

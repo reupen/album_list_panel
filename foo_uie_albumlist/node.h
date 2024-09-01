@@ -7,7 +7,6 @@ typedef std::shared_ptr<class Node> node_ptr;
 class Node : public std::enable_shared_from_this<Node> {
 public:
     HTREEITEM m_ti{};
-    bool m_label_dirty{};
     bool m_children_inserted{};
     uint16_t m_level;
 
@@ -62,7 +61,6 @@ public:
 
     node_ptr add_child_v2(const char* p_value) { return add_child_v2(p_value, strlen(p_value)); }
 
-    void mark_all_labels_dirty();
     void mark_tracks_unsorted();
 
     void purge_empty_children(HWND wnd);
