@@ -161,8 +161,9 @@ static void process_level_recur_t(
 {
     p_parent->set_bydir(t_entry::is_bydir);
     p_parent->set_data(ProcessEntryListWrapper<t_entry>(p_items, p_items_count), !b_add_only);
-    p_parent->m_label_dirty = cfg_show_subitem_counts != 0;
+
     assert(p_items_count > 0);
+
     pfc::array_t<t_local_entry> items_local;
     items_local.set_size(p_items_count);
     size_t items_local_ptr{0};
@@ -201,12 +202,6 @@ static void process_level_recur_t(
         process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
         items_local_ptr = 0;
         last_path = nullptr;
-    }
-
-    if (b_node_added && cfg_show_item_indices) {
-        size_t count = p_parent->get_children().size();
-        for (size_t i{0}; i < count; i++)
-            p_parent->get_children()[i]->m_label_dirty = true;
     }
 }
 

@@ -21,49 +21,53 @@ void TreeViewPopulator::s_setup_children(HWND wnd_tv, node_ptr ptr)
 void TreeViewPopulator::setup_tree(HTREEITEM parent, node_ptr ptr, std::optional<alp::SavedNodeState> node_state,
     t_size idx, t_size max_idx, HTREEITEM ti_after)
 {
-    const auto expanded = node_state ? node_state->expanded : ptr->m_level < 1;
-    const auto selected = node_state ? node_state->selected : false;
+    const auto expanded = [&] {
+        if (node_state)
+            return node_state->expanded;
+
+        return ptr->m_ti ? ptr->is_expanded() : ptr->m_level < 1;
+    }();
+
     const auto populate_children = ptr->m_children_inserted || ptr->m_level < 1 + m_initial_level || expanded;
 
     ptr->purge_empty_children(m_wnd_tv);
 
-    if ((!ptr->m_ti || ptr->m_label_dirty) && (ptr->m_level > 0 || cfg_show_root_node)) {
-        ptr->set_display_index(idx);
+    ptr->set_display_index(idx);
 
-        if (!ptr->m_ti) {
-            TVINSERTSTRUCT is{};
-            is.hParent = parent;
-            is.hInsertAfter = ti_after;
-            is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
-            is.item.pszText = LPSTR_TEXTCALLBACK;
-            is.item.lParam = reinterpret_cast<LPARAM>(ptr.get());
-            is.item.state = expanded ? TVIS_EXPANDED : 0;
-            is.item.stateMask = TVIS_EXPANDED;
+    if (!ptr->m_ti && (ptr->m_level > 0 || cfg_show_root_node)) {
+        const auto selected = node_state ? node_state->selected : false;
 
-            if (m_has_selection && selected) {
-                is.item.state |= TVIS_SELECTED;
-                is.item.stateMask |= TVIS_SELECTED;
-            }
+        TVINSERTSTRUCT is{};
+        is.hParent = parent;
+        is.hInsertAfter = ti_after;
+        is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
+        is.item.pszText = LPSTR_TEXTCALLBACK;
+        is.item.lParam = reinterpret_cast<LPARAM>(ptr.get());
+        is.item.state = expanded ? TVIS_EXPANDED : 0;
+        is.item.stateMask = TVIS_EXPANDED;
 
-            const auto children_count = ptr->get_children().size();
-            if (!populate_children && children_count > 0) {
-                is.item.mask |= TVIF_CHILDREN;
-                is.item.cChildren = 1;
-            }
-
-            ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);
-
-            if (selected && !m_has_selection) {
-                TreeView_SelectItem(m_wnd_tv, ptr->m_ti);
-                m_has_selection = true;
-            }
-
-            if (selected)
-                m_new_selection.emplace(ptr);
-
-            ptr->set_expanded(expanded);
+        if (m_has_selection && selected) {
+            is.item.state |= TVIS_SELECTED;
+            is.item.stateMask |= TVIS_SELECTED;
         }
-        ptr->m_label_dirty = false;
+
+        const auto children_count = ptr->get_children().size();
+        if (!populate_children && children_count > 0) {
+            is.item.mask |= TVIF_CHILDREN;
+            is.item.cChildren = 1;
+        }
+
+        ptr->m_ti = TreeView_InsertItem(m_wnd_tv, &is);
+
+        if (selected && !m_has_selection) {
+            TreeView_SelectItem(m_wnd_tv, ptr->m_ti);
+            m_has_selection = true;
+        }
+
+        if (selected)
+            m_new_selection.emplace(ptr);
+
+        ptr->set_expanded(expanded);
     }
 
     if (populate_children)
@@ -88,7 +92,7 @@ void TreeViewPopulator::setup_children(node_ptr ptr, std::optional<alp::SavedNod
 
             const auto insert_after = chunk_start != children.rend() ? (*chunk_start)->m_ti : TVI_FIRST;
 
-            if (chunk_start != children.rend())
+            while (chunk_start != children.rend() && (*chunk_start)->m_ti)
                 ++chunk_start;
 
             for (auto current = chunk_end; current != chunk_start; ++current) {
@@ -96,7 +100,7 @@ void TreeViewPopulator::setup_children(node_ptr ptr, std::optional<alp::SavedNod
                 const auto index = std::distance(current, children.rend()) - 1;
 
                 std::optional<alp::SavedNodeState> child_state
-                    = node_state ? find_node_state(node_state->children, node->get_name()) : std::nullopt;
+                    = node_state && !ptr->m_ti ? find_node_state(node_state->children, node->get_name()) : std::nullopt;
 
                 setup_tree(ptr->m_ti, node, std::move(child_state), index, children_count, insert_after);
             }

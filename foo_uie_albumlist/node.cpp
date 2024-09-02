@@ -140,11 +140,6 @@ node_ptr Node::add_child_v2(const char* p_value, size_t p_value_len)
     return temp;
 }
 
-void Node::mark_all_labels_dirty()
-{
-    apply_function([](auto& node) { node.m_label_dirty = true; });
-}
-
 void Node::mark_tracks_unsorted()
 {
     apply_function([](auto& node) { node.m_sorted = false; });
@@ -152,15 +147,8 @@ void Node::mark_tracks_unsorted()
 
 void Node::purge_empty_children(HWND wnd)
 {
-    size_t index_first_removed = pfc_infinite;
-
-    bool was_something_removed{};
     for (auto iter = m_children.begin(); iter != m_children.end();) {
         auto& child = *iter;
-
-        if (was_something_removed && cfg_show_item_indices) {
-            child->m_label_dirty = true;
-        }
 
         if (child->get_tracks().get_count()) {
             ++iter;
@@ -176,10 +164,5 @@ void Node::purge_empty_children(HWND wnd)
             TreeView_DeleteItem(wnd, child->m_ti);
 
         iter = m_children.erase(iter);
-
-        was_something_removed = true;
-
-        if (cfg_show_subitem_counts)
-            m_label_dirty = true;
     }
 }
