@@ -1,0 +1,13 @@
+name: Auto-merge pull requests
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge
+    uses: reupen/github-actions/.github/workflows/auto-merge.yml@v1
