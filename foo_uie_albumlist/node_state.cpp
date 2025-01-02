@@ -42,7 +42,7 @@ auto read_node_state(stream_reader* reader, abort_callback& aborter) -> SavedNod
 {
     const auto size = reader->read_lendian_t<uint32_t>(aborter);
 
-    fbh::StreamReaderLimiter limited_reader(reader, size);
+    stream_reader_limited_ref limited_reader(reader, size);
 
     SavedNodeState state;
     state.name = limited_reader.read_string(aborter);
