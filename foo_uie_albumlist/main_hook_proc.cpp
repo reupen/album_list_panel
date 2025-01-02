@@ -198,7 +198,7 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
                 const auto colour_selection_text = colours.get_colour(cui::colours::colour_selection_text);
                 const auto selection_count = tracks_holder.tracks().get_count();
                 pfc::string8 text;
-                text << mmh::IntegerFormatter(selection_count) << (selection_count != 1 ? " tracks" : " track");
+                text << mmh::format_integer(selection_count).c_str() << (selection_count != 1 ? " tracks" : " track");
                 SHDRAGIMAGE sdi = {0};
                 LOGFONT lf = {0};
                 GetObject(s_font.get(), sizeof(lf), &lf);
