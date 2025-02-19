@@ -38,9 +38,10 @@ void write_node_state(stream_writer* writer, const SavedNodeState& state, abort_
     writer->write(temp_writer.m_data.get_ptr(), temp_writer.m_data.get_size(), aborter);
 }
 
-auto read_node_state(stream_reader* reader, abort_callback& aborter) -> SavedNodeState
+auto read_node_state(stream_reader* reader, abort_callback& aborter, std::optional<uint32_t> read_size)
+    -> SavedNodeState
 {
-    const auto size = reader->read_lendian_t<uint32_t>(aborter);
+    const auto size = read_size ? *read_size : reader->read_lendian_t<uint32_t>(aborter);
 
     stream_reader_limited_ref limited_reader(reader, size);
 

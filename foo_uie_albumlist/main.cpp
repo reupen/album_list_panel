@@ -520,6 +520,8 @@ void AlbumListWindow::get_config(stream_writer* p_writer, abort_callback& p_abor
         write_node_state(p_writer, m_root->get_state(m_selection), p_abort);
     } else if (m_node_state) {
         write_node_state(p_writer, *m_node_state, p_abort);
+    } else {
+        p_writer->write_lendian_t(uint32_t{}, p_abort);
     }
 
     pfc::string filter_query;
@@ -564,22 +566,36 @@ void AlbumListWindow::get_category(pfc::string_base& out) const
 
 void AlbumListWindow::set_config(stream_reader* p_reader, t_size psize, abort_callback& p_abort)
 {
-    if (psize) {
-        p_reader->read_string(m_view, p_abort);
-        try {
-            p_reader->read_lendian_t(m_filter, p_abort);
-            const auto horizontal_scroll_position = p_reader->read_lendian_t<int32_t>(p_abort);
-            const auto vertical_scroll_position = p_reader->read_lendian_t<int32_t>(p_abort);
-            const auto vertical_scroll_max = p_reader->read_lendian_t<int32_t>(p_abort);
-            m_node_state = alp::read_node_state(p_reader, p_abort);
+    if (!psize)
+        return;
+
+    stream_reader_limited_ref limited_reader(p_reader, psize);
+
+    limited_reader.read_string(m_view, p_abort);
+    try {
+        limited_reader.read_lendian_t(m_filter, p_abort);
+        const auto horizontal_scroll_position = limited_reader.read_lendian_t<int32_t>(p_abort);
+        const auto vertical_scroll_position = limited_reader.read_lendian_t<int32_t>(p_abort);
+        const auto vertical_scroll_max = limited_reader.read_lendian_t<int32_t>(p_abort);
+
+        const auto next_element_size = limited_reader.read_lendian_t<uint32_t>(p_abort);
+
+        // Handle bad config data written by versions from 2.0.0 to 2.0.3
+        if (next_element_size == limited_reader.get_remaining()) {
+            limited_reader.read_string_ex(m_saved_filter_query, next_element_size, p_abort);
+            return;
+        }
+
+        if (next_element_size > 0) {
+            m_node_state = alp::read_node_state(&limited_reader, p_abort, next_element_size);
 
             // Only set scroll positions if expansion state was read
             m_saved_scroll_position
                 = alp::SavedScrollPosition{horizontal_scroll_position, vertical_scroll_position, vertical_scroll_max};
-
-            p_reader->read_string(m_saved_filter_query, p_abort);
-        } catch (exception_io_data_truncation&) {
         }
+
+        limited_reader.read_string(m_saved_filter_query, p_abort);
+    } catch (exception_io_data_truncation&) {
     }
 }
 
