@@ -319,13 +319,13 @@ void AlbumListWindow::on_task_completion(t_uint32 task, t_uint32 code)
 void AlbumListWindow::create_or_destroy_filter()
 {
     if (m_filter)
-        create_filter();
+        create_filter(true);
     else
         destroy_filter();
     on_size();
 }
 
-void AlbumListWindow::create_filter()
+void AlbumListWindow::create_filter(bool set_focus)
 {
     if (m_filter && !m_wnd_edit) {
         const auto flags = WS_EX_CLIENTEDGE;
@@ -334,7 +334,8 @@ void AlbumListWindow::create_filter()
             core_api::get_my_instance(), nullptr);
         update_edit_theme();
         uih::set_window_font(m_wnd_edit, s_font.get(), false);
-        SetFocus(m_wnd_edit);
+        if (set_focus)
+            SetFocus(m_wnd_edit);
         Edit_SetCueBannerText(m_wnd_edit, L"Search");
     }
 }
