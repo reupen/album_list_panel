@@ -59,7 +59,7 @@ public:
     void toggle_show_filter();
 
     void create_or_destroy_filter();
-    void create_filter();
+    void create_filter(bool set_focus = false);
     void destroy_filter();
     void create_tree();
     void destroy_tree(bool should_save_scroll_position);
