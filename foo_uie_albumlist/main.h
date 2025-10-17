@@ -119,6 +119,8 @@ private:
     LRESULT WINAPI on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     std::optional<LRESULT> on_tree_lbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     std::optional<LRESULT> on_tree_lbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    void on_tree_rbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    std::optional<LRESULT> on_tree_rbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
     static inline pfc::ptr_list_t<AlbumListWindow> s_instances;
     static const GUID s_extension_guid;
@@ -162,6 +164,7 @@ private:
     std::optional<std::vector<node_ptr>> m_cleaned_selection;
     std::unordered_set<node_ptr> m_selection;
     std::optional<alp::SavedNodeState> m_node_state;
+    std::optional<std::vector<std::weak_ptr<Node>>> m_previous_selection;
     pfc::string m_saved_filter_query;
     search_filter::ptr m_filter_ptr;
     ui_selection_holder::ptr m_selection_holder;

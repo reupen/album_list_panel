@@ -107,6 +107,7 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         m_selection_holder.release();
         m_root.reset();
         m_selection.clear();
+        m_previous_selection.reset();
         m_cleaned_selection.reset();
         m_delayed_click_node.reset();
 
@@ -144,16 +145,10 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
     const HMENU menu{CreatePopupMenu()};
     service_ptr_t<contextmenu_manager> p_menu_manager;
     HTREEITEM treeitem{nullptr};
-    TVHITTESTINFO ti{};
 
-    if (pt.x != -1 && pt.y != -1) {
-        ti.pt = pt;
-        ScreenToClient(m_wnd_tv, &ti.pt);
-        TreeView_HitTest(m_wnd_tv, &ti);
-        if (ti.hItem && (ti.flags & TVHT_ONITEM)) {
-            treeitem = ti.hItem;
-        }
-    } else {
+    const auto is_from_keyboard = pt.x == -1 && pt.y == -1;
+
+    if (is_from_keyboard) {
         treeitem = TreeView_GetSelection(m_wnd_tv);
         RECT rc;
         if (treeitem && TreeView_GetItemRect(m_wnd_tv, treeitem, &rc, TRUE)) {
@@ -163,6 +158,21 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
             pt.y = rc.top + (rc.bottom - rc.top) / 2;
         } else {
             GetMessagePos(&pt);
+        }
+    } else {
+        TVHITTESTINFO ti{};
+        ti.pt = pt;
+        ScreenToClient(m_wnd_tv, &ti.pt);
+
+        RECT client_rect{};
+        GetClientRect(get_wnd(), &client_rect);
+
+        if (!PtInRect(&client_rect, ti.pt))
+            return 0;
+
+        TreeView_HitTest(m_wnd_tv, &ti);
+        if (ti.hItem && (ti.flags & TVHT_ONITEM)) {
+            treeitem = ti.hItem;
         }
     }
 
@@ -197,15 +207,18 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
 
     TVITEMEX tvi{};
     tvi.hItem = treeitem;
-    tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+    tvi.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_STATE;
+    tvi.stateMask = TVIS_SELECTED;
     TreeView_GetItem(m_wnd_tv, &tvi);
+
+    if (is_from_keyboard && !(tvi.state & TVIS_SELECTED))
+        treeitem = nullptr;
+
     const auto click_node = treeitem && tvi.lParam ? reinterpret_cast<Node*>(tvi.lParam)->shared_from_this() : nullptr;
 
     if (click_node && !m_selection.contains(click_node)) {
-        TreeView_SelectItem(m_wnd_tv, treeitem);
-
-        if (!(GetKeyState(VK_SHIFT) & 0x8000))
-            autosend();
+        deselect_selected_nodes();
+        manually_select_tree_item(treeitem, true);
     }
 
     const auto nodes
@@ -234,8 +247,6 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
     const int cmd
         = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, get_wnd(), nullptr);
     DestroyMenu(menu);
-
-    update_shift_start_node();
 
     if (cmd > 0) {
         if (p_menu_manager.is_valid() && cmd >= IDM_MANAGER_BASE) {

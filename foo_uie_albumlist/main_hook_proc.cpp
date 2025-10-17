@@ -160,6 +160,16 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
         if (const auto result = on_tree_lbuttondown(wnd, msg, wp, lp))
             return *result;
         break;
+    case WM_RBUTTONDOWN:
+        on_tree_rbuttondown(wnd, msg, wp, lp);
+
+        // The tree view uses a modal loop to process clicks. So supress the default handling
+        // so we get a WM_RBUTTONUP message.
+        return 0;
+    case WM_RBUTTONUP:
+        if (const auto result = on_tree_rbuttonup(wnd, msg, wp, lp))
+            return *result;
+        break;
     case WM_MOUSEMOVE: {
         const POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
 
@@ -357,4 +367,57 @@ std::optional<LRESULT> AlbumListWindow::on_tree_lbuttonup(HWND wnd, UINT msg, WP
     }
 
     return {};
+}
+
+void AlbumListWindow::on_tree_rbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    SetFocus(wnd);
+
+    TVHITTESTINFO tvhti{};
+    tvhti.pt = POINT{GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+    TreeView_HitTest(wnd, &tvhti);
+
+    if (!(tvhti.hItem && tvhti.flags & TVHT_ONITEM))
+        return;
+
+    TVITEMEX tvi{};
+    tvi.hItem = tvhti.hItem;
+    tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+    TreeView_GetItem(m_wnd_tv, &tvi);
+
+    if (!tvi.lParam)
+        return;
+
+    const auto click_node = reinterpret_cast<Node*>(tvi.lParam)->shared_from_this();
+
+    if (!click_node || m_selection.contains(click_node))
+        return;
+
+    SetCapture(wnd);
+
+    m_previous_selection.emplace();
+    ranges::copy(m_selection, std::back_inserter(*m_previous_selection));
+
+    deselect_selected_nodes();
+    manually_select_tree_item(tvhti.hItem, true);
+}
+
+std::optional<LRESULT> AlbumListWindow::on_tree_rbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (GetCapture() == wnd)
+        ReleaseCapture();
+
+    const auto result = CallWindowProc(m_treeproc, wnd, msg, wp, lp);
+
+    if (m_previous_selection) {
+        deselect_selected_nodes();
+
+        for (const auto& node : *m_previous_selection)
+            if (auto locked_node = node.lock())
+                manually_select_tree_item(locked_node->m_ti, true);
+    }
+
+    m_previous_selection.reset();
+
+    return result;
 }
