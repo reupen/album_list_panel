@@ -122,6 +122,32 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
             m_process_char = true;
             return 0;
         }
+
+        switch (wp) {
+        // Ctrl+A
+        case 1: {
+            if ((HIWORD(lp) & KF_REPEAT) || (GetKeyState(VK_CONTROL) & 0x8000) == 0)
+                return 0;
+
+            auto tree_item = TreeView_GetRoot(wnd);
+            bool any_selected{};
+
+            do {
+                if (auto node = get_node_for_tree_item(tree_item)) {
+                    if (!m_selection.contains(node)) {
+                        manually_select_tree_item(tree_item, true);
+                        any_selected = true;
+                    }
+                }
+            } while ((tree_item = TreeView_GetNextVisible(m_wnd_tv, tree_item)));
+
+            if (any_selected) {
+                autosend();
+                update_selection_holder();
+            }
+            return 0;
+        }
+        }
         break;
     case WM_SETFOCUS: {
         update_shift_start_node();
