@@ -60,15 +60,12 @@ void Node::sort_tracks()
     m_sorted = true;
 }
 
-Node::Node(const char* name, size_t name_length, AlbumListWindow* window, uint16_t level, std::weak_ptr<Node> parent)
+Node::Node(std::string name, AlbumListWindow* window, uint16_t level, std::weak_ptr<Node> parent)
     : m_level(level)
     , m_parent(std::move(parent))
+    , m_name(std::move(name))
     , m_window(window)
 {
-    if (name && name_length > 0) {
-        m_name.set_string(name, name_length);
-    }
-    m_sorted = false;
 }
 
 void Node::remove_tracks(pfc::bit_array& mask)
@@ -102,8 +99,7 @@ alp::SavedNodeState Node::get_state(const std::unordered_set<node_ptr>& selectio
 std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> Node::find_child(
     std::string_view name) const
 {
-    auto normalised_name = name.empty() ? "?"sv : name;
-    const auto value_utf16 = pfc::stringcvt::string_wide_from_utf8(normalised_name.data(), normalised_name.size());
+    const auto value_utf16 = pfc::stringcvt::string_wide_from_utf8(name.data(), name.size());
 
     return std::ranges::equal_range(
         m_children, value_utf16.get_ptr(),
@@ -111,12 +107,12 @@ std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_i
         [](auto& node) { return node->get_name_utf16(); });
 }
 
-node_ptr Node::find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new)
+node_ptr Node::find_or_add_child(std::string name, bool b_find, bool& b_new)
 {
     if (!b_find)
-        return add_child_v2(p_value, p_value_len);
+        return add_child_v2(std::move(name));
 
-    auto [start, end] = find_child({p_value, p_value_len});
+    auto [start, end] = find_child(name);
 
     if (start != end) {
         b_new = false;
@@ -125,17 +121,12 @@ node_ptr Node::find_or_add_child(const char* p_value, size_t p_value_len, bool b
 
     b_new = true;
 
-    return *m_children.insert(
-        start, std::make_shared<Node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this()));
+    return *m_children.insert(start, std::make_shared<Node>(name, m_window, m_level + 1, this->shared_from_this()));
 }
 
-node_ptr Node::add_child_v2(const char* p_value, size_t p_value_len)
+node_ptr Node::add_child_v2(std::string name)
 {
-    if (p_value_len == 0 || *p_value == 0) {
-        p_value = "?";
-        p_value_len = 1;
-    }
-    node_ptr temp = std::make_shared<Node>(p_value, p_value_len, m_window, m_level + 1, this->shared_from_this());
+    node_ptr temp = std::make_shared<Node>(std::move(name), m_window, m_level + 1, this->shared_from_this());
     m_children.emplace_back(temp);
     return temp;
 }

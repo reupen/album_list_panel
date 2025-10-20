@@ -65,8 +65,8 @@ void send_nodes_to_playlist(const std::vector<node_ptr>& nodes, bool replace_con
         return;
 
     if (create_new) {
-        auto node_names
-            = nodes | ranges::views::transform([](auto& node) { return node->get_name(); }) | ranges::views::take(3);
+        auto node_names = nodes | ranges::views::transform([](auto& node) { return node->get_display_name(); })
+            | ranges::views::take(3);
         auto playlist_name = mmh::join<decltype(node_names)&, std::string_view, std::string>(node_names, ", ");
 
         if (nodes.size() > 3)

@@ -2,13 +2,15 @@
 
 namespace alp {
 
-auto find_node_state(const std::vector<SavedNodeState>& items, const char* child_name) -> std::optional<SavedNodeState>
+auto find_node_state(const std::vector<SavedNodeState>& items, std::string_view child_name)
+    -> std::optional<SavedNodeState>
 {
-    const pfc::stringcvt::string_wide_from_utf8 wide_child_name(child_name);
+    const auto child_name_utf16 = mmh::to_utf16(child_name);
 
     const auto [start, end] = std::ranges::equal_range(
-        items, wide_child_name, [](auto&& left, auto&& right) { return StrCmpLogicalW(left, right) < 0; },
-        [](auto& child) { return pfc::stringcvt::string_wide_from_utf8(child.name); });
+        items, child_name_utf16,
+        [](auto&& left, auto&& right) { return StrCmpLogicalW(left.c_str(), right.c_str()) < 0; },
+        [](auto& child) { return mmh::to_utf16(child.name); });
 
     if (start != end)
         return *start;
@@ -58,7 +60,7 @@ auto read_node_state(stream_reader* reader, abort_callback& aborter, std::option
     // Behaviour of StrCmpLogicalW can change e.g. with Windows updates, so re-sort after deserialising
     std::ranges::sort(
         state.children, [](auto&& left, auto&& right) { return StrCmpLogicalW(left, right) < 0; },
-        [](auto& item) { return pfc::stringcvt::string_wide_from_utf8(item.name); });
+        [](auto& item) { return pfc::stringcvt::string_wide_from_utf8(item.name.data(), item.name.size()); });
 
     state.selected = limited_reader.read_lendian_t<bool>(aborter);
     limited_reader.flush_remaining(aborter);

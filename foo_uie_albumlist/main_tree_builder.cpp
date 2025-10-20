@@ -1,5 +1,16 @@
 #include "stdafx.h"
 #include "tree_view_populator.h"
+#include "utils.h"
+
+namespace {
+
+constexpr auto vertical_bar = "|"sv;
+constexpr auto vertical_bar_replacement = "\uEFA0"sv;
+
+std::string unescape_vertical_bar(std::string_view text)
+{
+    return alp::utils::replace_substring(text, vertical_bar_replacement, vertical_bar);
+}
 
 template <typename String>
 const char* c_str(String& string)
@@ -13,11 +24,10 @@ const char* c_str(const char* const& string)
     return string;
 }
 
+} // namespace
+
 class VerticalBarTitleformatTextFilter : public titleformat_text_filter {
 public:
-    static constexpr auto filter_char = '|';
-    static constexpr auto replacement_char = "_";
-
     void write(const GUID& p_inputtype, pfc::string_receiver& p_out, const char* p_data, t_size p_data_length) override
     {
         // titleformat_text_filter_impl_reserved_chars only filters for titleformat_inputtypes::meta
@@ -32,7 +42,7 @@ public:
         size_t start{};
 
         while (start < real_length) {
-            const size_t end = input.find(filter_char, start);
+            const size_t end = input.find(vertical_bar, start);
 
             if (end == std::string_view::npos) {
                 p_out.add_string(p_data + start, p_data_length - start);
@@ -40,7 +50,7 @@ public:
             }
 
             p_out.add_string(p_data + start, end - start);
-            p_out.add_string(replacement_char, 1);
+            p_out.add_string(vertical_bar_replacement.data(), vertical_bar_replacement.size());
             start = end + 1;
         }
     }
@@ -176,8 +186,8 @@ static void process_level_recur_t(
             current_path++;
         if (items_local_ptr > 0 && t_entry::g_compare_segment(last_path, current_path) != 0) {
             bool b_new = false;
-            node_ptr p_node
-                = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only, b_new);
+            node_ptr p_node = p_parent->find_or_add_child(
+                unescape_vertical_bar({last_path, t_entry::g_get_segment_length(last_path)}), !b_add_only, b_new);
             if (b_new)
                 b_node_added = true;
             process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
@@ -195,8 +205,8 @@ static void process_level_recur_t(
 
     if (items_local_ptr > 0) {
         bool b_new{false};
-        node_ptr p_node
-            = p_parent->find_or_add_child(last_path, t_entry::g_get_segment_length(last_path), !b_add_only, b_new);
+        node_ptr p_node = p_parent->find_or_add_child(
+            unescape_vertical_bar({last_path, t_entry::g_get_segment_length(last_path)}), !b_add_only, b_new);
         if (b_new)
             b_node_added = true;
         process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
@@ -359,7 +369,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
             mmh::single_reordering_sort(entries, process_bydir_entry::g_compare, false);
 
             if (!preserve_existing || !m_root)
-                m_root = std::make_shared<Node>(nullptr, 0, this, 0);
+                m_root = std::make_shared<Node>("All music"s, this, 0);
 
             process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
         }
@@ -419,7 +429,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
             mmh::destructive_reorder(entries_sorted, perm);
 
             if (!preserve_existing || !m_root)
-                m_root = std::make_shared<Node>(nullptr, 0, this, 0);
+                m_root = std::make_shared<Node>("All music"s, this, 0);
             process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(
                 entries_sorted.get_ptr(), size, m_root, !preserve_existing);
         }

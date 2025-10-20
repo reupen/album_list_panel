@@ -10,8 +10,7 @@ public:
     bool m_children_inserted{};
     uint16_t m_level;
 
-    Node(const char* name, size_t name_length, class AlbumListWindow* window, uint16_t level,
-        std::weak_ptr<Node> parent = {});
+    Node(std::string name, class AlbumListWindow* window, uint16_t level, std::weak_ptr<Node> parent = {});
 
     void sort_children();
 
@@ -30,16 +29,21 @@ public:
         m_children.clear();
     }
 
-    const char* get_name() const { return m_name.is_empty() ? "All music" : m_name.get_ptr(); }
+    std::string_view get_name() const { return m_name; }
+    std::string_view get_display_name() const { return m_name.empty() ? "?"sv : m_name; }
     const wchar_t* get_name_utf16()
     {
-        if (m_name.is_empty())
-            return L"All music";
-
         if (m_name_utf16.is_empty())
-            m_name_utf16.convert(m_name.get_ptr(), m_name.get_length());
+            m_name_utf16.convert(m_name.data(), m_name.length());
 
         return m_name_utf16.get_ptr();
+    }
+    const wchar_t* get_display_name_utf16()
+    {
+        if (m_name.empty())
+            return L"?";
+
+        return get_name_utf16();
     }
 
     void add_entry(const metadb_handle_ptr& p_entry) { m_tracks.add_item(p_entry); }
@@ -55,11 +59,9 @@ public:
 
     std::tuple<std::vector<node_ptr>::const_iterator, std::vector<node_ptr>::const_iterator> find_child(
         std::string_view name) const;
-    node_ptr find_or_add_child(const char* p_value, size_t p_value_len, bool b_find, bool& b_new);
+    node_ptr find_or_add_child(std::string name, bool b_find, bool& b_new);
 
-    node_ptr add_child_v2(const char* p_value, size_t p_value_len);
-
-    node_ptr add_child_v2(const char* p_value) { return add_child_v2(p_value, strlen(p_value)); }
+    node_ptr add_child_v2(std::string name);
 
     void mark_tracks_unsorted();
 
@@ -95,12 +97,12 @@ private:
 
     std::weak_ptr<Node> m_parent;
     std::optional<size_t> m_display_index;
-    pfc::string_simple m_name;
+    std::string m_name;
     pfc::stringcvt::string_wide_from_utf8 m_name_utf16;
     std::vector<node_ptr> m_children;
     metadb_handle_list m_tracks;
-    bool m_sorted : 1 {};
-    bool m_bydir : 1 {};
-    bool m_expanded : 1 {};
+    bool m_sorted{};
+    bool m_bydir{};
+    bool m_expanded{};
     class AlbumListWindow* m_window{};
 };
