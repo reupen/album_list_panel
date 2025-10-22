@@ -296,6 +296,7 @@
     <ClCompile Include=".\tfhook.cpp" />
     <ClCompile Include="node_state.cpp" />
     <ClCompile Include="tree_view_populator.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\config.h" />
@@ -311,6 +312,7 @@
     <ClInclude Include="node_state.h" />
     <ClInclude Include="node_utils.h" />
     <ClInclude Include="tree_view_populator.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\columns_ui-sdk\columns_ui-sdk.vcxproj">
