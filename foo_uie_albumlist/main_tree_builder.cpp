@@ -57,91 +57,106 @@ public:
 };
 
 struct process_bydir_entry {
-    metadb_handle* m_item;
-    const char* m_path;
+    metadb_handle* m_track{};
+    std::string_view m_path;
 
-    static bool g_is_separator(char c) { return c == '\\' || c == '|' || c == '/'; }
+    process_bydir_entry() {}
 
-    static const char* g_advance(const char* p_path)
+    process_bydir_entry(metadb_handle* m_track, std::string_view m_path) : m_track(m_track), m_path(std::move(m_path))
     {
-        const char* ptr = p_path;
-        while (*ptr && !g_is_separator(*ptr))
-            ptr++;
-        while (*ptr && g_is_separator(*ptr))
-            ptr++;
-        return ptr;
     }
 
-    static size_t g_get_segment_length(const char* p_path)
+    const std::vector<std::string_view>& segments() const
     {
-        size_t ret{0};
-        while (p_path[ret] && !g_is_separator(p_path[ret]))
-            ret++;
-        return ret;
+        if (!m_segments) {
+            m_segments = ranges::views::split_when(m_path, [](char c) {
+                return "\\|/"sv.find(c) != std::string_view::npos;
+            }) | ranges::views::transform([](auto&& range) {
+                return std::string_view(&*range.begin(), std::ranges::distance(range));
+            }) | ranges::to<std::vector>;
+        }
+
+        return *m_segments;
     }
 
-    size_t get_segment_length() const { return g_get_segment_length(m_path); }
-
-    static int g_compare_segment(const char* p_path1, const char* p_path2)
+    static int s_compare_segment(std::string_view p_path1, std::string_view p_path2)
     {
-        return metadb::path_compare_ex(p_path1, g_get_segment_length(p_path1), p_path2, g_get_segment_length(p_path2));
+        return metadb::path_compare_ex(p_path1.data(), p_path1.size(), p_path2.data(), p_path2.size());
     }
 
-    static int g_compare_segment(const process_bydir_entry& p_item1, const process_bydir_entry& p_item2)
+    static int s_compare(const process_bydir_entry& p_item1, const process_bydir_entry& p_item2)
     {
         return metadb::path_compare_ex(
-            p_item1.m_path, p_item1.get_segment_length(), p_item2.m_path, p_item2.get_segment_length());
-    }
-
-    static int g_compare(const process_bydir_entry& p_item1, const process_bydir_entry& p_item2)
-    {
-        return metadb::path_compare(p_item1.m_path, p_item2.m_path);
+            p_item1.m_path.data(), p_item1.m_path.size(), p_item2.m_path.data(), p_item2.m_path.size());
     }
 
     enum {
         is_bydir = true
     };
+
+private:
+    mutable std::optional<std::vector<std::string_view>> m_segments;
 };
 
-template <typename String = std::string>
 struct process_byformat_entry {
-    metadb_handle* m_item;
-    String m_path;
+    metadb_handle* m_track{};
+    std::string m_path;
 
-    static bool g_is_separator(char c) { return c == '|'; }
+    process_byformat_entry() {}
 
-    static const char* g_advance(const char* p_path)
+    process_byformat_entry(metadb_handle* m_track, std::string m_path) : m_track(m_track), m_path(std::move(m_path)) {}
+
+    process_byformat_entry(const process_byformat_entry& other) : m_track(other.m_track), m_path(other.m_path)
     {
-        const char* ptr = p_path;
-        while (*ptr && !g_is_separator(*ptr))
-            ptr++;
-        while (*ptr && g_is_separator(*ptr))
-            ptr++;
-        return ptr;
+        assert(!other.m_segments);
     }
 
-    static size_t g_get_segment_length(const char* p_path)
+    process_byformat_entry(process_byformat_entry&& other) noexcept
+        : m_track(other.m_track)
+        , m_path(std::move(other.m_path))
     {
-        size_t ret = 0;
-        while (p_path[ret] && !g_is_separator(p_path[ret]))
-            ret++;
-        return ret;
+        assert(!other.m_segments);
     }
 
-    size_t get_segment_length() const { return g_get_segment_length(c_str(m_path)); }
-
-    static int g_compare_segment(const char* p_path1, const char* p_path2)
+    process_byformat_entry& operator=(const process_byformat_entry& other)
     {
-        return stricmp_utf8_ex(p_path1, g_get_segment_length(p_path1), p_path2, g_get_segment_length(p_path2));
+        if (this == &other)
+            return *this;
+
+        assert(!other.m_segments);
+        m_track = other.m_track;
+        m_path = other.m_path;
+        return *this;
     }
 
-    static int g_compare_segment(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2)
+    process_byformat_entry& operator=(process_byformat_entry&& other) noexcept
     {
-        return stricmp_utf8_ex(
-            c_str(p_item1.m_path), p_item1.get_segment_length(), c_str(p_item2.m_path), p_item2.get_segment_length());
+        if (this == &other)
+            return *this;
+
+        assert(!other.m_segments);
+        m_track = other.m_track;
+        m_path = std::move(other.m_path);
+        return *this;
     }
 
-    static int g_compare(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2)
+    const std::vector<std::string_view>& segments() const
+    {
+        if (!m_segments) {
+            m_segments = m_path | std::views::split("|"sv)
+                | std::views::transform([](auto&& range) { return std::string_view(range.data(), range.size()); })
+                | ranges::to<std::vector>;
+        }
+
+        return *m_segments;
+    }
+
+    static int s_compare_segment(std::string_view p_path1, std::string_view p_path2)
+    {
+        return stricmp_utf8_ex(p_path1.data(), p_path1.size(), p_path2.data(), p_path2.size());
+    }
+
+    static int s_compare(const process_byformat_entry& p_item1, const process_byformat_entry& p_item2)
     {
         return stricmp_utf8(c_str(p_item1.m_path), c_str(p_item2.m_path));
     }
@@ -149,69 +164,44 @@ struct process_byformat_entry {
     enum {
         is_bydir = false
     };
+
+private:
+    mutable std::optional<std::vector<std::string_view>> m_segments;
 };
 
 template <typename t_entry>
 class ProcessEntryListWrapper : public pfc::list_base_const_t<metadb_handle_ptr> {
 public:
-    ProcessEntryListWrapper(const t_entry* p_data, size_t p_count) : m_data(p_data), m_count(p_count) {}
+    explicit ProcessEntryListWrapper(std::span<const t_entry> items) : m_items(items) {}
 
-    size_t get_count() const override { return m_count; }
+    size_t get_count() const override { return m_items.size(); }
 
-    void get_item_ex(metadb_handle_ptr& p_out, size_t n) const override { p_out = m_data[n].m_item; }
+    void get_item_ex(metadb_handle_ptr& p_out, size_t n) const override { p_out = m_items[n].m_track; }
 
 private:
-    const t_entry* m_data;
-    size_t m_count;
+    std::span<const t_entry> m_items;
 };
 
-template <typename t_entry, typename t_local_entry = t_entry>
-static void process_level_recur_t(
-    const t_entry* p_items, size_t const p_items_count, node_ptr p_parent, bool b_add_only)
+template <typename t_entry>
+static void process_level_recur_t(std::span<const t_entry> items, node_ptr p_parent, bool b_add_only, size_t level = 0)
 {
     p_parent->set_bydir(t_entry::is_bydir);
-    p_parent->set_data(ProcessEntryListWrapper<t_entry>(p_items, p_items_count), !b_add_only);
+    p_parent->set_data(ProcessEntryListWrapper<t_entry>(items), !b_add_only);
 
-    assert(p_items_count > 0);
+    assert(items.size() > 0);
 
-    pfc::array_t<t_local_entry> items_local;
-    items_local.set_size(p_items_count);
-    size_t items_local_ptr{0};
-    const char* last_path{nullptr};
-    bool b_node_added{false};
+    auto chunks = items | ranges::views::filter([level](const auto& item) { return level < item.segments().size(); })
+        | ranges::views::chunk_by([level](const auto& left, const auto& right) {
+              return t_entry::s_compare_segment(left.segments()[level], right.segments()[level]) == 0;
+          });
 
-    for (size_t i = 0; i < p_items_count; i++) {
-        const char* current_path = c_str(p_items[i].m_path);
-        while (*current_path && t_entry::g_is_separator(*current_path))
-            current_path++;
-        if (items_local_ptr > 0 && t_entry::g_compare_segment(last_path, current_path) != 0) {
-            bool b_new = false;
-            node_ptr p_node = p_parent->find_or_add_child(
-                unescape_vertical_bar({last_path, t_entry::g_get_segment_length(last_path)}), !b_add_only, b_new);
-            if (b_new)
-                b_node_added = true;
-            process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
-            items_local_ptr = 0;
-            last_path = nullptr;
-        }
+    for (auto&& chunk : chunks) {
+        const auto segment = chunk.front().segments()[level];
 
-        if (*current_path != 0) {
-            items_local[items_local_ptr].m_item = p_items[i].m_item;
-            items_local[items_local_ptr].m_path = t_entry::g_advance(current_path);
-            items_local_ptr++;
-            last_path = current_path;
-        }
-    }
-
-    if (items_local_ptr > 0) {
-        bool b_new{false};
-        node_ptr p_node = p_parent->find_or_add_child(
-            unescape_vertical_bar({last_path, t_entry::g_get_segment_length(last_path)}), !b_add_only, b_new);
-        if (b_new)
-            b_node_added = true;
-        process_level_recur_t<>(items_local.get_ptr(), items_local_ptr, p_node, b_add_only);
-        items_local_ptr = 0;
-        last_path = nullptr;
+        bool b_new{};
+        const auto next_parent = p_parent->find_or_add_child(unescape_vertical_bar(segment), !b_add_only, b_new);
+        process_level_recur_t<t_entry>({&chunk.front(), gsl::narrow_cast<size_t>(ranges::distance(chunk))}, next_parent,
+            b_add_only || b_new, level + 1);
     }
 }
 
@@ -362,16 +352,16 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
 
             for (size_t n{0}; n < count; n++) {
                 api->get_relative_path(tracks[n], strings[n]);
-                entries[n].m_path = strings[n];
-                entries[n].m_item = tracks[n].get_ptr();
+                entries[n].m_path = {strings[n], strings[n].length()};
+                entries[n].m_track = tracks[n].get_ptr();
             }
 
-            mmh::single_reordering_sort(entries, process_bydir_entry::g_compare, false);
+            mmh::single_reordering_sort(entries, process_bydir_entry::s_compare, false);
 
             if (!preserve_existing || !m_root)
                 m_root = std::make_shared<Node>("All music"s, this, 0);
 
-            process_level_recur_t(entries.get_ptr(), count, m_root, !preserve_existing);
+            process_level_recur_t<process_bydir_entry>({entries.get_ptr(), count}, m_root, !preserve_existing);
         }
     } else {
         const size_t count{tracks.get_count()};
@@ -379,7 +369,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
         if (count > 0) {
             service_ptr_t<titleformat_object> script;
             static_api_ptr_t<titleformat_compiler>()->compile_safe(script, get_hierarchy());
-            concurrency::concurrent_vector<process_byformat_entry<>> entries;
+            concurrency::concurrent_vector<process_byformat_entry> entries;
 
             const auto metadb_v2_api = metadb_v2::tryGet();
 
@@ -419,19 +409,18 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
 
             const size_t size = entries.size();
 
-            pfc::list_t<process_byformat_entry<>> entries_sorted;
+            pfc::list_t<process_byformat_entry> entries_sorted;
             entries_sorted.set_size(size);
             for (size_t i{0}; i < size; ++i)
                 entries_sorted[i] = std::move(entries[i]);
 
             mmh::Permutation perm(size);
-            mmh::sort_get_permutation(entries_sorted, perm, process_byformat_entry<>::g_compare, false, false, true);
+            mmh::sort_get_permutation(entries_sorted, perm, process_byformat_entry::s_compare, false, false, true);
             mmh::destructive_reorder(entries_sorted, perm);
 
             if (!preserve_existing || !m_root)
                 m_root = std::make_shared<Node>("All music"s, this, 0);
-            process_level_recur_t<process_byformat_entry<>, process_byformat_entry<const char*>>(
-                entries_sorted.get_ptr(), size, m_root, !preserve_existing);
+            process_level_recur_t<process_byformat_entry>({entries_sorted.get_ptr(), size}, m_root, !preserve_existing);
         }
     }
     if (!preserve_existing && m_root) {

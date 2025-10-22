@@ -30,7 +30,7 @@ public:
     }
 
     std::string_view get_name() const { return m_name; }
-    std::string_view get_display_name() const { return m_name.empty() ? "?"sv : m_name; }
+    std::string_view get_display_name() const { return m_name.empty() ? "(blank)"sv : m_name; }
     const wchar_t* get_name_utf16()
     {
         if (m_name_utf16.is_empty())
@@ -41,7 +41,7 @@ public:
     const wchar_t* get_display_name_utf16()
     {
         if (m_name.empty())
-            return L"?";
+            return L"(blank)";
 
         return get_name_utf16();
     }
