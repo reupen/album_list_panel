@@ -206,111 +206,94 @@ static void process_level_recur_t(std::span<const t_entry> items, node_ptr p_par
 }
 
 struct process_byformat_branch_segment {
-    size_t m_first_choice;
-    size_t m_last_choice;
-    size_t m_current_choice;
+    size_t m_choices_begin{};
+    size_t m_choices_end{};
+    size_t m_current_choice{};
 };
 
 struct process_byformat_branch_choice {
-    size_t m_start;
-    size_t m_end;
+    size_t m_start{};
+    size_t m_end{};
 };
+
+constexpr auto branch_marker = '\4';
+constexpr auto branch_delimiter = '\5';
 
 template <typename List>
 size_t process_byformat_add_branches(metadb_handle* handle, std::string text, List& entries)
 {
     const char* p_text = text.data();
-    const char* marker = strchr(p_text, 4);
-    if (marker == nullptr) {
+
+    if (text.find(branch_marker) == std::string::npos) {
         entries.push_back({handle, std::move(text)});
         return 1;
     }
+
     size_t branch_count{1};
 
-    pfc::list_t<process_byformat_branch_segment> segments;
-    pfc::list_t<process_byformat_branch_choice> choices;
+    std::vector<process_byformat_branch_segment> segments;
+    std::vector<process_byformat_branch_choice> choices;
 
     // compute segments and branch count
-    size_t ptr{0};
-    while (p_text[ptr] != 0) {
+    size_t pos{};
+    while (p_text[pos] != 0) {
         // begin choice
-        if (p_text[ptr] == 4) {
-            ptr++;
+        if (p_text[pos] == branch_marker) {
+            pos++;
 
-            if (p_text[ptr] == 4)
-                return 0; // empty choice
+            const auto segment_first_choice = choices.size();
 
-            process_byformat_branch_segment segment;
-            segment.m_first_choice = choices.get_count();
-            segment.m_current_choice = segment.m_first_choice;
+            auto choice_start = pos;
 
-            process_byformat_branch_choice choice;
-            choice.m_start = ptr;
-
-            while (p_text[ptr] != 0 && p_text[ptr] != 4) {
-                if (p_text[ptr] == 5) {
-                    choice.m_end = ptr;
-                    choices.add_item(choice);
-                    ptr++;
-                    choice.m_start = ptr;
+            while (p_text[pos] != 0 && p_text[pos] != branch_marker) {
+                if (p_text[pos] == branch_delimiter) {
+                    choices.emplace_back(choice_start, pos);
+                    ++pos;
+                    choice_start = pos;
                 } else
-                    ptr++;
+                    ++pos;
             }
 
-            choice.m_end = ptr;
+            choices.emplace_back(choice_start, pos);
 
-            if (p_text[ptr] != 0)
-                ptr++;
+            if (p_text[pos] == branch_marker)
+                ++pos;
 
-            if (choice.m_end > choice.m_start)
-                choices.add_item(choice);
-
-            segment.m_last_choice = choices.get_count();
-
-            if (segment.m_last_choice == segment.m_first_choice)
-                return 0; // only empty choices
-
-            segments.add_item(segment);
-
-            branch_count *= segment.m_last_choice - segment.m_first_choice;
+            segments.emplace_back(segment_first_choice, choices.size(), segment_first_choice);
+            branch_count *= choices.size() - segment_first_choice;
         } else {
-            process_byformat_branch_segment segment;
-            segment.m_first_choice = choices.get_count();
-            segment.m_current_choice = segment.m_first_choice;
+            const auto segment_first_choice = choices.size();
+            const auto choice_start = pos;
 
-            process_byformat_branch_choice choice;
-            choice.m_start = ptr;
+            while (p_text[pos] != 0 && p_text[pos] != branch_marker)
+                ++pos;
 
-            while (p_text[ptr] != 0 && p_text[ptr] != 4)
-                ptr++;
-
-            choice.m_end = ptr;
-            choices.add_item(choice);
-
-            segment.m_last_choice = choices.get_count();
-            segments.add_item(segment);
+            choices.emplace_back(choice_start, pos);
+            segments.emplace_back(segment_first_choice, choices.size(), segment_first_choice);
         }
     }
 
     // assemble branches
     for (size_t branch_index{0}; branch_index < branch_count; branch_index++) {
         std::string buffer;
-        const size_t segment_count{segments.get_count()};
-        for (size_t segment_index{0}; segment_index < segment_count; segment_index++) {
-            const process_byformat_branch_choice& choice = choices[segments[segment_index].m_current_choice];
+
+        for (const auto& segment : segments) {
+            const auto& choice = choices[segment.m_current_choice];
             buffer.append(&p_text[choice.m_start], choice.m_end - choice.m_start);
         }
+
         entries.push_back({handle, std::move(buffer)});
 
-        for (size_t segment_index{0}; segment_index < segment_count; segment_index++) {
-            process_byformat_branch_segment& segment = segments[segment_count - segment_index - 1];
+        for (auto& segment : segments | std::views::reverse) {
             segment.m_current_choice++;
-            if (segment.m_current_choice >= segment.m_last_choice)
-                segment.m_current_choice = segment.m_first_choice;
-            else
+
+            if (segment.m_current_choice < segment.m_choices_end)
                 break;
+
+            segment.m_current_choice = segment.m_choices_begin;
         }
     }
+
     return branch_count;
 }
 

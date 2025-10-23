@@ -128,17 +128,16 @@ bool MetaBranchTitleformatHook::process_meta_branch(titleformat_text_out* p_out,
         return false;
 
     t_size value_count = m_info->meta_enum_value_count(p_index);
-    bool found = false;
     p_out->write(titleformat_inputtypes::meta, "\4", 1);
+
     for (t_size n{0}; n < value_count; n++) {
-        if (n > 0) {
+        if (n > 0)
             p_out->write(titleformat_inputtypes::meta, "\5", 1);
-        }
+
         const char* value = m_info->meta_enum_value(p_index, n);
-        if (*value != 0)
-            found = true;
         p_out->write(titleformat_inputtypes::meta, value, pfc_infinite);
     }
+
     p_out->write(titleformat_inputtypes::meta, "\4", 1);
-    return found;
+    return value_count > 0;
 }
