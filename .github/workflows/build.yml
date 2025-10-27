@@ -47,13 +47,13 @@ jobs:
         run: |
           msbuild /m '/p:Platform=${{ matrix.platform }};Configuration=${{ matrix.configuration }}' "/logger:$Env:Temp\Reupen.MSBuild.GitHubLogger.dll" vc17\album_list_panel.sln
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.configuration == 'release'
         with:
           name: Component package (${{ matrix.configuration }}, ${{ matrix.platform }})
           path: vc17\release-*\*.fb2k-component
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.configuration == 'release'
         with:
           name: Symbols for debugging (${{ matrix.configuration }}, ${{ matrix.platform }})
