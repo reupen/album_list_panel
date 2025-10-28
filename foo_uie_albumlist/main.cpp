@@ -327,17 +327,23 @@ void AlbumListWindow::create_or_destroy_filter()
 
 void AlbumListWindow::create_filter(bool set_focus)
 {
-    if (m_filter && !m_wnd_edit) {
-        const auto flags = WS_EX_CLIENTEDGE;
-        m_wnd_edit = CreateWindowEx(flags, WC_EDIT, pfc::stringcvt::string_wide_from_utf8(m_saved_filter_query),
-            WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0, get_wnd(), HMENU(IDC_FILTER),
-            core_api::get_my_instance(), nullptr);
-        update_edit_theme();
-        uih::set_window_font(m_wnd_edit, s_font.get(), false);
-        if (set_focus)
-            SetFocus(m_wnd_edit);
-        Edit_SetCueBannerText(m_wnd_edit, L"Search");
-    }
+    if (!m_filter || m_wnd_edit)
+        return;
+
+    constexpr auto flags = WS_EX_CLIENTEDGE;
+    m_wnd_edit = CreateWindowEx(flags, WC_EDIT, pfc::stringcvt::string_wide_from_utf8(m_saved_filter_query),
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL, 0, 0, 0, 0, get_wnd(), HMENU(IDC_FILTER),
+        core_api::get_my_instance(), nullptr);
+
+    if (!m_wnd_edit)
+        return;
+
+    uih::enhance_edit_control(m_wnd_edit);
+    update_edit_theme();
+    uih::set_window_font(m_wnd_edit, s_font.get(), false);
+    if (set_focus)
+        SetFocus(m_wnd_edit);
+    Edit_SetCueBannerText(m_wnd_edit, L"Search");
 }
 
 void AlbumListWindow::destroy_filter()

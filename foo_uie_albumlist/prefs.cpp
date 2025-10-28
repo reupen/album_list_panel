@@ -10,8 +10,13 @@ static INT_PTR CALLBACK EditViewProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp, e
 {
     switch (msg) {
     case WM_INITDIALOG: {
-        uSetDlgItemText(wnd, IDC_NAME, state.name);
-        uSetDlgItemText(wnd, IDC_VALUE, state.value);
+        const auto name_edit_wnd = uGetDlgItem(wnd, IDC_NAME);
+        uSetWindowText(name_edit_wnd, state.name);
+        uih::enhance_edit_control(name_edit_wnd);
+
+        const auto value_edit_wnd = uGetDlgItem(wnd, IDC_VALUE);
+        uSetWindowText(value_edit_wnd, state.value);
+        uih::enhance_edit_control(value_edit_wnd);
         break;
     }
     case WM_COMMAND:
@@ -90,23 +95,25 @@ INT_PTR TabGeneral::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
         SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
 
-        HWND list = uGetDlgItem(wnd, IDC_DBLCLK);
-        uSendMessageText(list, CB_ADDSTRING, 0, "Expand/collapse (default)");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Send to playlist");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Add to playlist");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Send to new playlist");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Send to autosend playlist");
-        SendMessage(list, CB_SETCURSEL, cfg_double_click_action, 0);
+        const auto double_click_action_wnd = uGetDlgItem(wnd, IDC_DBLCLK);
+        uSendMessageText(double_click_action_wnd, CB_ADDSTRING, 0, "Expand/collapse (default)");
+        uSendMessageText(double_click_action_wnd, CB_ADDSTRING, 0, "Send to playlist");
+        uSendMessageText(double_click_action_wnd, CB_ADDSTRING, 0, "Add to playlist");
+        uSendMessageText(double_click_action_wnd, CB_ADDSTRING, 0, "Send to new playlist");
+        uSendMessageText(double_click_action_wnd, CB_ADDSTRING, 0, "Send to autosend playlist");
+        SendMessage(double_click_action_wnd, CB_SETCURSEL, cfg_double_click_action, 0);
 
-        list = uGetDlgItem(wnd, IDC_MIDDLE);
-        uSendMessageText(list, CB_ADDSTRING, 0, "None");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Send to playlist");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Add to playlist");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Send to new playlist");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Send to autosend playlist");
-        SendMessage(list, CB_SETCURSEL, cfg_middle_click_action, 0);
+        const auto middle_click_action_wnd = uGetDlgItem(wnd, IDC_MIDDLE);
+        uSendMessageText(middle_click_action_wnd, CB_ADDSTRING, 0, "None");
+        uSendMessageText(middle_click_action_wnd, CB_ADDSTRING, 0, "Send to playlist");
+        uSendMessageText(middle_click_action_wnd, CB_ADDSTRING, 0, "Add to playlist");
+        uSendMessageText(middle_click_action_wnd, CB_ADDSTRING, 0, "Send to new playlist");
+        uSendMessageText(middle_click_action_wnd, CB_ADDSTRING, 0, "Send to autosend playlist");
+        SendMessage(middle_click_action_wnd, CB_SETCURSEL, cfg_middle_click_action, 0);
 
-        uSetDlgItemText(wnd, IDC_PLAYLIST_NAME, cfg_autosend_playlist_name);
+        const auto playlist_name_wnd = GetDlgItem(wnd, IDC_PLAYLIST_NAME);
+        uSetWindowText(playlist_name_wnd, cfg_autosend_playlist_name);
+        uih::enhance_edit_control(playlist_name_wnd);
 
         SendDlgItemMessage(wnd, IDC_AUTO_SEND, BM_SETCHECK, cfg_autosend, 0);
 
@@ -304,13 +311,13 @@ INT_PTR TabAdvanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_INITDIALOG: {
         SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS, BM_SETCHECK, cfg_show_subitem_counts, 0);
         SendDlgItemMessage(wnd, IDC_SHOW_NUMBERS2, BM_SETCHECK, cfg_show_item_indices, 0);
-        HWND list = uGetDlgItem(wnd, IDC_FRAME);
+        const auto edge_style_wnd = uGetDlgItem(wnd, IDC_FRAME);
 
-        uSendMessageText(list, CB_ADDSTRING, 0, "None");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Sunken");
-        uSendMessageText(list, CB_ADDSTRING, 0, "Grey");
+        uSendMessageText(edge_style_wnd, CB_ADDSTRING, 0, "None");
+        uSendMessageText(edge_style_wnd, CB_ADDSTRING, 0, "Sunken");
+        uSendMessageText(edge_style_wnd, CB_ADDSTRING, 0, "Grey");
 
-        SendMessage(list, CB_SETCURSEL, cfg_frame_style, 0);
+        SendMessage(edge_style_wnd, CB_SETCURSEL, cfg_frame_style, 0);
 
         SendDlgItemMessage(wnd, IDC_KEYB, BM_SETCHECK, cfg_process_keyboard_shortcuts, 0);
         SendDlgItemMessage(wnd, IDC_POPULATE, BM_SETCHECK, cfg_populate_on_init, 0);
@@ -322,27 +329,31 @@ INT_PTR TabAdvanced::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         SendDlgItemMessage(wnd, IDC_AUTOCOLLAPSE, BM_SETCHECK, cfg_collapse_other_nodes_on_expansion, 0);
 
         SendDlgItemMessage(wnd, IDC_USE_INDENT, BM_SETCHECK, cfg_use_custom_indentation, 0);
-        HWND wnd_indent = GetDlgItem(wnd, IDC_INDENT);
+        const auto indent_wnd = GetDlgItem(wnd, IDC_INDENT);
 
-        EnableWindow(wnd_indent, cfg_use_custom_indentation);
+        EnableWindow(indent_wnd, cfg_use_custom_indentation);
         EnableWindow(GetDlgItem(wnd, IDC_INDENT_SPIN), cfg_use_custom_indentation);
         if (cfg_use_custom_indentation)
             SetDlgItemInt(wnd, IDC_INDENT, cfg_custom_indentation_amount, TRUE);
         else
-            uSendMessageText(wnd_indent, WM_SETTEXT, 0, "");
+            uSendMessageText(indent_wnd, WM_SETTEXT, 0, "");
+
+        uih::enhance_edit_control(indent_wnd);
 
         SendDlgItemMessage(wnd, IDC_INDENT_SPIN, UDM_SETRANGE32, 1, 999);
         SendDlgItemMessage(wnd, IDC_USE_ITEM_HEIGHT, BM_SETCHECK, cfg_use_custom_vertical_item_padding, 0);
 
-        HWND wnd_item_height = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
+        const auto item_height_wnd = GetDlgItem(wnd, IDC_ITEM_HEIGHT);
 
-        EnableWindow(wnd_item_height, cfg_use_custom_vertical_item_padding);
+        EnableWindow(item_height_wnd, cfg_use_custom_vertical_item_padding);
         EnableWindow(GetDlgItem(wnd, IDC_ITEM_HEIGHT_SPIN), cfg_use_custom_vertical_item_padding);
 
         if (cfg_use_custom_vertical_item_padding)
             SetDlgItemInt(wnd, IDC_ITEM_HEIGHT, cfg_custom_vertical_padding_amount, TRUE);
         else
-            uSendMessageText(wnd_item_height, WM_SETTEXT, 0, "");
+            uSendMessageText(item_height_wnd, WM_SETTEXT, 0, "");
+
+        uih::enhance_edit_control(item_height_wnd);
 
         SendDlgItemMessage(wnd, IDC_ITEM_HEIGHT_SPIN, UDM_SETRANGE32, -99, 99);
 
