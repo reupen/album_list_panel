@@ -171,4 +171,6 @@ private:
     NodeFormatter m_node_formatter;
     library_manager_v4::ptr m_library_v4;
     library_manager_v3::ptr m_library_v3;
+    uih::direct_write::Context::Ptr m_direct_write_context;
+    std::optional<uih::D2DDragImageCreator> m_drag_image_creator;
 };

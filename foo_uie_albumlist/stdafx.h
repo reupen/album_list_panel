@@ -20,6 +20,8 @@
 
 #include "../mmh/stdafx.h"
 #include "../ui_helpers/stdafx.h"
+#include "../ui_helpers/direct_write.h"
+#include "../ui_helpers/drag_image_d2d.h"
 #include "../fbh/stdafx.h"
 #include "../columns_ui-sdk/ui_extension.h"
 

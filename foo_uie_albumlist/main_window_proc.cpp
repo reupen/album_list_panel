@@ -111,6 +111,9 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         m_cleaned_selection.reset();
         m_delayed_click_node.reset();
 
+        m_direct_write_context.reset();
+        m_drag_image_creator.reset();
+
         if (m_dd_theme) {
             CloseThemeData(m_dd_theme);
             m_dd_theme = nullptr;
