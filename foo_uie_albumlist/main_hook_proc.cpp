@@ -232,14 +232,35 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
                 auto colours = cui::colours::helper(album_list_items_colours_client_id);
                 const auto colour_selection_background = colours.get_colour(cui::colours::colour_selection_background);
                 const auto colour_selection_text = colours.get_colour(cui::colours::colour_selection_text);
+
                 const auto selection_count = tracks_holder.tracks().get_count();
-                pfc::string8 text;
-                text << mmh::format_integer(selection_count).c_str() << (selection_count != 1 ? " tracks" : " track");
-                SHDRAGIMAGE sdi = {0};
-                LOGFONT lf = {0};
-                GetObject(s_font.get(), sizeof(lf), &lf);
-                uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colour_selection_background, colour_selection_text,
-                    nullptr, &lf, true, text, &sdi);
+                const auto text = fmt::format(
+                    std::locale(""), L"{:L} {}", selection_count, selection_count == 1 ? L"track" : L"tracks");
+
+                SHDRAGIMAGE sdi{};
+
+                if (mmh::is_windows_10_or_newer()) {
+                    if (!m_direct_write_context) {
+                        try {
+                            m_direct_write_context = uih::direct_write::Context::s_create();
+                        }
+                        CATCH_LOG()
+                    }
+
+                    if (m_direct_write_context) {
+                        if (!m_drag_image_creator)
+                            m_drag_image_creator.emplace(static_cast<float>(uih::get_system_dpi_cached().cx));
+
+                        m_drag_image_creator->create_drag_image(
+                            m_wnd_tv, cui::colours::is_dark_mode_active(), *m_direct_write_context, text, &sdi);
+                    }
+                } else {
+                    LOGFONT lf{};
+                    GetObject(s_font.get(), sizeof(lf), &lf);
+                    uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colour_selection_background,
+                        colour_selection_text, nullptr, &lf, true, mmh::to_utf8(text).c_str(), &sdi);
+                }
+
                 uih::ole::do_drag_drop(m_wnd_tv, wp, data_object.get_ptr(), DROPEFFECT_COPY | DROPEFFECT_MOVE,
                     DROPEFFECT_COPY, &effect, &sdi);
             }
