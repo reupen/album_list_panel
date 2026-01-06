@@ -2,11 +2,15 @@
   "name": "album-list-panel",
   "version-string": "git",
   "builtin-baseline": "74e6536215718009aae747d86d84b78376bf9e09",
-  "dependencies": ["fmt", "ms-gsl", "range-v3", "wil"],
+  "dependencies": ["fmt", "foonathan-lexy", "ms-gsl", "range-v3", "wil"],
   "overrides": [
     {
       "name": "fmt",
       "version": "11.2.0"
+    },
+    {
+      "name": "foonathan-lexy",
+      "version": "2025.5.0"
     },
     {
       "name": "ms-gsl",
