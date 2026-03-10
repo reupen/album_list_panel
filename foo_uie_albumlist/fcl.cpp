@@ -16,7 +16,7 @@ const GUID g_guid_fcl_dataset_album_list_appearance{
 
 class AlbumListViewsDataSet : public cui::fcl::dataset {
 public:
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List Views"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel views"; }
     const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_views; }
     const GUID& get_group() const override { return g_guid_fcl_group_album_list_views; }
 
@@ -99,7 +99,7 @@ private:
 
 class AlbumListAppearanceDataSet : public cui::fcl::dataset {
 public:
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List appearance settings"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel appearance settings"; }
     const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_appearance; }
     const GUID& get_group() const override { return cui::fcl::groups::colours_and_fonts; }
 
@@ -216,8 +216,8 @@ private:
     }
 };
 
-cui::fcl::group_impl_factory g_fclgroup{g_guid_fcl_group_album_list_views, "Album List Views",
-    "Album List view title format scripts", cui::fcl::groups::title_scripts};
+cui::fcl::group_impl_factory g_fclgroup{g_guid_fcl_group_album_list_views, "Album list panel views",
+    "Album list panel view title formatting scripts", cui::fcl::groups::title_scripts};
 
 cui::fcl::dataset_factory<AlbumListViewsDataSet> g_album_list_fcl_views;
 cui::fcl::dataset_factory<AlbumListAppearanceDataSet> g_album_list_fcl_appearance;

@@ -22,7 +22,7 @@ class FontClient : public cui::fonts::client {
 public:
     const GUID& get_client_guid() const override { return album_list_font_client_id; }
 
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel"; }
 
     cui::fonts::font_type_t get_default_font_type() const override { return cui::fonts::font_type_items; }
 
@@ -34,7 +34,7 @@ FontClient::factory<FontClient> g_font_client_album_list;
 class ItemsColoursClient : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return album_list_items_colours_client_id; }
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Items"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel: Items"; }
     uint32_t get_supported_colours() const override
     {
         uint32_t flags = cui::colours::colour_flag_all
@@ -62,7 +62,7 @@ cui::colours::client::factory<ItemsColoursClient> g_items_colours_client;
 class FilterColoursClient : public cui::colours::client {
 public:
     const GUID& get_client_guid() const override { return album_list_filter_colours_client_id; }
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List: Filter"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel: Filter"; }
     uint32_t get_supported_colours() const override
     {
         return cui::colours::colour_flag_background | cui::colours::colour_flag_text;
