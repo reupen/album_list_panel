@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include "prefs_views.h"
+
 // {3E3F5B9F-5599-417e-A867-AC690EF01A8A}
 const GUID g_guid_fcl_group_album_list_views{
     0x3e3f5b9f, 0x5599, 0x417e, {0xa8, 0x67, 0xac, 0x69, 0xe, 0xf0, 0x1a, 0x8a}};
@@ -31,7 +33,7 @@ public:
         for (uint32_t i{0}; i < count; i++) {
             w.write_raw(uint32_t{2});
             w.write_item(view_name, views.get_name(i));
-            w.write_item(view_script, views.get_value(i));
+            w.write_item(view_script, views.get_title_format(i));
         }
     }
 
@@ -48,8 +50,10 @@ public:
             for (uint32_t i{0}; i < count; i++)
                 read_item(fcl_reader);
         }
-        if (g_config_general.is_active())
-            g_config_general.refresh_views();
+
+        if (alp::g_prefs_tab_views.is_active())
+            alp::g_prefs_tab_views.refresh_views();
+
         AlbumListWindow::s_refresh_all();
     }
 

@@ -199,9 +199,11 @@ const char* AlbumListWindow::get_hierarchy() const
     auto& views = get_views();
 
     const auto index = views.find_item(m_view);
+
     if (index != pfc_infinite)
-        return views.get_value(index);
-    return "N/A";
+        return views.get_title_format(index);
+
+    return "View not found";
 }
 
 void AlbumListWindow::on_view_script_change(const char* p_view_before, const char* p_view)

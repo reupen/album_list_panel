@@ -2,17 +2,17 @@
 // Microsoft Visual C++ generated include file.
 // Used by albumlist.rc
 //
-#define IDD_CONFIG                      102
+#define IDD_VIEWS_TAB                   102
 #define IDD_EDIT_VIEW                   105
 #define IDD_HOST                        191
-#define IDD_ADVANCED                    192
-#define IDC_SHOW_NUMBERS                1005
-#define IDC_SHOW_NUMBERS2               1006
+#define IDD_APPEARANCE_TAB              192
+#define IDD_BEHAVIOUR_TAB               193
+#define IDC_SHOW_COUNTS                 1005
+#define IDC_SHOW_INDICES                1006
 #define IDC_DBLCLK                      1007
 #define IDC_MIDDLE                      1012
-#define IDC_VIEWS                       1016
 #define IDC_NAME                        1017
-#define IDC_VALUE                       1018
+#define IDC_TITLE_FORMAT                1018
 #define IDC_VIEW_NEW                    1019
 #define IDC_VIEW_DELETE                 1020
 #define IDC_VIEW_UP                     1022
@@ -36,16 +36,13 @@
 #define IDC_AUTOCOLLAPSE                1038
 #define IDC_TAB1                        1039
 #define IDC_ADD_ITEMS_USE_CORE_SORT     1041
-
-#ifndef IDC_STATIC
-#define IDC_STATIC				        -1
-#endif
+#define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        106
+#define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40004
 #define _APS_NEXT_CONTROL_VALUE         1040
 #define _APS_NEXT_SYMED_VALUE           103
