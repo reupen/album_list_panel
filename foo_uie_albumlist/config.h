@@ -21,10 +21,10 @@ public:
         return nullptr;
     }
 
-    const char* get_value(size_t index) const
+    const char* get_title_format(size_t index) const
     {
         if (index >= 0 && index < m_data.get_count())
-            return m_data[index].value;
+            return m_data[index].title_format;
         return nullptr;
     }
 
@@ -38,7 +38,7 @@ public:
         return (std::numeric_limits<size_t>::max)();
     }
 
-    size_t add_item(const char* name, const char* value) { return m_data.add_item(entry{name, value}); }
+    size_t add_item(const char* name, const char* title_format) { return m_data.add_item(entry{name, title_format}); }
 
     void remove_item(size_t index) { m_data.remove_by_idx(index); }
 
@@ -48,7 +48,7 @@ public:
     {
         auto& p_entry = m_data[index];
         p_entry.name = name;
-        p_entry.value = value;
+        p_entry.title_format = value;
     }
 
     size_t get_count() const { return m_data.get_count(); }
@@ -62,19 +62,12 @@ public:
         reset();
     }
 
-    void format_display(size_t index, pfc::string_base& out) const
-    {
-        out = get_name(index);
-        out += " : ";
-        out += get_value(index);
-    }
-
     bool has_set_values() const { return m_has_set_values; }
 
 private:
     struct entry {
         pfc::string8 name;
-        pfc::string8 value;
+        pfc::string8 title_format;
     };
 
     pfc::list_t<entry> m_data;

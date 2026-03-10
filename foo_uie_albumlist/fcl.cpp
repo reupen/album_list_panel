@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include "prefs_views.h"
+
 // {3E3F5B9F-5599-417e-A867-AC690EF01A8A}
 const GUID g_guid_fcl_group_album_list_views{
     0x3e3f5b9f, 0x5599, 0x417e, {0xa8, 0x67, 0xac, 0x69, 0xe, 0xf0, 0x1a, 0x8a}};
@@ -14,7 +16,7 @@ const GUID g_guid_fcl_dataset_album_list_appearance{
 
 class AlbumListViewsDataSet : public cui::fcl::dataset {
 public:
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List Views"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel views"; }
     const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_views; }
     const GUID& get_group() const override { return g_guid_fcl_group_album_list_views; }
 
@@ -31,7 +33,7 @@ public:
         for (uint32_t i{0}; i < count; i++) {
             w.write_raw(uint32_t{2});
             w.write_item(view_name, views.get_name(i));
-            w.write_item(view_script, views.get_value(i));
+            w.write_item(view_script, views.get_title_format(i));
         }
     }
 
@@ -48,8 +50,10 @@ public:
             for (uint32_t i{0}; i < count; i++)
                 read_item(fcl_reader);
         }
-        if (g_config_general.is_active())
-            g_config_general.refresh_views();
+
+        if (alp::g_prefs_tab_views.is_active())
+            alp::g_prefs_tab_views.refresh_views();
+
         AlbumListWindow::s_refresh_all();
     }
 
@@ -95,7 +99,7 @@ private:
 
 class AlbumListAppearanceDataSet : public cui::fcl::dataset {
 public:
-    void get_name(pfc::string_base& p_out) const override { p_out = "Album List appearance settings"; }
+    void get_name(pfc::string_base& p_out) const override { p_out = "Album list panel appearance settings"; }
     const GUID& get_guid() const override { return g_guid_fcl_dataset_album_list_appearance; }
     const GUID& get_group() const override { return cui::fcl::groups::colours_and_fonts; }
 
@@ -212,8 +216,8 @@ private:
     }
 };
 
-cui::fcl::group_impl_factory g_fclgroup{g_guid_fcl_group_album_list_views, "Album List Views",
-    "Album List view title format scripts", cui::fcl::groups::title_scripts};
+cui::fcl::group_impl_factory g_fclgroup{g_guid_fcl_group_album_list_views, "Album list panel views",
+    "Album list panel view title formatting scripts", cui::fcl::groups::title_scripts};
 
 cui::fcl::dataset_factory<AlbumListViewsDataSet> g_album_list_fcl_views;
 cui::fcl::dataset_factory<AlbumListAppearanceDataSet> g_album_list_fcl_appearance;

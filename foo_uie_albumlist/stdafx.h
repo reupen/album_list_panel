@@ -22,6 +22,7 @@
 #include "../ui_helpers/stdafx.h"
 #include "../ui_helpers/direct_write.h"
 #include "../ui_helpers/drag_image_d2d.h"
+#include "../ui_helpers/list_view/list_view.h"
 #include "../fbh/stdafx.h"
 #include "../columns_ui-sdk/ui_extension.h"
 
@@ -32,6 +33,7 @@
 
 using namespace std::literals;
 using namespace mmh::literals::pcc;
+using namespace uih::literals::spx;
 
 #include "node.h"
 #include "config.h"

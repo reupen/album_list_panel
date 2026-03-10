@@ -199,9 +199,11 @@ const char* AlbumListWindow::get_hierarchy() const
     auto& views = get_views();
 
     const auto index = views.find_item(m_view);
+
     if (index != pfc_infinite)
-        return views.get_value(index);
-    return "N/A";
+        return views.get_title_format(index);
+
+    return "View not found";
 }
 
 void AlbumListWindow::on_view_script_change(const char* p_view_before, const char* p_view)
@@ -626,7 +628,7 @@ void AlbumListWindow::set_view(const char* view)
 void AlbumListWindow::get_menu_items(ui_extension::menu_hook_t& p_hook)
 {
     const auto node_settings
-        = uie::menu_node_ptr{new uie::simple_command_menu_node{"Settings", "Shows Album List panel settings", 0,
+        = uie::menu_node_ptr{new uie::simple_command_menu_node{"Settings", "Shows Album list panel settings", 0,
             [] { static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id); }}};
     const auto node_filter = uie::menu_node_ptr{new uie::simple_command_menu_node{"Filter", "Shows the filter bar",
         m_filter ? uie::menu_node_t::state_checked : 0,

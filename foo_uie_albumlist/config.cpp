@@ -63,7 +63,7 @@ void CfgViewList::get_data_raw(stream_writer* out, abort_callback& p_abort)
 
     for (size_t i{0}; i < item_count; ++i) {
         out->write_string(m_data[i].name, p_abort);
-        out->write_string(m_data[i].value, p_abort);
+        out->write_string(m_data[i].title_format, p_abort);
     }
 }
 
@@ -77,7 +77,7 @@ void CfgViewList::set_data_raw(stream_reader* r, size_t psize, abort_callback& p
     for (size_t i{0}; i < item_count; ++i) {
         entry item;
         r->read_string(item.name, p_abort);
-        r->read_string(item.value, p_abort);
+        r->read_string(item.title_format, p_abort);
         m_data.add_item(item);
     }
 
