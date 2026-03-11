@@ -16,14 +16,26 @@ public:
 private:
     INT_PTR CALLBACK handle_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
+    void update_show_root_node_expand_button()
+    {
+        const auto show_root_node_expand_button_wnd = GetDlgItem(m_wnd, IDC_SHOW_ROOT_EXPAND_BUTTON);
+        EnableWindow(show_root_node_expand_button_wnd, cfg_show_root_node);
+        Button_SetCheck(show_root_node_expand_button_wnd,
+            cfg_show_root_node && cfg_show_root_node_expand_button ? BST_CHECKED : BST_UNCHECKED);
+    }
+
     bool m_initialised{};
+    HWND m_wnd{};
 };
 
 INT_PTR TabAppearance::handle_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_INITDIALOG: {
+        m_wnd = wnd;
         SendDlgItemMessage(wnd, IDC_SHOW_ROOT, BM_SETCHECK, cfg_show_root_node, 0);
+        update_show_root_node_expand_button();
+
         SendDlgItemMessage(wnd, IDC_SHOW_INDICES, BM_SETCHECK, cfg_show_item_indices, 0);
         SendDlgItemMessage(wnd, IDC_SHOW_COUNTS, BM_SETCHECK, cfg_show_subitem_counts, 0);
         SendDlgItemMessage(wnd, IDC_HSCROLL, BM_SETCHECK, cfg_show_horizontal_scroll_bar, 0);
@@ -71,6 +83,7 @@ INT_PTR TabAppearance::handle_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
     }
     case WM_DESTROY:
         m_initialised = false;
+        m_wnd = nullptr;
         break;
     case WM_COMMAND:
         switch (wp) {
@@ -80,7 +93,13 @@ INT_PTR TabAppearance::handle_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
         case IDC_SHOW_ROOT:
             cfg_show_root_node = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
+            update_show_root_node_expand_button();
+            AlbumListWindow::s_update_all_show_root_expand_button();
             AlbumListWindow::s_refresh_all();
+            break;
+        case IDC_SHOW_ROOT_EXPAND_BUTTON:
+            cfg_show_root_node_expand_button = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;
+            AlbumListWindow::s_update_all_show_root_expand_button();
             break;
         case IDC_SHOW_COUNTS:
             cfg_show_subitem_counts = Button_GetCheck(reinterpret_cast<HWND>(lp)) != BST_UNCHECKED;

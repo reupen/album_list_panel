@@ -55,6 +55,25 @@ void AlbumListWindow::s_update_all_fonts()
     }
 }
 
+void AlbumListWindow::s_update_all_show_root_expand_button()
+{
+    for (auto&& instance : s_instances) {
+        const auto wnd = instance->m_wnd_tv;
+
+        if (!wnd)
+            continue;
+
+        auto styles = GetWindowLongPtr(wnd, GWL_STYLE);
+
+        if (cfg_show_root_node_expand_button || !cfg_show_root_node)
+            styles |= TVS_LINESATROOT;
+        else
+            styles &= ~TVS_LINESATROOT;
+
+        SetWindowLongPtr(wnd, GWL_STYLE, styles);
+    }
+}
+
 AlbumListWindow::~AlbumListWindow()
 {
     if (m_initialised) {
@@ -396,11 +415,9 @@ void AlbumListWindow::create_tree()
     else if (cfg_frame_style == 2)
         ex_styles |= WS_EX_STATICEDGE;
 
-    auto styles = TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | WS_CHILD | WS_VSCROLL
-        | WS_VISIBLE | WS_TABSTOP;
-
-    if (!cfg_show_horizontal_scroll_bar)
-        styles |= TVS_NOHSCROLL;
+    const auto styles = TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VSCROLL | WS_VISIBLE
+        | WS_TABSTOP | (cfg_show_root_node_expand_button || !cfg_show_root_node ? TVS_LINESATROOT : 0)
+        | (!cfg_show_horizontal_scroll_bar ? TVS_NOHSCROLL : 0);
 
     m_wnd_tv = CreateWindowEx(ex_styles, WC_TREEVIEW, L"Album list", styles, 0, 0, 0, 0, wnd,
         reinterpret_cast<HMENU>(IDC_TREE), core_api::get_my_instance(), nullptr);

@@ -46,6 +46,7 @@ public:
     static void s_mark_tracks_unsorted();
     static void s_update_all_showhscroll();
     static void s_update_all_fonts();
+    static void s_update_all_show_root_expand_button();
     static void s_refresh_all();
     static void s_on_view_script_change(const char* p_view_before, const char* p_view);
     static void s_update_all_window_frames();

@@ -97,6 +97,7 @@ extern cfg_int cfg_middle_click_action;
 extern cfg_int cfg_frame_style;
 extern cfg_int cfg_show_horizontal_scroll_bar;
 extern cfg_int cfg_show_root_node;
+extern cfg_int cfg_show_root_node_expand_button;
 extern cfg_int cfg_play_on_send;
 extern cfg_int cfg_use_custom_indentation;
 extern fbh::ConfigInt32DpiAware cfg_custom_indentation_amount;
