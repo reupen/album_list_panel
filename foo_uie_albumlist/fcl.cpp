@@ -120,6 +120,7 @@ public:
         w.write_item(id_indentation, cfg_custom_indentation_amount.get_raw_value().value);
         w.write_item(id_indentation_dpi, cfg_custom_indentation_amount.get_raw_value().dpi);
         w.write_item(id_edge_style, cfg_frame_style);
+        w.write_item(id_root_node_expand_button, cfg_show_root_node_expand_button);
     }
 
     void set_data(stream_reader* reader, size_t size, t_uint32 type, cui::fcl::t_import_feedback& feedback,
@@ -132,6 +133,7 @@ public:
             AlbumListWindow::s_update_all_item_heights();
             AlbumListWindow::s_update_all_indents();
             AlbumListWindow::s_update_all_window_frames();
+            AlbumListWindow::s_update_all_show_root_expand_button();
         }
     }
 
@@ -152,6 +154,7 @@ private:
         id_edge_style,
         id_indentation_dpi,
         id_item_padding_dpi,
+        id_root_node_expand_button,
     };
 
     static void read_items(fbh::fcl::Reader& fcl_reader)
@@ -178,6 +181,9 @@ private:
                 break;
             case id_root_node:
                 fcl_reader.read_item(cfg_show_root_node);
+                break;
+            case id_root_node_expand_button:
+                fcl_reader.read_item(cfg_show_root_node_expand_button);
                 break;
             case id_use_item_padding:
                 fcl_reader.read_item(cfg_use_custom_vertical_item_padding);

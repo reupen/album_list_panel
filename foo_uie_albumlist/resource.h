@@ -32,6 +32,7 @@
 #define IDC_USE_INDENT                  1034
 #define IDC_USE_ITEM_HEIGHT             1035
 #define IDC_AUTOPLAY                    1036
+#define IDC_SHOW_ROOT_EXPAND_BUTTON     1036
 #define IDC_ADD_ITEMS_SELECT            1037
 #define IDC_AUTOCOLLAPSE                1038
 #define IDC_TAB1                        1039
@@ -44,7 +45,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40004
-#define _APS_NEXT_CONTROL_VALUE         1040
+#define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif
