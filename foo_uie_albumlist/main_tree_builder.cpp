@@ -4,6 +4,7 @@
 
 namespace {
 
+constexpr auto all_music_node_label = "\u200bAll music"sv;
 constexpr auto vertical_bar = "|"sv;
 constexpr auto vertical_bar_replacement = "\uEFA0"sv;
 
@@ -342,7 +343,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
             mmh::single_reordering_sort(entries, process_bydir_entry::s_compare, false);
 
             if (!preserve_existing || !m_root)
-                m_root = std::make_shared<Node>("All music"s, this, 0);
+                m_root = std::make_shared<Node>(std::string{all_music_node_label}, this, 0);
 
             process_level_recur_t<process_bydir_entry>({entries.get_ptr(), count}, m_root, !preserve_existing);
         }
@@ -402,7 +403,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
             mmh::destructive_reorder(entries_sorted, perm);
 
             if (!preserve_existing || !m_root)
-                m_root = std::make_shared<Node>("All music"s, this, 0);
+                m_root = std::make_shared<Node>(std::string{all_music_node_label}, this, 0);
             process_level_recur_t<process_byformat_entry>({entries_sorted.get_ptr(), size}, m_root, !preserve_existing);
         }
     }
