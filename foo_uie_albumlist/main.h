@@ -79,8 +79,7 @@ public:
 
     void update_all_labels() const;
     void mark_tracks_unsorted() const;
-    void update_tree_theme(
-        const cui::colours::helper& colours = cui::colours::helper(album_list_items_colours_client_id)) const;
+    void update_tree_theme() const;
     void update_tree_colours();
     void update_tooltip_theme() const;
     void update_edit_theme() const;
@@ -146,7 +145,9 @@ private:
 
     HWND m_wnd_tv{nullptr};
     HWND m_wnd_edit{nullptr};
-    HTHEME m_dd_theme{nullptr};
+    std::optional<cui::colours::helper> m_item_colours;
+    wil::unique_htheme m_dd_theme;
+    wil::unique_htheme m_tree_view_theme;
     WNDPROC m_treeproc{nullptr};
     bool m_initialised{false};
     bool m_populated{false};

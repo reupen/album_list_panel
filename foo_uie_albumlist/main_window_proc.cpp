@@ -3,6 +3,16 @@
 #include "node_utils.h"
 #include "tree_view_populator.h"
 
+namespace {
+
+bool is_windows_11_22h2_or_newer()
+{
+    static bool result = mmh::check_windows_10_build(22'621);
+    return result;
+}
+
+} // namespace
+
 LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
@@ -11,7 +21,8 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         m_initialised = true;
         modeless_dialog_manager::g_add(wnd);
 
-        m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr;
+        m_item_colours.emplace(album_list_items_colours_client_id);
+        m_dd_theme.reset(IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr);
 
         m_library_v3 = library_manager_v3::get();
         m_library_v3->service_query_t(m_library_v4);
@@ -29,12 +40,9 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 
         break;
     }
-    case WM_THEMECHANGED: {
-        if (m_dd_theme)
-            CloseThemeData(m_dd_theme);
-        m_dd_theme = IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr;
+    case WM_THEMECHANGED:
+        m_dd_theme.reset(IsThemeActive() && IsAppThemed() ? OpenThemeData(wnd, VSCLASS_DRAGDROP) : nullptr);
         break;
-    }
     case WM_CTLCOLOREDIT: {
         cui::colours::helper colours(album_list_filter_colours_client_id);
         const auto dc = reinterpret_cast<HDC>(wp);
@@ -114,10 +122,8 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
         m_direct_write_context.reset();
         m_drag_image_creator.reset();
 
-        if (m_dd_theme) {
-            CloseThemeData(m_dd_theme);
-            m_dd_theme = nullptr;
-        }
+        m_dd_theme.reset();
+        m_tree_view_theme.reset();
 
         s_instances.remove_item(this);
 
@@ -125,6 +131,8 @@ LRESULT AlbumListWindow::on_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
             s_filter_background_brush.reset();
             s_font.reset();
         }
+
+        m_item_colours.reset();
 
         m_initialised = false;
         break;
@@ -374,10 +382,11 @@ std::optional<LRESULT> AlbumListWindow::on_tree_view_wm_notify(LPNMHDR hdr)
 
         switch (nmtvcd->nmcd.dwDrawStage) {
         case CDDS_PREPAINT:
-            if (cui::colours::helper(album_list_items_colours_client_id).get_themed())
+            if (m_item_colours->get_themed() && !is_windows_11_22h2_or_newer())
                 return CDRF_DODEFAULT;
-            return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTERASE;
+            return CDRF_NOTIFYITEMDRAW;
         case CDDS_ITEMPREPAINT: {
+            const auto is_themed = m_item_colours->get_themed();
             const auto is_window_focused = GetFocus() == hdr->hwndFrom;
             const auto is_selected = (nmtvcd->nmcd.uItemState & CDIS_SELECTED) != 0;
             const auto is_drop_highlighted
@@ -385,32 +394,59 @@ std::optional<LRESULT> AlbumListWindow::on_tree_view_wm_notify(LPNMHDR hdr)
                 != 0;
 
             if (is_selected || is_drop_highlighted) {
-                cui::colours::helper colour_client(album_list_items_colours_client_id);
+                const auto non_themed_text_colour = is_window_focused
+                    ? m_item_colours->get_colour(cui::colours::colour_selection_text)
+                    : m_item_colours->get_colour(cui::colours::colour_inactive_selection_text);
+                const auto non_themed_background_colour = is_window_focused
+                    ? m_item_colours->get_colour(cui::colours::colour_selection_background)
+                    : m_item_colours->get_colour(cui::colours::colour_inactive_selection_background);
 
-                nmtvcd->clrText = is_window_focused
-                    ? colour_client.get_colour(cui::colours::colour_selection_text)
-                    : colour_client.get_colour(cui::colours::colour_inactive_selection_text);
-                nmtvcd->clrTextBk = is_window_focused
-                    ? colour_client.get_colour(cui::colours::colour_selection_background)
-                    : colour_client.get_colour(cui::colours::colour_inactive_selection_background);
+                nmtvcd->clrText = non_themed_text_colour;
+                nmtvcd->clrTextBk = non_themed_background_colour;
 
-                if (cui::colours::is_dark_mode_active())
-                    return CDRF_NOTIFYPOSTPAINT;
+                if (!(is_themed || cui::colours::is_dark_mode_active()))
+                    return CDRF_DODEFAULT;
+
+                SaveDC(nmtvcd->nmcd.hdc);
+
+                RECT item_rect{};
+                TreeView_GetItemRect(
+                    nmtvcd->nmcd.hdr.hwndFrom, reinterpret_cast<HTREEITEM>(nmtvcd->nmcd.dwItemSpec), &item_rect, TRUE);
+
+                ExcludeClipRect(
+                    nmtvcd->nmcd.hdc, item_rect.left - 2, item_rect.top, item_rect.right + 2, item_rect.bottom);
+
+                return CDRF_NOTIFYPOSTPAINT;
             }
-
             return CDRF_DODEFAULT;
         }
         case CDDS_ITEMPOSTPAINT: {
-            if (!nmtvcd->nmcd.lItemlParam)
-                return CDRF_DODEFAULT;
+            const auto is_themed = m_item_colours->get_themed();
+            const auto is_window_focused = GetFocus() == hdr->hwndFrom;
 
-            RECT rc{};
+            COLORREF themed_text_colour{};
+            RECT item_rect{};
             TreeView_GetItemRect(
-                nmtvcd->nmcd.hdr.hwndFrom, reinterpret_cast<HTREEITEM>(nmtvcd->nmcd.dwItemSpec), &rc, TRUE);
-            InflateRect(&rc, 1, -1);
+                nmtvcd->nmcd.hdr.hwndFrom, reinterpret_cast<HTREEITEM>(nmtvcd->nmcd.dwItemSpec), &item_rect, TRUE);
+            InflateRect(&item_rect, 2, 0);
 
-            wil::unique_hbrush brush(CreateSolidBrush(nmtvcd->clrTextBk));
-            FillRect(nmtvcd->nmcd.hdc, &rc, brush.get());
+            RestoreDC(nmtvcd->nmcd.hdc, -1);
+
+            if (is_themed) {
+                const auto part_id = TVP_TREEITEM;
+                const auto state_id = is_window_focused ? TREIS_SELECTED : TREIS_SELECTEDNOTFOCUS;
+
+                RECT background_rect{item_rect};
+                InflateRect(&background_rect, 1, 1);
+
+                DrawThemeBackground(
+                    m_tree_view_theme.get(), nmtvcd->nmcd.hdc, part_id, state_id, &background_rect, &item_rect);
+
+                GetThemeColor(m_tree_view_theme.get(), part_id, state_id, TMT_TEXTCOLOR, &themed_text_colour);
+            } else {
+                wil::unique_hbrush brush(CreateSolidBrush(nmtvcd->clrTextBk));
+                FillRect(nmtvcd->nmcd.hdc, &item_rect, brush.get());
+            }
 
             // Tree view does not display more than 260 code units (including null terminator)
             std::array<wchar_t, 260> text{};
@@ -421,8 +457,9 @@ std::optional<LRESULT> AlbumListWindow::on_tree_view_wm_notify(LPNMHDR hdr)
             tvi.pszText = text.data();
             TreeView_GetItem(nmtvcd->nmcd.hdr.hwndFrom, &tvi);
 
-            SetTextColor(nmtvcd->nmcd.hdc, nmtvcd->clrText);
-            DrawTextEx(nmtvcd->nmcd.hdc, text.data(), gsl::narrow<int>(wcsnlen(text.data(), text.size())), &rc,
+            SetTextColor(nmtvcd->nmcd.hdc, is_themed ? themed_text_colour : nmtvcd->clrText);
+            SetBkMode(nmtvcd->nmcd.hdc, TRANSPARENT);
+            DrawTextEx(nmtvcd->nmcd.hdc, text.data(), gsl::narrow<int>(wcsnlen(text.data(), text.size())), &item_rect,
                 DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER, nullptr);
 
             return CDRF_DODEFAULT;

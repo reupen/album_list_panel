@@ -249,17 +249,17 @@ void AlbumListWindow::mark_tracks_unsorted() const
         m_root->mark_tracks_unsorted();
 }
 
-void AlbumListWindow::update_tree_theme(const cui::colours::helper& colours) const
+void AlbumListWindow::update_tree_theme() const
 {
     if (!m_wnd_tv)
         return;
 
     bool is_themed{};
 
-    if (colours.get_bool(cui::colours::bool_dark_mode_enabled)) {
+    if (m_item_colours->get_bool(cui::colours::bool_dark_mode_enabled)) {
         SetWindowTheme(m_wnd_tv, L"DarkMode_Explorer", nullptr);
         is_themed = true;
-    } else if (colours.get_themed()) {
+    } else if (m_item_colours->get_themed()) {
         SetWindowTheme(m_wnd_tv, L"Explorer", nullptr);
         is_themed = true;
     } else {
@@ -279,12 +279,11 @@ void AlbumListWindow::update_tree_theme(const cui::colours::helper& colours) con
 void AlbumListWindow::update_tree_colours()
 {
     SetWindowRedraw(m_wnd_tv, FALSE);
-    cui::colours::helper p_colours(album_list_items_colours_client_id);
-    update_tree_theme(p_colours);
+    update_tree_theme();
 
-    TreeView_SetBkColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_background));
-    TreeView_SetLineColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_active_item_frame));
-    TreeView_SetTextColor(m_wnd_tv, p_colours.get_colour(cui::colours::colour_text));
+    TreeView_SetBkColor(m_wnd_tv, m_item_colours->get_colour(cui::colours::colour_background));
+    TreeView_SetLineColor(m_wnd_tv, m_item_colours->get_colour(cui::colours::colour_active_item_frame));
+    TreeView_SetTextColor(m_wnd_tv, m_item_colours->get_colour(cui::colours::colour_text));
     RedrawWindow(m_wnd_tv, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME);
     SetWindowRedraw(m_wnd_tv, TRUE);
 }
@@ -426,6 +425,9 @@ void AlbumListWindow::create_tree()
         TreeView_SetExtendedStyle(m_wnd_tv, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
         update_tree_theme();
         update_tooltip_theme();
+
+        if (!m_tree_view_theme)
+            m_tree_view_theme.reset(OpenThemeData(m_wnd_tv, VSCLASS_TREEVIEW));
 
         if (s_font) {
             uih::set_window_font(m_wnd_tv, s_font.get(), false);

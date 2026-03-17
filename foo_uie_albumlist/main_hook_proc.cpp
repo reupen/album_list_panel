@@ -20,6 +20,9 @@ static bool test_point_distance(POINT pt1, POINT pt2, int test)
 LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
+    case WM_THEMECHANGED:
+        m_tree_view_theme.reset(OpenThemeData(wnd, VSCLASS_TREEVIEW));
+        break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         uie::window_ptr p_this{this};
@@ -229,9 +232,9 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
                 = static_api_ptr_t<playlist_incoming_item_filter>()->create_dataobject_ex(tracks_holder.tracks());
             if (data_object.is_valid()) {
                 DWORD effect;
-                auto colours = cui::colours::helper(album_list_items_colours_client_id);
-                const auto colour_selection_background = colours.get_colour(cui::colours::colour_selection_background);
-                const auto colour_selection_text = colours.get_colour(cui::colours::colour_selection_text);
+                const auto colour_selection_background
+                    = m_item_colours->get_colour(cui::colours::colour_selection_background);
+                const auto colour_selection_text = m_item_colours->get_colour(cui::colours::colour_selection_text);
 
                 const auto selection_count = tracks_holder.tracks().get_count();
                 const auto text = fmt::format(
@@ -257,7 +260,7 @@ LRESULT WINAPI AlbumListWindow::on_tree_hooked_message(HWND wnd, UINT msg, WPARA
                 } else {
                     LOGFONT lf{};
                     GetObject(s_font.get(), sizeof(lf), &lf);
-                    uih::create_drag_image(m_wnd_tv, true, m_dd_theme, colour_selection_background,
+                    uih::create_drag_image(m_wnd_tv, true, m_dd_theme.get(), colour_selection_background,
                         colour_selection_text, nullptr, &lf, true, mmh::to_utf8(text).c_str(), &sdi);
                 }
 
