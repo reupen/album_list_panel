@@ -1,4 +1,4 @@
-name: VS 2022
+name: VS 2026
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
 
     strategy:
       matrix:
@@ -45,16 +45,16 @@ jobs:
 
       - name: Build
         run: |
-          msbuild /m '/p:Platform=${{ matrix.platform }};Configuration=${{ matrix.configuration }}' "/logger:$Env:Temp\Reupen.MSBuild.GitHubLogger.dll" vc17\album_list_panel.sln
+          msbuild /m '/p:Platform=${{ matrix.platform }};Configuration=${{ matrix.configuration }}' "/logger:$Env:Temp\Reupen.MSBuild.GitHubLogger.dll" vc18\album_list_panel.sln
 
       - uses: actions/upload-artifact@v7
         if: matrix.configuration == 'release'
         with:
           name: Component package (${{ matrix.configuration }}, ${{ matrix.platform }})
-          path: vc17\release-*\*.fb2k-component
+          path: vc18\release-*\*.fb2k-component
 
       - uses: actions/upload-artifact@v7
         if: matrix.configuration == 'release'
         with:
           name: Symbols for debugging (${{ matrix.configuration }}, ${{ matrix.platform }})
-          path: vc17\release-*\*.pdb
+          path: vc18\release-*\*.pdb
