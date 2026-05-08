@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "autoplaylist.h"
 #include "menu.h"
 #include "node.h"
 #include "tree_view_populator.h"
@@ -827,6 +828,47 @@ const std::vector<node_ptr>& AlbumListWindow::get_cleaned_selection()
         m_cleaned_selection = alp::clean_selection(m_selection);
 
     return *m_cleaned_selection;
+}
+
+void AlbumListWindow::create_autoplaylist(const std::span<const node_ptr> nodes) const
+{
+    const auto is_by_dir = is_bydir();
+
+    pfc::string8 filter;
+
+    if (m_wnd_edit)
+        uGetWindowText(m_wnd_edit, filter);
+
+    if (ranges::contains(nodes, m_root)) {
+        const auto name = "All music"sv;
+        const auto playlist_api = playlist_manager_v4::get();
+        const auto playlist_index = playlist_api->create_playlist(name.data(), name.size(), SIZE_MAX);
+
+        pfc::string8 sort_format;
+
+        if (!cfg_add_items_use_core_sort) {
+            if (is_by_dir)
+                sort_format = "%path_sort%";
+            else {
+                sort_format = get_hierarchy();
+                sort_format += "|%path_sort%";
+            }
+        }
+
+        autoplaylist_manager_v2::get()->add_client_simple(filter.empty() ? "ALL" : filter.c_str(),
+            sort_format.is_empty() ? nullptr : sort_format.c_str(), playlist_index, 0);
+        playlist_api->set_active_playlist(playlist_index);
+        return;
+    }
+
+    auto labels = nodes | ranges::views::transform([&](auto&& node) {
+        auto hierarchy = node->get_hierarchy();
+        return hierarchy | ranges::views::drop(1)
+            | ranges::views::transform([](const auto& node) { return node->get_name(); }) | ranges::to_vector;
+    });
+
+    alp::create_autoplaylist(
+        is_by_dir, is_by_dir ? "" : get_hierarchy(), labels | ranges::to_vector, {filter.c_str(), filter.length()});
 }
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}

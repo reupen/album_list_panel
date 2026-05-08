@@ -29,7 +29,7 @@ public:
         m_children.clear();
     }
 
-    std::string_view get_name() const { return m_name; }
+    wil::zstring_view get_name() const { return m_name; }
     std::string_view get_display_name() const { return m_name.empty() ? "(blank)"sv : m_name; }
     const wchar_t* get_name_utf16()
     {

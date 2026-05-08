@@ -1,17 +1,13 @@
 #include "stdafx.h"
+
 #include "tree_view_populator.h"
 #include "utils.h"
+
+#include "main_tree_builder.h"
 
 namespace {
 
 constexpr auto all_music_node_label = "\u200bAll music"sv;
-constexpr auto vertical_bar = "|"sv;
-constexpr auto vertical_bar_replacement = "\uEFA0"sv;
-
-std::string unescape_vertical_bar(std::string_view text)
-{
-    return alp::utils::replace_substring(text, vertical_bar_replacement, vertical_bar);
-}
 
 template <typename String>
 const char* c_str(String& string)
@@ -27,35 +23,19 @@ const char* c_str(const char* const& string)
 
 } // namespace
 
-class VerticalBarTitleformatTextFilter : public titleformat_text_filter {
-public:
-    void write(const GUID& p_inputtype, pfc::string_receiver& p_out, const char* p_data, t_size p_data_length) override
-    {
-        // titleformat_text_filter_impl_reserved_chars only filters for titleformat_inputtypes::meta
-        if (p_inputtype != titleformat_inputtypes::meta) {
-            p_out.add_string(p_data, p_data_length);
-            return;
-        }
+namespace alp {
 
-        const size_t real_length = strnlen(p_data, p_data_length);
+void unescape_vertical_bar(std::string_view text, std::string& result)
+{
+    return utils::replace_substring(text, alp::vertical_bar_replacement, alp::vertical_bar, result);
+}
 
-        const std::string_view input{p_data, real_length};
-        size_t start{};
+std::string unescape_vertical_bar(std::string_view text)
+{
+    return utils::replace_substring(text, alp::vertical_bar_replacement, alp::vertical_bar);
+}
 
-        while (start < real_length) {
-            const size_t end = input.find(vertical_bar, start);
-
-            if (end == std::string_view::npos) {
-                p_out.add_string(p_data + start, p_data_length - start);
-                break;
-            }
-
-            p_out.add_string(p_data + start, end - start);
-            p_out.add_string(vertical_bar_replacement.data(), vertical_bar_replacement.size());
-            start = end + 1;
-        }
-    }
-};
+} // namespace alp
 
 struct process_bydir_entry {
     metadb_handle* m_track{};
@@ -144,7 +124,7 @@ struct process_byformat_entry {
     const std::vector<std::string_view>& segments() const
     {
         if (!m_segments) {
-            m_segments = m_path | std::views::split("|"sv)
+            m_segments = m_path | std::views::split(alp::vertical_bar)
                 | std::views::transform([](auto&& range) { return std::string_view(range.data(), range.size()); })
                 | ranges::to<std::vector>;
         }
@@ -200,92 +180,86 @@ static void process_level_recur_t(std::span<const t_entry> items, node_ptr p_par
         const auto segment = chunk.front().segments()[level];
 
         bool b_new{};
-        const auto next_parent = p_parent->find_or_add_child(unescape_vertical_bar(segment), !b_add_only, b_new);
+        const auto next_parent = p_parent->find_or_add_child(alp::unescape_vertical_bar(segment), !b_add_only, b_new);
         process_level_recur_t<t_entry>({&chunk.front(), gsl::narrow_cast<size_t>(ranges::distance(chunk))}, next_parent,
             b_add_only || b_new, level + 1);
     }
 }
 
-struct process_byformat_branch_segment {
-    size_t m_choices_begin{};
-    size_t m_choices_end{};
-    size_t m_current_choice{};
-};
+namespace alp {
 
-struct process_byformat_branch_choice {
-    size_t m_start{};
-    size_t m_end{};
-};
-
-constexpr auto branch_marker = '\4';
-constexpr auto branch_delimiter = '\5';
-
-template <typename List>
-size_t process_byformat_add_branches(metadb_handle* handle, std::string text, List& entries)
+Branches get_branches(std::string_view text)
 {
-    const char* p_text = text.data();
-
-    if (text.find(branch_marker) == std::string::npos) {
-        entries.push_back({handle, std::move(text)});
-        return 1;
-    }
-
-    size_t branch_count{1};
-
-    std::vector<process_byformat_branch_segment> segments;
-    std::vector<process_byformat_branch_choice> choices;
+    Branches branches;
 
     // compute segments and branch count
     size_t pos{};
-    while (p_text[pos] != 0) {
+    while (pos < text.size()) {
         // begin choice
-        if (p_text[pos] == branch_marker) {
+        if (text[pos] == branch_marker) {
             pos++;
 
-            const auto segment_first_choice = choices.size();
+            const auto segment_first_choice = branches.choices.size();
 
             auto choice_start = pos;
 
-            while (p_text[pos] != 0 && p_text[pos] != branch_marker) {
-                if (p_text[pos] == branch_delimiter) {
-                    choices.emplace_back(choice_start, pos);
+            while (pos < text.size() && text[pos] != branch_marker) {
+                if (text[pos] == branch_delimiter) {
+                    branches.choices.emplace_back(choice_start, pos);
                     ++pos;
                     choice_start = pos;
                 } else
                     ++pos;
             }
 
-            choices.emplace_back(choice_start, pos);
+            branches.choices.emplace_back(choice_start, pos);
 
-            if (p_text[pos] == branch_marker)
+            if (pos < text.size() && text[pos] == branch_marker)
                 ++pos;
 
-            segments.emplace_back(segment_first_choice, choices.size(), segment_first_choice);
-            branch_count *= choices.size() - segment_first_choice;
+            branches.segments.emplace_back(segment_first_choice, branches.choices.size(), segment_first_choice);
+            branches.branch_count *= branches.choices.size() - segment_first_choice;
         } else {
-            const auto segment_first_choice = choices.size();
+            const auto segment_first_choice = branches.choices.size();
             const auto choice_start = pos;
 
-            while (p_text[pos] != 0 && p_text[pos] != branch_marker)
+            while (pos < text.size() && text[pos] != branch_marker)
                 ++pos;
 
-            choices.emplace_back(choice_start, pos);
-            segments.emplace_back(segment_first_choice, choices.size(), segment_first_choice);
+            branches.choices.emplace_back(choice_start, pos);
+            branches.segments.emplace_back(segment_first_choice, branches.choices.size(), segment_first_choice);
         }
     }
 
+    return branches;
+}
+
+} // namespace alp
+
+template <typename List>
+size_t process_byformat_add_branches(metadb_handle* handle, std::string text, List& entries)
+{
+    const char* p_text = text.data();
+
+    if (text.find(alp::branch_marker) == std::string::npos) {
+        entries.push_back({handle, std::move(text)});
+        return 1;
+    }
+
+    auto branches = alp::get_branches(text);
+
     // assemble branches
-    for (size_t branch_index{0}; branch_index < branch_count; branch_index++) {
+    for (size_t branch_index{0}; branch_index < branches.branch_count; branch_index++) {
         std::string buffer;
 
-        for (const auto& segment : segments) {
-            const auto& choice = choices[segment.m_current_choice];
+        for (const auto& segment : branches.segments) {
+            const auto& choice = branches.choices[segment.m_current_choice];
             buffer.append(&p_text[choice.m_start], choice.m_end - choice.m_start);
         }
 
         entries.push_back({handle, std::move(buffer)});
 
-        for (auto& segment : segments | std::views::reverse) {
+        for (auto& segment : branches.segments | std::views::reverse) {
             segment.m_current_choice++;
 
             if (segment.m_current_choice < segment.m_choices_end)
@@ -295,7 +269,7 @@ size_t process_byformat_add_branches(metadb_handle* handle, std::string text, Li
         }
     }
 
-    return branch_count;
+    return branches.branch_count;
 }
 
 void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressive>& tracks, bool preserve_existing)
@@ -368,7 +342,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
                         const playable_location& location = track->get_location();
 
                         MetaBranchTitleformatHook tf_hook_file_info(location, &rec.info->info());
-                        VerticalBarTitleformatTextFilter tf_hook_text_filter;
+                        alp::VerticalBarTitleformatTextFilter tf_hook_text_filter;
                         std::string formatted_title;
                         mmh::StringAdaptor interop_title(formatted_title);
                         track->formatTitle_v2(rec, &tf_hook_file_info, interop_title, script, &tf_hook_text_filter);
@@ -383,7 +357,7 @@ void AlbumListWindow::build_nodes(metadb_handle_list_t<pfc::alloc_fast_aggressiv
 
                     const playable_location& location = tracks[n]->get_location();
                     MetaBranchTitleformatHook tf_hook_file_info(location, &info_ptr->info());
-                    VerticalBarTitleformatTextFilter tf_hook_text_filter;
+                    alp::VerticalBarTitleformatTextFilter tf_hook_text_filter;
                     std::string formatted_title;
                     mmh::StringAdaptor interop_title(formatted_title);
                     tracks[n]->format_title(&tf_hook_file_info, interop_title, script, &tf_hook_text_filter);

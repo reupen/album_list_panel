@@ -31,6 +31,8 @@
 #include <commctrl.h>
 #include <windowsx.h>
 
+#include <wil/stl.h>
+
 using namespace std::literals;
 using namespace mmh::literals::pcc;
 using namespace uih::literals::spx;
