@@ -121,6 +121,7 @@ private:
     std::optional<LRESULT> on_tree_lbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     void on_tree_rbuttondown(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
     std::optional<LRESULT> on_tree_rbuttonup(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
+    void create_autoplaylist(std::span<const node_ptr> nodes) const;
 
     static inline pfc::ptr_list_t<AlbumListWindow> s_instances;
     static const GUID s_extension_guid;

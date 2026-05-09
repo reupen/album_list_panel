@@ -4,9 +4,10 @@
 
 namespace alp::utils {
 
-std::string replace_substring(std::string_view input, std::string_view search, std::string_view replacement)
+void replace_substring(
+    std::string_view input, std::string_view search, std::string_view replacement, std::string& result)
 {
-    std::string result;
+    result.clear();
     size_t fragment_start{};
 
     while (true) {
@@ -21,7 +22,12 @@ std::string replace_substring(std::string_view input, std::string_view search, s
 
         fragment_start = fragment_end + search.length();
     }
+}
 
+std::string replace_substring(std::string_view input, std::string_view search, std::string_view replacement)
+{
+    std::string result;
+    replace_substring(input, search, replacement, result);
     return result;
 }
 

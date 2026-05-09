@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "autoplaylist.h"
 #include "playlist_utils.h"
 #include "node_utils.h"
 #include "tree_view_populator.h"
@@ -147,6 +148,7 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
         ID_ADD,
         ID_NEW,
         ID_AUTOSEND,
+        ID_AUTOPLAYLIST,
         ID_REFRESH,
         ID_FILT,
         ID_CONF,
@@ -244,6 +246,7 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
         uAppendMenu(
             menu, MF_STRING, ID_NEW, show_shortcuts ? "Send to &new playlist\tCtrl+Enter" : "Send to &new playlist");
         uAppendMenu(menu, MF_STRING, ID_AUTOSEND, "Send to &autosend playlist");
+        uAppendMenu(menu, MF_STRING, ID_AUTOPLAYLIST, "Create a&utoplaylist");
         uAppendMenu(menu, MF_SEPARATOR, 0, "");
 
         contextmenu_manager::g_create(p_menu_manager);
@@ -280,6 +283,9 @@ LRESULT AlbumListWindow::on_wm_contextmenu(POINT pt)
                 break;
             case ID_AUTOSEND:
                 alp::send_nodes_to_autosend_playlist(nodes, m_view, true);
+                break;
+            case ID_AUTOPLAYLIST:
+                create_autoplaylist(nodes);
                 break;
             case ID_CONF:
                 static_api_ptr_t<ui_control>()->show_preferences(album_list_panel_preferences_page_id);

@@ -283,6 +283,7 @@
     <ResourceCompile Include=".\albumlist.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="autoplaylist.cpp" />
     <ClCompile Include="node_utils.cpp" />
     <ClCompile Include="playlist_utils.cpp" />
     <ClCompile Include=".\config.cpp" />
@@ -309,6 +310,8 @@
     <ClInclude Include=".\resource.h" />
     <ClInclude Include=".\stdafx.h" />
     <ClInclude Include=".\tfhook.h" />
+    <ClInclude Include="autoplaylist.h" />
+    <ClInclude Include="main_tree_builder.h" />
     <ClInclude Include="playlist_utils.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="node_formatter.h" />
