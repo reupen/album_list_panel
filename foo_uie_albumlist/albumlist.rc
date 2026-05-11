@@ -134,6 +134,22 @@ BEGIN
     COMBOBOX        IDC_MIDDLE,7,244,150,90,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
+IDD_EDIT_AUTOPLAYLIST DIALOGEX 0, 0, 330, 149
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit autoplaylist – Album list panel"
+FONT 8, "Tahoma", 0, 0, 0x0
+BEGIN
+    CONTROL         "Keep playlist sorted and prevent manual reordering",IDC_FORCE_SORT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,7,196,10
+    LTEXT           "Sorting pattern",IDC_STATIC,9,24,64,8
+    EDITTEXT        IDC_SORTING_PATTERN,9,35,312,31,ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL
+    CONTROL         "Reverse sort",IDC_REVERSE_SORT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,75,65,10
+    LTEXT           "Filter query",IDC_STATIC,9,93,63,8
+    EDITTEXT        IDC_FILTER_QUERY,9,104,312,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,218,128,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,271,128,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -181,6 +197,14 @@ BEGIN
         TOPMARGIN, 9
         BOTTOMMARGIN, 265
     END
+
+    IDD_EDIT_AUTOPLAYLIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 9
+        RIGHTMARGIN, 321
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 142
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -211,6 +235,11 @@ BEGIN
 END
 
 IDD_EDIT_VIEW AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_EDIT_AUTOPLAYLIST AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

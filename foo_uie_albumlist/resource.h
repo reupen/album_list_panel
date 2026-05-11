@@ -7,6 +7,7 @@
 #define IDD_HOST                        191
 #define IDD_APPEARANCE_TAB              192
 #define IDD_BEHAVIOUR_TAB               193
+#define IDD_EDIT_AUTOPLAYLIST           194
 #define IDC_SHOW_COUNTS                 1005
 #define IDC_SHOW_INDICES                1006
 #define IDC_DBLCLK                      1007
@@ -37,6 +38,10 @@
 #define IDC_AUTOCOLLAPSE                1038
 #define IDC_TAB1                        1039
 #define IDC_ADD_ITEMS_USE_CORE_SORT     1041
+#define IDC_FORCE_SORT                  1041
+#define IDC_SORTING_PATTERN             1042
+#define IDC_FILTER_QUERY                1043
+#define IDC_REVERSE_SORT                1044
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -45,7 +50,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40004
-#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_CONTROL_VALUE         1045
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif
