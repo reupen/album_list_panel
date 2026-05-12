@@ -839,36 +839,17 @@ void AlbumListWindow::create_autoplaylist(const std::span<const node_ptr> nodes)
     if (m_wnd_edit)
         uGetWindowText(m_wnd_edit, filter);
 
-    if (ranges::contains(nodes, m_root)) {
-        const auto name = "All music"sv;
-        const auto playlist_api = playlist_manager_v4::get();
-        const auto playlist_index = playlist_api->create_playlist(name.data(), name.size(), SIZE_MAX);
+    const auto has_root = ranges::contains(nodes, m_root);
 
-        pfc::string8 sort_format;
-
-        if (!cfg_add_items_use_core_sort) {
-            if (is_by_dir)
-                sort_format = "%path_sort%";
-            else {
-                sort_format = get_hierarchy();
-                sort_format += "|%path_sort%";
-            }
-        }
-
-        autoplaylist_manager_v2::get()->add_client_simple(filter.empty() ? "ALL" : filter.c_str(),
-            sort_format.is_empty() ? nullptr : sort_format.c_str(), playlist_index, 0);
-        playlist_api->set_active_playlist(playlist_index);
-        return;
-    }
-
-    auto labels = nodes | ranges::views::transform([&](auto&& node) {
-        auto hierarchy = node->get_hierarchy();
-        return hierarchy | ranges::views::drop(1)
-            | ranges::views::transform([](const auto& node) { return node->get_name(); }) | ranges::to_vector;
-    });
+    auto labels
+        = has_root ? std::vector<std::vector<wil::zstring_view>>{} : nodes | ranges::views::transform([&](auto&& node) {
+              auto hierarchy = node->get_hierarchy();
+              return hierarchy | ranges::views::drop(1)
+                  | ranges::views::transform([](const auto& node) { return node->get_name(); }) | ranges::to_vector;
+          }) | ranges::to_vector;
 
     alp::create_autoplaylist(
-        is_by_dir, is_by_dir ? "" : get_hierarchy(), labels | ranges::to_vector, {filter.c_str(), filter.length()});
+        is_by_dir, is_by_dir ? "" : get_hierarchy(), std::move(labels), {filter.c_str(), filter.length()});
 }
 
 // {606E9CDD-45EE-4c3b-9FD5-49381CEBE8AE}
