@@ -60,6 +60,19 @@ std::string get_autoplaylist_name(auto&& labels_by_node)
     return mmh::join<const decltype(leaf_labels)&, std::string_view, std::string>(leaf_labels, ", "sv).c_str();
 }
 
+search_filter_v2::ptr create_filter_obj(wil::zstring_view query, completion_notify::ptr change_notify)
+{
+    if (!query.empty()) {
+        try {
+            return search_filter_manager_v2::get()->create_ex(query.c_str(), std::move(change_notify), 0);
+        } catch (const std::exception& exc) {
+            console::print("Album list panel autoplaylist – filter error: ", exc.what());
+        }
+    }
+
+    return {};
+}
+
 struct ConfigurationState {
     size_t playlist_index{};
     bool is_force_sorted{};
@@ -141,6 +154,23 @@ HWND show_configuration_dialog(
 
 } // namespace
 
+class CompletionNotifyForwarder : public completion_notify {
+public:
+    void on_completion(unsigned p_code) override
+    {
+        if (m_next_completion_notify.is_valid())
+            m_next_completion_notify->on_completion(p_code);
+    }
+
+    void set_next_completion_notify(completion_notify::ptr next_completion_notify)
+    {
+        m_next_completion_notify = std::move(next_completion_notify);
+    }
+
+private:
+    ptr m_next_completion_notify;
+};
+
 class ByFormatAutoplaylistClient : public autoplaylist_client_v3 {
 public:
     ByFormatAutoplaylistClient(wil::zstring_view view_titleformat, std::vector<std::vector<std::string>> node_labels,
@@ -150,9 +180,11 @@ public:
         , m_labels_by_node(std::move(node_labels))
         , m_filter(std::forward<decltype(filter)>(filter))
         , m_is_force_sorted(is_force_sorted)
-        , m_sort_titleformat(std::move(sort_titleformat))
         , m_is_reverse_sort(is_reverse_sort)
+        , m_sort_titleformat(std::move(sort_titleformat))
+        , m_completion_notify(fb2k::service_new<CompletionNotifyForwarder>())
     {
+        recreate_filter_obj();
     }
 
     GUID get_guid() override { return by_autoplaylist_client_id; }
@@ -185,15 +217,15 @@ public:
             return;
         }
 
-        std::unique_lock lock(m_mutex);
         ConfigurationState state{p_source_playlist, m_is_force_sorted, m_sort_titleformat, m_is_reverse_sort, m_filter};
-        lock.unlock();
 
         m_configuration_dialog_wnd = show_configuration_dialog(
             std::move(state),
             [this, self{ptr{this}}](auto& state) {
                 if (state.playlist_index == SIZE_MAX)
                     return;
+
+                m_filter = state.filter_query;
 
                 std::unique_lock lock(m_mutex);
 
@@ -202,8 +234,7 @@ public:
                 m_is_force_sorted = state.is_force_sorted;
                 m_sort_titleformat = state.sorting_pattern;
                 m_is_reverse_sort = state.is_reverse_sort;
-                m_filter = state.filter_query;
-                const auto completion_notify = m_completion_notify;
+                recreate_filter_obj();
 
                 lock.unlock();
 
@@ -212,17 +243,16 @@ public:
                     manager_api->set_client_flags(this, state.is_force_sorted ? autoplaylist_flag_sort : 0);
                 }
 
-                if (completion_notify.is_valid())
-                    completion_notify->on_completion(1);
+                m_completion_notify->on_completion(1);
             },
             [this, self{ptr{this}}] { m_configuration_dialog_wnd = nullptr; });
     }
 
     void set_full_refresh_notify(completion_notify::ptr notify) override
     {
-        std::scoped_lock _scoped_lock(m_mutex);
-        m_completion_notify = notify;
+        m_completion_notify->set_next_completion_notify(notify);
     }
+
     bool show_ui_available() override { return true; }
     void get_display_name(pfc::string_base& out) override { out = "Album list panel"; }
 
@@ -233,18 +263,14 @@ public:
         const auto& labels_by_node = m_labels_by_node;
 
         std::unique_lock lock(m_mutex);
-        const auto completion_notify = m_completion_notify;
-        const auto filter = m_filter;
         const auto titleformat_obj = m_titleformat_object;
+        const auto filter_obj = m_filter_obj;
         lock.unlock();
 
-        if (!filter.empty()) {
-            const auto filter_obj = search_filter_manager_v2::get()->create_ex(filter.c_str(), completion_notify,
-                completion_notify.is_valid() ? 0 : search_filter_manager_v2::KFlagSuppressNotify);
+        if (filter_obj.is_valid())
             filter_obj->test_multi_ex(items, out, abort);
-        } else {
+        else
             std::fill_n(out, items.size(), true);
-        }
 
         if (labels_by_node.empty())
             return;
@@ -332,15 +358,18 @@ public:
     fb2k::arrayRef get_contents(abort_callback& a) override { return {}; }
 
 private:
+    void recreate_filter_obj() { m_filter_obj = create_filter_obj(m_filter, m_completion_notify); }
+
     std::mutex m_mutex;
     std::string m_view_titleformat;
     titleformat_object::ptr m_titleformat_object;
     std::vector<std::vector<std::string>> m_labels_by_node;
     std::string m_filter;
+    search_filter_v2::ptr m_filter_obj;
     bool m_is_force_sorted{};
     bool m_is_reverse_sort{};
     std::string m_sort_titleformat;
-    completion_notify::ptr m_completion_notify;
+    service_ptr_t<CompletionNotifyForwarder> m_completion_notify;
     HWND m_configuration_dialog_wnd{};
 };
 
@@ -353,7 +382,9 @@ public:
         , m_is_force_sorted(is_force_sorted)
         , m_is_reverse_sort(is_reverse_sort)
         , m_sort_titleformat(std::move(sort_titleformat))
+        , m_completion_notify(fb2k::service_new<CompletionNotifyForwarder>())
     {
+        recreate_filter_obj();
     }
 
     GUID get_guid() override { return by_autoplaylist_client_id; }
@@ -362,7 +393,6 @@ public:
     {
         p_stream->write_lendian_t(true, p_abort);
 
-        std::scoped_lock lock(m_mutex);
         p_stream->write_string(m_filter.c_str(), p_abort);
         p_stream->write_lendian_t(m_is_force_sorted, p_abort);
         p_stream->write_string(m_sort_titleformat.c_str(), p_abort);
@@ -385,9 +415,7 @@ public:
             return;
         }
 
-        std::unique_lock lock(m_mutex);
         ConfigurationState state{p_source_playlist, m_is_force_sorted, m_sort_titleformat, m_is_reverse_sort, m_filter};
-        lock.unlock();
 
         m_configuration_dialog_wnd = show_configuration_dialog(
             std::move(state),
@@ -395,15 +423,15 @@ public:
                 if (state.playlist_index == SIZE_MAX)
                     return;
 
+                m_filter = state.filter_query;
+
                 std::unique_lock lock(m_mutex);
 
                 const auto old_is_force_sorted = m_is_force_sorted;
-
                 m_is_force_sorted = state.is_force_sorted;
                 m_sort_titleformat = state.sorting_pattern;
                 m_is_reverse_sort = state.is_reverse_sort;
-                m_filter = state.filter_query;
-                const auto completion_notify = m_completion_notify;
+                recreate_filter_obj();
 
                 lock.unlock();
 
@@ -412,15 +440,13 @@ public:
                     manager_api->set_client_flags(this, state.is_force_sorted ? autoplaylist_flag_sort : 0);
                 }
 
-                if (completion_notify.is_valid())
-                    completion_notify->on_completion(1);
+                m_completion_notify->on_completion(1);
             },
             [this, self{ptr{this}}] { m_configuration_dialog_wnd = nullptr; });
     }
     void set_full_refresh_notify(completion_notify::ptr notify) override
     {
-        std::scoped_lock _scoped_lock(m_mutex);
-        m_completion_notify = notify;
+        m_completion_notify->set_next_completion_notify(notify);
     }
     bool show_ui_available() override { return true; }
     void get_display_name(pfc::string_base& out) override { out = "Album list panel"; }
@@ -432,17 +458,13 @@ public:
         const auto& labels_by_node = m_labels_by_node;
 
         std::unique_lock lock(m_mutex);
-        const auto completion_notify = m_completion_notify;
-        const auto filter = m_filter;
+        const auto filter_obj = m_filter_obj;
         lock.unlock();
 
-        if (!filter.empty()) {
-            const auto filter_obj = search_filter_manager_v2::get()->create_ex(filter.c_str(), completion_notify,
-                completion_notify.is_valid() ? 0 : search_filter_manager_v2::KFlagSuppressNotify);
+        if (filter_obj.is_valid())
             filter_obj->test_multi_ex(items, out, abort);
-        } else {
+        else
             std::fill_n(out, items.size(), true);
-        }
 
         if (labels_by_node.empty())
             return;
@@ -467,7 +489,7 @@ public:
                 segments.clear();
 
                 auto segments_view = path | ranges::views::split_when([](char c) {
-                    return alp::path_separators.find(c) != std::string_view::npos;
+                    return path_separators.find(c) != std::string_view::npos;
                 }) | ranges::views::transform([](auto&& range) {
                     return std::string_view(&*range.begin(), std::ranges::distance(range));
                 });
@@ -513,13 +535,16 @@ public:
     fb2k::arrayRef get_contents(abort_callback& a) override { return {}; }
 
 private:
+    void recreate_filter_obj() { m_filter_obj = create_filter_obj(m_filter, m_completion_notify); }
+
     std::mutex m_mutex;
     std::vector<std::vector<std::string>> m_labels_by_node;
     std::string m_filter;
+    search_filter_v2::ptr m_filter_obj;
     bool m_is_force_sorted{};
     bool m_is_reverse_sort{};
     std::string m_sort_titleformat;
-    completion_notify::ptr m_completion_notify;
+    service_ptr_t<CompletionNotifyForwarder> m_completion_notify;
     HWND m_configuration_dialog_wnd{};
 };
 
